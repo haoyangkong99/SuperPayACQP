@@ -1,0 +1,11 @@
+Django>=4.2
+djangorestframework>=3.14
+django-cors-headers>=4.3
+python-dotenv>=1.0
+requests>=2.31
+cryptography>=41.0
+django-filter>=23.0
+drf-spectacular>=0.27
+pydantic>=2.0
+pytest>=7.4
+pytest-django>=4.7
