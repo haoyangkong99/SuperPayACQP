@@ -10,6 +10,7 @@ class ApiRecord(models.Model):
     """
     id = models.AutoField(primary_key=True)
     api_url = models.TextField()
+    http_method= models.TextField()
     request_body = models.TextField()
     response_body = models.TextField()
     message_type = models.TextField()  # INBOUND or OUTBOUND

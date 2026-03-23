@@ -1,10 +1,10 @@
 """
 Response DTOs
 """
-from dtos import BaseResponseDTO, ResultDTO, AmountDTO
+from dtos import BaseResponseDTO, AmountDTO
 from pydantic import BaseModel
 from typing import Optional, List
-
+from utils.constants import Result
 
 class SettlementQuoteDTO(BaseModel):
     """Settlement quote DTO"""
@@ -58,7 +58,7 @@ class TransactionResultDTO(BaseModel):
 
 class TransactionDTO(BaseModel):
     """Transaction DTO"""
-    transactionResult: Optional[TransactionResultDTO] = None
+    transactionResult: Optional[Result] = None
     transactionId: Optional[str] = None
     transactionRequestId: Optional[str] = None
     transactionAmount: Optional[AmountDTO] = None
@@ -69,7 +69,7 @@ class TransactionDTO(BaseModel):
 
 class InquiryPaymentResponseDTO(BaseResponseDTO):
     """Inquiry payment response DTO"""
-    paymentResult: Optional[ResultDTO] = None
+    paymentResult: Optional[Result] = None
     acquirerId: Optional[str] = None
     pspId: Optional[str] = None
     paymentRequestId: Optional[str] = None
@@ -79,7 +79,7 @@ class InquiryPaymentResponseDTO(BaseResponseDTO):
     customerId: Optional[str] = None
     walletBrandName: Optional[str] = None
     settlementAmount: Optional[AmountDTO] = None
-    settlementQuote: Optional[dict] = None
+    settlementQuote: Optional[SettlementQuoteDTO] = None
     customsDeclarationAmount: Optional[AmountDTO] = None
     mppPaymentId: Optional[str] = None
     transactions: Optional[List[TransactionDTO]] = None
@@ -88,3 +88,6 @@ class InquiryPaymentResponseDTO(BaseResponseDTO):
 class NotifyPaymentResponseDTO(BaseResponseDTO):
     """Notify payment response DTO"""
     pass  # Only contains result field
+
+class RegistrationRequestDTO(BaseResponseDTO):
+    passThroughInfo: Optional[str] = None

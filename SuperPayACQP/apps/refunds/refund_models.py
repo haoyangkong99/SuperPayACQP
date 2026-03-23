@@ -9,11 +9,11 @@ class RefundRecord(models.Model):
     Refund Record model for SuperPayACQP
     """
     refundRequestId = models.TextField(primary_key=True)
-    paymentRequestId = models.TextField()  # FK to PaymentRequest
-    paymentId = models.TextField(blank=True)
+    paymentRequestId = models.TextField(blank=True,null=True)  # FK to PaymentRequest
+    paymentId = models.TextField(blank=True,null=True)
     refundAmountValue = models.IntegerField()
     refundAmountCurrency = models.TextField()
-    refundReason = models.TextField(blank=True)
+    refundReason = models.TextField(blank=True,null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

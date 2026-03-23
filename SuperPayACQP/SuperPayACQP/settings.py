@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'drf_spectacular',
+    'background_task',
     # Local apps
     'apps.users',
     'apps.merchants',
@@ -53,12 +54,12 @@ MIDDLEWARE = [
     'middleware.merchant_auth.MerchantAuthMiddleware',
 ]
 
-ROOT_URLCONF = 'superpayacqp.urls'
+ROOT_URLCONF = 'SuperPayACQP.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -71,7 +72,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'superpayacqp.wsgi.application'
+WSGI_APPLICATION = 'SuperPayACQP.wsgi.application'
 
 # Database
 # Using SQLite for development (can be changed to H2 or other databases)

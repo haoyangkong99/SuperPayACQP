@@ -6,8 +6,9 @@ import base64
 import logging
 from urllib.parse import quote, unquote
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.backends import default_backend
+from typing import Union, Optional, cast
 
 logger = logging.getLogger(__name__)
 
@@ -26,32 +27,30 @@ class SignatureService:
             public_key: Base64 encoded X.509 public key
             client_id: Client identifier for Alipay+
         """
-        self.private_key = self._load_private_key(private_key)
-        self.public_key = self._load_public_key(public_key)
+        self.private_key: rsa.RSAPrivateKey = self._load_private_key(private_key)
+        self.public_key: rsa.RSAPublicKey = self._load_public_key(public_key)
         self.client_id = client_id
     
-    def _load_private_key(self, key_str: str):
-        """
-        Load PKCS#8 private key from Base64 string
-        
-        Args:
-            key_str: Base64 encoded private key
-            
-        Returns:
-            Private key object
-        """
+    def _load_private_key(self, key_str: str) -> rsa.RSAPrivateKey:
+
         try:
+            # Try PEM format first (has headers)
+
             key_bytes = base64.b64decode(key_str)
-            return serialization.load_der_private_key(
-                key_bytes, 
-                password=None, 
-                backend=default_backend()
-            )
+            key = serialization.load_der_private_key(
+                    key_bytes, 
+                    password=None, 
+                    backend=default_backend()
+                )
+            
+            if not isinstance(key, rsa.RSAPrivateKey):
+                raise ValueError("Private key must be an RSA key")
+            return key
         except Exception as e:
             logger.error(f"Failed to load private key: {e}")
             raise
     
-    def _load_public_key(self, key_str: str):
+    def _load_public_key(self, key_str: str) -> rsa.RSAPublicKey:
         """
         Load X.509 public key from Base64 string
         
@@ -59,14 +58,17 @@ class SignatureService:
             key_str: Base64 encoded public key
             
         Returns:
-            Public key object
+            RSAPublicKey object
         """
         try:
             key_bytes = base64.b64decode(key_str)
-            return serialization.load_der_public_key(
+            key = serialization.load_der_public_key(
                 key_bytes, 
                 backend=default_backend()
             )
+            if not isinstance(key, rsa.RSAPublicKey):
+                raise ValueError("Public key must be an RSA key")
+            return cast(rsa.RSAPublicKey, key)
         except Exception as e:
             logger.error(f"Failed to load public key: {e}")
             raise
@@ -86,9 +88,9 @@ class SignatureService:
             URL-encoded Base64 signature
         """
         # Build content to be signed
-        content = f"{http_method.upper()} {request_uri}\n{self.client_id}.{request_time}.{request_body or ''}"
+        content = f"{http_method.upper()} {request_uri}\n{self.client_id}.{request_time}.{request_body}"
         
-        logger.debug(f"Content to be signed: {content}")
+
         
         # Sign the content
         signature = self.private_key.sign(
@@ -96,9 +98,9 @@ class SignatureService:
             padding.PKCS1v15(),
             hashes.SHA256()
         )
-        
+        generated_signature = base64.urlsafe_b64encode(signature).decode("utf-8").rstrip("=")
         # Base64 encode and URL encode
-        return quote(base64.b64encode(signature).decode('utf-8'))
+        return generated_signature
     
     def verify_signature(self, http_method: str, request_uri: str,
                         request_time: str, request_body: str, signature: str) -> bool:
@@ -117,12 +119,12 @@ class SignatureService:
         """
         try:
             # Build content to be validated
-            content = f"{http_method.upper()} {request_uri}\n{self.client_id}.{request_time}.{request_body or ''}"
+            content = f"{http_method.upper()} {request_uri}\n{self.client_id}.{request_time}.{request_body}"
             
-            logger.debug(f"Content to verify: {content}")
+
             
             # Decode signature
-            signature_bytes = base64.b64decode(unquote(signature))
+            signature_bytes = base64.urlsafe_b64decode(unquote(signature))
             
             # Verify signature
             self.public_key.verify(
@@ -149,7 +151,7 @@ class SignatureService:
         """
         return f"algorithm=RSA256,keyVersion={key_version},signature={signature}"
     
-    def extract_signature_from_header(self, header: str) -> str:
+    def extract_signature_from_header(self, header: str) -> Optional[str]:
         """
         Extract signature value from header
         

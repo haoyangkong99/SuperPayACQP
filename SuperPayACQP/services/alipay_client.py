@@ -7,11 +7,10 @@ import logging
 import time
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List, Callable
-
+import os
 import requests
-
-from dtos.request import CancelPaymentRequestDTO, RefundRequestDTO, InquiryPaymentRequestDTO
-from dtos.alipay_request import AlipayPayRequestDTO
+import uuid
+from dtos.request import CancelPaymentRequestDTO, RefundRequestDTO, InquiryPaymentRequestDTO, AlipayPayRequestDTO
 from dtos.response import (
     PaymentResponseDTO, 
     CancelPaymentResponseDTO, 
@@ -91,8 +90,8 @@ class AlipayClient:
     Client for interacting with Alipay+ API
     """
     
-    BASE_URL = "https://open-sea.alipayplus.com/aps"
-    
+    BASE_URL = "https://open-sea.alipayplus.com"
+    API_BASE_URL = os.getenv('API_BASE_URL')
     # API Endpoints
     PAY_ENDPOINT = "/aps/api/v1/payments/pay"
     CANCEL_ENDPOINT = "/aps/api/v1/payments/cancelPayment"
@@ -137,7 +136,7 @@ class AlipayClient:
             "Signature": self.signature_service.build_signature_header(signature)
         }
     
-    def _make_request(self, endpoint: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def _make_request(self, endpoint: str, payload: Dict[str, Any],timeout:int) -> Dict[str, Any]:
         """
         Make HTTP request to Alipay+ API
         
@@ -154,17 +153,21 @@ class AlipayClient:
         
         headers = self._build_headers(endpoint, request_time, request_body)
         
-        logger.info(f"Making request to Alipay+: {endpoint}")
+        # logger.info(f"Making request to Alipay+: {endpoint}")
         logger.debug(f"Request body: {request_body}")
         
         try:
-            response = requests.post(url, headers=headers, data=request_body, timeout=30)
+            response = requests.post(url, headers=headers, data=request_body, timeout=timeout)
             response.raise_for_status()
             
-            # Verify response signature
+# Verify response signature
             response_signature = response.headers.get('Signature')
-            response_time = response.headers.get('response-time')
+            response_time = response.headers.get('Response-Time')
             
+            # Only verify signature for successful responses (not errors)
+            # Error responses from sandbox may not be signed
+            response_json = response.json()
+
             if response_signature and response_time:
                 sig_value = self.signature_service.extract_signature_from_header(response_signature)
                 if sig_value:
@@ -173,6 +176,7 @@ class AlipayClient:
                     )
                     if not is_valid:
                         logger.warning("Response signature verification failed")
+
             
             logger.debug(f"Response: {response.text}")
             return response.json()
@@ -207,7 +211,7 @@ class AlipayClient:
             PaymentResponseDTO instance
         """
         payload = request_dto.to_alipay_dict()
-        response_data = self._make_request(self.PAY_ENDPOINT, payload)
+        response_data = self._make_request(self.PAY_ENDPOINT, payload,8)
         return PaymentResponseDTO(**response_data)
     
     def cancel_payment(self, request_dto: CancelPaymentRequestDTO) -> CancelPaymentResponseDTO:
@@ -221,7 +225,7 @@ class AlipayClient:
             CancelPaymentResponseDTO instance
         """
         payload = request_dto.model_dump(exclude_none=True)
-        response_data = self._make_request(self.CANCEL_ENDPOINT, payload)
+        response_data = self._make_request(self.CANCEL_ENDPOINT, payload,8)
         return CancelPaymentResponseDTO(**response_data)
     
     def refund(self, request_dto: RefundRequestDTO) -> RefundResponseDTO:
@@ -235,7 +239,7 @@ class AlipayClient:
             RefundResponseDTO instance
         """
         payload = request_dto.model_dump(exclude_none=True)
-        response_data = self._make_request(self.REFUND_ENDPOINT, payload)
+        response_data = self._make_request(self.REFUND_ENDPOINT, payload,8)
         return RefundResponseDTO(**response_data)
     
     def inquiry_payment(self, request_dto: InquiryPaymentRequestDTO) -> InquiryPaymentResponseDTO:
@@ -249,5 +253,8 @@ class AlipayClient:
             InquiryPaymentResponseDTO instance
         """
         payload = request_dto.model_dump(exclude_none=True)
-        response_data = self._make_request(self.INQUIRY_ENDPOINT, payload)
+        response_data = self._make_request(self.INQUIRY_ENDPOINT, payload,5)
         return InquiryPaymentResponseDTO(**response_data)
+
+
+

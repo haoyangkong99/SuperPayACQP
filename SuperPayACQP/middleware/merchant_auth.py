@@ -4,6 +4,8 @@ Validates Merchant-ID header for all API requests
 """
 import logging
 from django.http import JsonResponse
+from apps.merchants.merchants_models import Merchant
+from apps.merchants.merchants_models import Merchant
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +21,10 @@ class MerchantAuthMiddleware:
         '/alipay/notifyPayment',
         '/api/schema/',
         '/api/docs/',
+        '/api/merchants',
+        '/entry-code',
+        '/entry-code/confirm',
+        '/favicon.ico',
     ]
     
     def __init__(self, get_response):
@@ -44,7 +50,7 @@ class MerchantAuthMiddleware:
         
         # Validate merchant exists
         try:
-            from apps.merchants.models import Merchant
+            
             merchant = Merchant.objects.get(merchantId=merchant_id)
             request.merchant = merchant
             logger.debug(f"Merchant authenticated: {merchant_id}")

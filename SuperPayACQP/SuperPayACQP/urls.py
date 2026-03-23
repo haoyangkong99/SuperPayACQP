@@ -4,13 +4,15 @@ URL configuration for SuperPayACQP project.
 from django.urls import path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from apps.payments.views import (
+from apps.payments.payments_views import (
     PlaceOrderView, 
     CancelPaymentView, 
     InquiryPaymentView,
-    NotifyPaymentView
+    NotifyPaymentView,
+    
 )
-from apps.refunds.views import RefundView
+from apps.merchants.merchants_views import MerchantView, GenerateEntryCodeView, EntryCodeView, EntryCodeConfirmView
+from apps.refunds.refund_views import RefundView
 
 urlpatterns = [
     # API Schema
@@ -21,8 +23,13 @@ urlpatterns = [
     path('api/place-order', PlaceOrderView.as_view(), name='place-order'),
     path('api/cancel-payment', CancelPaymentView.as_view(), name='cancel-payment'),
     path('api/refund', RefundView.as_view(), name='refund'),
-    path('api/inquiryPayment', InquiryPaymentView.as_view(), name='inquiry-payment'),
+    path('api/inquiry-payment', InquiryPaymentView.as_view(), name='inquiry-payment'),
+    path('api/generate-entry-code', GenerateEntryCodeView.as_view(), name='generate-entry-code'),
+    path('entry-code', EntryCodeView.as_view(), name='entry-code'),
+    path('entry-code/confirm', EntryCodeConfirmView.as_view(), name='entry-code-confirm'),
     
     # Alipay+ Callback
     path('alipay/notifyPayment', NotifyPaymentView.as_view(), name='notify-payment'),
+
+    path('api/merchants', MerchantView.as_view(), name='create-merchant'),
 ]

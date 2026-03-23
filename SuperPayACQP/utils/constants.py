@@ -4,6 +4,8 @@ Constants and Enums for SuperPayACQP
 from enum import Enum
 from typing import Optional
 
+from pydantic import BaseModel, field_serializer
+
 
 class ResultStatus(str, Enum):
     """Result status enumeration"""
@@ -12,10 +14,25 @@ class ResultStatus(str, Enum):
     UNKNOWN = 'U'
 
 
+class PaymentStatus(str, Enum):
+    PENDING = 'PENDING'
+    SUCCESS = 'SUCCESS'
+    CANCELLED = 'CANCELLED'
+    FAILED = 'FAILED'
+
+
 class MessageType(str, Enum):
     """API record message type enumeration"""
     INBOUND = 'INBOUND'
     OUTBOUND = 'OUTBOUND'
+
+
+class HTTPMethod(str, Enum):
+    POST = 'POST'
+    PUT = 'PUT'
+    GET = 'GET'
+    DELETE = 'DELETE'
+    PATCH = 'PATCH'
 
 
 class ResultCode(str, Enum):
@@ -63,314 +80,312 @@ class ResultCode(str, Enum):
     INTERNAL_ERROR = 'INTERNAL_ERROR'
 
 
-class Result:
-    """Result class for API responses"""
+class Result(BaseModel):
+    """Result model for API responses - Pydantic model for seamless serialization"""
+    resultStatus: ResultStatus
+    resultMessage: str
+    resultCode: str
 
-    def __init__(
-        self,
-        resultStatus: Optional[ResultStatus] = None,
-        resultMessage: Optional[str] = None,
-        resultCode: Optional[str] = None
-    ):
-        self.resultCode = resultCode
-        self.resultStatus = resultStatus
-        self.resultMessage = resultMessage
+    @field_serializer('resultStatus')
+    def serialize_result_status(self, value: ResultStatus) -> str:
+        """Serialize ResultStatus enum to string value"""
+        return value.value if isinstance(value, ResultStatus) else value
 
     @classmethod
     def returnSuccess(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'SUCCESS'
-        result.resultStatus = ResultStatus.SUCCESS
-        result.resultMessage = 'Success'
-        return result
+        return cls(
+            resultStatus=ResultStatus.SUCCESS,
+            resultMessage='Success',
+            resultCode='SUCCESS'
+        )
 
     @classmethod
     def returnAccessDenied(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'ACCESS_DENIED'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The access is denied.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The access is denied.',
+            resultCode='ACCESS_DENIED'
+        )
 
     @classmethod
     def returnBusinessNotSupport(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'BUSINESS_NOT_SUPPORT'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The payment business is not supported.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The payment business is not supported.',
+            resultCode='BUSINESS_NOT_SUPPORT'
+        )
 
     @classmethod
     def returnCurrencyNotSupport(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'CURRENCY_NOT_SUPPORT'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The currency is not supported.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The currency is not supported.',
+            resultCode='CURRENCY_NOT_SUPPORT'
+        )
 
     @classmethod
     def returnExpiredCode(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'EXPIRED_CODE'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The code is expired.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The code is expired.',
+            resultCode='EXPIRED_CODE'
+        )
 
     @classmethod
     def returnInvalidClient(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'INVALID_CLIENT'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The client is invalid.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The client is invalid.',
+            resultCode='INVALID_CLIENT'
+        )
 
     @classmethod
     def returnInvalidCode(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'INVALID_CODE'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The code is invalid.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The code is invalid.',
+            resultCode='INVALID_CODE'
+        )
 
     @classmethod
     def returnInvalidContract(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'INVALID_CONTRACT'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The contract is invalid.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The contract is invalid.',
+            resultCode='INVALID_CONTRACT'
+        )
 
     @classmethod
     def returnInvalidSignature(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'INVALID_SIGNATURE'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The signature is invalid.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The signature is invalid.',
+            resultCode='INVALID_SIGNATURE'
+        )
 
     @classmethod
     def returnInvalidToken(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'INVALID_TOKEN'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The access token is invalid.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The access token is invalid.',
+            resultCode='INVALID_TOKEN'
+        )
 
     @classmethod
     def returnKeyNotFound(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'KEY_NOT_FOUND'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The key is not found.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The key is not found.',
+            resultCode='KEY_NOT_FOUND'
+        )
 
     @classmethod
     def returnMediaTypeNotAcceptable(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'MEDIA_TYPE_NOT_ACCEPTABLE'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The server does not implement the media type that is acceptable to the client.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The server does not implement the media type that is acceptable to the client.',
+            resultCode='MEDIA_TYPE_NOT_ACCEPTABLE'
+        )
 
     @classmethod
     def returnMerchantNotRegistered(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'MERCHANT_NOT_REGISTERED'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The merchant is not registered.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The merchant is not registered.',
+            resultCode='MERCHANT_NOT_REGISTERED'
+        )
 
     @classmethod
     def returnMethodNotSupported(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'METHOD_NOT_SUPPORTED'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The server does not implement the requested HTTP method.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The server does not implement the requested HTTP method.',
+            resultCode='METHOD_NOT_SUPPORTED'
+        )
 
     @classmethod
     def returnNoInterfaceDef(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'NO_INTERFACE_DEF'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'API is not defined.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='API is not defined.',
+            resultCode='NO_INTERFACE_DEF'
+        )
 
     @classmethod
     def returnOrderIsClosed(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'ORDER_IS_CLOSED'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The order is closed.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The order is closed.',
+            resultCode='ORDER_IS_CLOSED'
+        )
 
     @classmethod
     def returnParamIllegal(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'PARAM_ILLEGAL'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'Illegal parameters exist. For example, a non-numeric input, or an invalid date.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='Illegal parameters exist. For example, a non-numeric input, or an invalid date.',
+            resultCode='PARAM_ILLEGAL'
+        )
 
     @classmethod
     def returnPaymentAmountExceedLimit(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'PAYMENT_AMOUNT_EXCEED_LIMIT'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The payment amount exceeds the limit.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The payment amount exceeds the limit.',
+            resultCode='PAYMENT_AMOUNT_EXCEED_LIMIT'
+        )
 
     @classmethod
     def returnPaymentCountExceedLimit(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'PAYMENT_COUNT_EXCEED_LIMIT'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The number of payments exceeds the limit.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The number of payments exceeds the limit.',
+            resultCode='PAYMENT_COUNT_EXCEED_LIMIT'
+        )
 
     @classmethod
     def returnProcessFail(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'PROCESS_FAIL'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'A general business failure occurred. Don\'t retry.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='A general business failure occurred. Don\'t retry.',
+            resultCode='PROCESS_FAIL'
+        )
 
     @classmethod
     def returnRegulationRestriction(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'REGULATION_RESTRICTION'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The payment failed due to regulatory restriction.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The payment failed due to regulatory restriction.',
+            resultCode='REGULATION_RESTRICTION'
+        )
 
     @classmethod
     def returnRepeatReqInconsistent(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'REPEAT_REQ_INCONSISTENT'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'Repeated requests are inconsistent.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='Repeated requests are inconsistent.',
+            resultCode='REPEAT_REQ_INCONSISTENT'
+        )
 
     @classmethod
     def returnRiskReject(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'RISK_REJECT'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The request is rejected because of the risk control.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The request is rejected because of the risk control.',
+            resultCode='RISK_REJECT'
+        )
 
     @classmethod
     def returnUnavailablePaymentMethod(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'UNAVAILABLE_PAYMENT_METHOD'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The payment method is unavailable.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The payment method is unavailable.',
+            resultCode='UNAVAILABLE_PAYMENT_METHOD'
+        )
 
     @classmethod
     def returnUserAmountExceedLimit(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'USER_AMOUNT_EXCEED_LIMIT'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The payment amount exceeds the user payment limit.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The payment amount exceeds the user payment limit.',
+            resultCode='USER_AMOUNT_EXCEED_LIMIT'
+        )
 
     @classmethod
     def returnUserBalanceNotEnough(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'USER_BALANCE_NOT_ENOUGH'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The user balance is not enough for the payment.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The user balance is not enough for the payment.',
+            resultCode='USER_BALANCE_NOT_ENOUGH'
+        )
 
     @classmethod
     def returnUserKycNotQualified(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'USER_KYC_NOT_QUALIFIED'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The user is not KYC compliant.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The user is not KYC compliant.',
+            resultCode='USER_KYC_NOT_QUALIFIED'
+        )
 
     @classmethod
     def returnUserNotExist(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'USER_NOT_EXIST'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The user does not exist.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The user does not exist.',
+            resultCode='USER_NOT_EXIST'
+        )
 
     @classmethod
     def returnUserPaymentVerificationFailed(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'USER_PAYMENT_VERIFICATION_FAILED'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'User fails to pass the payment verification in the methods like OTP, PIN, and so on.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='User fails to pass the payment verification in the methods like OTP, PIN, and so on.',
+            resultCode='USER_PAYMENT_VERIFICATION_FAILED'
+        )
 
     @classmethod
     def returnUserStatusAbnormal(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'USER_STATUS_ABNORMAL'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The user status is abnormal.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The user status is abnormal.',
+            resultCode='USER_STATUS_ABNORMAL'
+        )
 
     @classmethod
     def returnPaymentInProcess(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'PAYMENT_IN_PROCESS'
-        result.resultStatus = ResultStatus.UNKNOWN
-        result.resultMessage = 'The payment is being processed.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.UNKNOWN,
+            resultMessage='The payment is being processed.',
+            resultCode='PAYMENT_IN_PROCESS'
+        )
 
     @classmethod
     def returnRequestTrafficExceedLimit(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'REQUEST_TRAFFIC_EXCEED_LIMIT'
-        result.resultStatus = ResultStatus.UNKNOWN
-        result.resultMessage = 'The request traffic exceeds the limit.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.UNKNOWN,
+            resultMessage='The request traffic exceeds the limit.',
+            resultCode='REQUEST_TRAFFIC_EXCEED_LIMIT'
+        )
 
     @classmethod
     def returnUnknownException(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'UNKNOWN_EXCEPTION'
-        result.resultStatus = ResultStatus.UNKNOWN
-        result.resultMessage = 'An API calling is failed, which is caused by unknown reasons.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.UNKNOWN,
+            resultMessage='An API calling is failed, which is caused by unknown reasons.',
+            resultCode='UNKNOWN_EXCEPTION'
+        )
 
     @classmethod
     def returnCancelWindowExceed(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'CANCEL_WINDOW_EXCEED'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'Exceed Cancel window.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='Exceed Cancel window.',
+            resultCode='CANCEL_WINDOW_EXCEED'
+        )
 
     @classmethod
     def returnRefundAmountExceed(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'REFUND_AMOUNT_EXCEED'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The total refund amount exceeds the original payment amount.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The total refund amount exceeds the original payment amount.',
+            resultCode='REFUND_AMOUNT_EXCEED'
+        )
 
     @classmethod
     def returnRefundWindowExceed(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'REFUND_WINDOW_EXCEED'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The refund request is outside the allowable refund window.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The refund request is outside the allowable refund window.',
+            resultCode='REFUND_WINDOW_EXCEED'
+        )
 
     @classmethod
     def returnOrderNotExist(cls) -> 'Result':
-        result = cls()
-        result.resultCode = 'ORDER_NOT_EXIST'
-        result.resultStatus = ResultStatus.FAILURE
-        result.resultMessage = 'The order doesn\'t exist.'
-        return result
+        return cls(
+            resultStatus=ResultStatus.FAILURE,
+            resultMessage='The order doesn\'t exist.',
+            resultCode='ORDER_NOT_EXIST'
+        )
 
 
 # Retry intervals for PAYMENT_IN_PROCESS (in seconds)
@@ -386,3 +401,11 @@ CANCEL_RETRY_TIMEOUT_SECONDS = 60
 # Inquiry payment retry settings
 INQUIRY_RETRY_INTERVAL_SECONDS = 5
 INQUIRY_RETRY_TIMEOUT_SECONDS = 60
+
+# Allowed User-Agent strings for Entry Code payment
+ALIPAY_IOS_USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/18D52 Ariver/1.1.0 AliApp(AP/10.2.15.6000) Nebula WK RVKType(1) AlipayDefined(nt:4G,ws:414|672|3.0) AlipayClient/10.2.15.6000 Alipay Language/zh-Hans Region/CN NebulaX/1.0.0"
+
+ALIPAY_ANDROID_USER_AGENT = "Mozilla/5.0 (Linux; Android 10; Mi 10 Build/QKQ1.191117.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/80.0.3987.99 Mobile Safari/537.36 Ariver/2.16.0  Griver/2.16.2 AppContainer/10.5.10 AlipayConnect iapconnectsdk/2.7.0"
+
+# UA Identifiers to check in User-Agent header
+ALLOWED_UA_IDENTIFIERS = ['AlipayClient', 'AlipayConnect']
