@@ -82,6 +82,14 @@ class OrderDTO(BaseModel):
     env: Optional[EnvDTO] = None
 
 
+class PaymentMethodDTO(BaseModel):
+    """Payment method DTO"""
+    paymentMethodType: str = "CONNECT_WALLET"
+    paymentMethodId: Optional[str] = None
+    customerId: Optional[str] = None
+    paymentMethodMetaData: Optional[dict] = None
+
+
 class PlaceOrderRequestDTO(BaseRequestDTO):
     """Place order request DTO"""
     order: OrderDTO
@@ -109,13 +117,6 @@ class InquiryPaymentRequestDTO(BaseRequestDTO):
     """Inquiry payment request DTO"""
     paymentId: Optional[str] = None
     paymentRequestId: str
-
-class PaymentMethodDTO(BaseModel):
-    """Payment method DTO"""
-    paymentMethodType: str = "CONNECT_WALLET"
-    paymentMethodId: Optional[str] = None
-    customerId: Optional[str] = None
-    paymentMethodMetaData: Optional[dict] = None
 
 
 class SettlementStrategyDTO(BaseModel):
