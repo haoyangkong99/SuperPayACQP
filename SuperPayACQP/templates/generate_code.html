@@ -317,30 +317,7 @@
                     <span id="validityText">Code valid for 15 minutes.</span>
                 </div>
             </div>
-            
-            <div class="features-row">
-                <div class="feature-item">
-                    <div class="icon">
-                        <i class="bi bi-shield-lock"></i>
-                    </div>
-                    <h4>Encrypted</h4>
-                    <p>256-bit AES protection</p>
-                </div>
-                <div class="feature-item">
-                    <div class="icon">
-                        <i class="bi bi-1-circle"></i>
-                    </div>
-                    <h4>One-Time</h4>
-                    <p>Single use per device</p>
-                </div>
-                <div class="feature-item">
-                    <div class="icon">
-                        <i class="bi bi-arrow-repeat"></i>
-                    </div>
-                    <h4>Syncing</h4>
-                    <p>Real-time terminal link</p>
-                </div>
-            </div>
+
         </div>
     </div>
     
@@ -430,16 +407,20 @@
                 
                 const data = await response.json();
                 
-                if (response.ok && data.codeId) {
+                if (response.ok && data.entryCodeUrl) {
+                    // Extract codeId from entryCodeUrl
+                    const urlParams = new URLSearchParams(data.entryCodeUrl.split('?')[1]);
+                    const codeId = urlParams.get('codeId');
+                    
                     // Show QR code placeholder (in real implementation, generate QR)
                     document.getElementById('qrPlaceholder').style.display = 'none';
                     const qrCode = document.getElementById('qrCode');
                     qrCode.style.display = 'block';
                     // Use a QR code API to generate QR
-                    qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(data.codeId)}`;
+                    qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(data.entryCodeUrl)}`;
                     
                     // Update token value
-                    document.getElementById('tokenValue').textContent = formatToken(data.codeId);
+                    document.getElementById('tokenValue').textContent = formatToken(codeId || 'Generated');
                     
                     // Show validity
                     document.getElementById('codeValidity').style.display = 'block';
