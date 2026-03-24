@@ -7,7 +7,7 @@ from utils.helpers import format_str_to_datetime
 from django.conf import settings
 from django.db import transaction
 from apps.api_records.api_records_models import ApiRecord
-from apps.orders.models import Order, OrderGoods
+from apps.orders.orders_models import Order, OrderGoods
 from apps.payments.payments_models import PaymentRequest,Settlement
 from apps.merchants.merchants_models import Merchant
 from apps.refunds.refund_models import RefundRecord

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'apps.refunds',
     'apps.api_records',
     'apps.user_auth',
+    'apps.goods',
     'apps.frontend',
 ]
 

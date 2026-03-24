@@ -233,3 +233,21 @@ class RegistrationRequestDTO(BaseRequestDTO):
     storeInfo: Optional[StoreRegistrationInfo] = None
     registrationNotifyUrl: Optional[str] = None
     passThroughInfo: Optional[str] = None
+
+
+class GoodsUnitAmountDTO(BaseModel):
+    """Goods unit amount DTO"""
+    value: int
+    currency: str = 'MYR'
+
+
+class GoodsCatalogItemRequestDTO(BaseRequestDTO):
+    """Goods catalog item request DTO for upsert operations"""
+    goodsId: Optional[str] = None
+    goodsName: str
+    goodsCategory: Optional[str] = None
+    goodsBrand: Optional[str] = None
+    goodsUnitAmountValue: int
+    goodsUnitAmountCurrency: Optional[str] = 'MYR'
+    stockQuantity: Optional[int] = 0
+    taxRate: Optional[float] = 0.00

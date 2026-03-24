@@ -31,7 +31,161 @@
 <body class="{% block body_class %}{% endblock %}">
     {% block content %}{% endblock %}
     
+    <!-- Reusable Loading Overlay -->
+    <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.8); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
+        <div class="loading-spinner" style="width: 50px; height: 50px; border: 4px solid #e9ecef; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <div id="loadingMessage" style="margin-top: 16px; font-size: 14px; color: var(--text-secondary); font-weight: 500;">Loading...</div>
+    </div>
+    
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    
+    <!-- Reusable Confirmation Dialog -->
+    <div class="modal fade" id="confirmDialog" tabindex="-1" aria-labelledby="confirmDialogTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+                <div class="modal-header" style="background-color: var(--primary-color); color: white; border-radius: 12px 12px 0 0; border: none; padding: 16px 20px;">
+                    <h5 class="modal-title" id="confirmDialogTitle">
+                        <i class="bi bi-question-circle me-2"></i>
+                        <span id="confirmDialogTitleText">Confirm Action</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 24px 20px;">
+                    <div class="d-flex align-items-start">
+                        <div class="me-3" style="width: 48px; height: 48px; background-color: #fff3cd; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-exclamation-triangle" style="font-size: 24px; color: #856404;"></i>
+                        </div>
+                        <div>
+                            <p id="confirmDialogMessage" style="margin: 0; color: var(--text-primary); font-size: 15px; line-height: 1.5;">
+                                Are you sure you want to proceed?
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border: none; padding: 16px 20px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px; border-radius: 8px; font-weight: 500;">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </button>
+                    <button type="button" class="btn" id="confirmDialogConfirmBtn" style="background-color: var(--primary-color); color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500;">
+                        <i class="bi bi-check-lg me-1"></i> <span id="confirmDialogConfirmText">Confirm</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
+    
+    <!-- Reusable Confirmation Dialog Script -->
+    <script>
+        /**
+         * Reusable Loading Indicator
+         * Usage: showLoading(message) / hideLoading()
+         * 
+         * Parameters:
+         * - message: Optional loading message (default: "Loading...")
+         */
+        function showLoading(message = 'Loading...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const messageEl = document.getElementById('loadingMessage');
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
+        }
+        
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+        }
+        
+        /**
+         * Reusable Confirmation Dialog
+         * Usage: showConfirmDialog(options)
+         * 
+         * Options:
+         * - title: Dialog title (default: "Confirm Action")
+         * - message: Dialog message (default: "Are you sure you want to proceed?")
+         * - confirmText: Confirm button text (default: "Confirm")
+         * - confirmClass: Additional CSS class for confirm button (default: "")
+         * - onConfirm: Callback function when confirmed
+         * - onCancel: Callback function when cancelled (optional)
+         */
+        function showConfirmDialog(options = {}) {
+            const defaults = {
+                title: 'Confirm Action',
+                message: 'Are you sure you want to proceed?',
+                confirmText: 'Confirm',
+                confirmClass: '',
+                onConfirm: function() {},
+                onCancel: function() {}
+            };
+            
+            const settings = { ...defaults, ...options };
+            
+            const dialog = document.getElementById('confirmDialog');
+            const titleText = document.getElementById('confirmDialogTitleText');
+            const message = document.getElementById('confirmDialogMessage');
+            const confirmBtn = document.getElementById('confirmDialogConfirmBtn');
+            const confirmText = document.getElementById('confirmDialogConfirmText');
+            
+            // Set dialog content
+            titleText.textContent = settings.title;
+            message.textContent = settings.message;
+            confirmText.textContent = settings.confirmText;
+            
+            // Reset and set confirm button class
+            confirmBtn.className = 'btn';
+            confirmBtn.style.backgroundColor = 'var(--primary-color)';
+            confirmBtn.style.color = 'white';
+            if (settings.confirmClass) {
+                confirmBtn.classList.add(settings.confirmClass);
+            }
+            
+            // Create Bootstrap modal
+            const bsModal = new bootstrap.Modal(dialog, {
+                backdrop: 'static',
+                keyboard: false
+            });
+            
+            // Handle confirm button click
+            const handleConfirm = function() {
+                bsModal.hide();
+                settings.onConfirm();
+                cleanup();
+            };
+            
+            // Handle cancel (via backdrop click or cancel button)
+            const handleCancel = function() {
+                settings.onCancel();
+                cleanup();
+            };
+            
+            // Cleanup event listeners
+            const cleanup = function() {
+                confirmBtn.removeEventListener('click', handleConfirm);
+                dialog.removeEventListener('hidden.bs.modal', handleCancel);
+            };
+            
+            // Add event listeners
+            confirmBtn.addEventListener('click', handleConfirm);
+            dialog.addEventListener('hidden.bs.modal', handleCancel, { once: true });
+            
+            // Show dialog
+            bsModal.show();
+            
+            return bsModal;
+        }
+    </script>
 </body>
 </html>

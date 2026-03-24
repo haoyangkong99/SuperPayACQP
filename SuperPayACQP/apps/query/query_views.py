@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
 from apps.payments.payments_models import PaymentRequest, Settlement
-from apps.orders.models import Order, OrderGoods
+from apps.orders.orders_models import Order, OrderGoods
 from apps.merchants.merchants_models import Merchant
 from apps.refunds.refund_models import RefundRecord
 

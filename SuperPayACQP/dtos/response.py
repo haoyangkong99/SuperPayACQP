@@ -91,3 +91,43 @@ class NotifyPaymentResponseDTO(BaseResponseDTO):
 
 class RegistrationRequestDTO(BaseResponseDTO):
     passThroughInfo: Optional[str] = None
+
+
+class GoodsCatalogItemDTO(BaseModel):
+    """Goods catalog item DTO for response"""
+    goodsId: str
+    goodsName: str
+    goodsCategory: str
+    goodsBrand: str
+    goodsUnitAmountValue: int
+    goodsUnitAmountCurrency: str
+    stockQuantity: int
+    taxRate: float
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class GoodsCatalogUpsertResponseDTO(BaseResponseDTO):
+    """Goods catalog upsert response DTO"""
+    goodsId: str
+    action: str  # 'created' or 'updated'
+
+
+class GoodsCatalogListResponseDTO(BaseResponseDTO):
+    """Goods catalog list response DTO"""
+    count: int
+    goods: List[GoodsCatalogItemDTO]
+
+
+class GoodsCatalogDetailResponseDTO(BaseResponseDTO):
+    """Goods catalog detail response DTO"""
+    goodsId: str
+    goodsName: str
+    goodsCategory: str
+    goodsBrand: str
+    goodsUnitAmountValue: int
+    goodsUnitAmountCurrency: str
+    stockQuantity: int
+    taxRate: float
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None

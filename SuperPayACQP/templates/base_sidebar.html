@@ -132,7 +132,7 @@
             <li><a href="/dashboard/" {% if active_page == 'dashboard' %}class="active"{% endif %}><i class="bi bi-speedometer2"></i> Dashboard</a></li>
             <li><a href="#" {% if active_page == 'create_order' %}class="active"{% endif %}><i class="bi bi-plus-circle"></i> Create Order</a></li>
             <li><a href="#" {% if active_page == 'view_orders' %}class="active"{% endif %}><i class="bi bi-list-ul"></i> View Orders</a></li>
-            <li><a href="#" {% if active_page == 'manage_goods' %}class="active"{% endif %}><i class="bi bi-box"></i> Manage Goods</a></li>
+            <li><a href="/manage-goods/" {% if active_page == 'manage_goods' %}class="active"{% endif %}><i class="bi bi-box"></i> Manage Goods</a></li>
             <li><a href="#" {% if active_page == 'manage_merchants' %}class="active"{% endif %}><i class="bi bi-shop"></i> Manage Merchants</a></li>
             <li><a href="/generate-code/" {% if active_page == 'generate_code' %}class="active"{% endif %}><i class="bi bi-key"></i> Generate Codes</a></li>
             <li><a href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
@@ -198,21 +198,29 @@
     document.getElementById('logoutBtn').addEventListener('click', async function(e) {
         e.preventDefault();
         
-        try {
-            const csrftoken = getCookie('csrftoken');
-            
-            await fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken,
+        showConfirmDialog({
+            title: 'Logout Confirmation',
+            message: 'Are you sure you want to logout? You will need to login again to access your account.',
+            confirmText: 'Logout',
+            confirmClass: 'btn-danger',
+            onConfirm: async function() {
+                try {
+                    const csrftoken = getCookie('csrftoken');
+                    
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken,
+                        }
+                    });
+                } catch (error) {
+                    console.error('Logout error:', error);
                 }
-            });
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
-        
-        window.location.href = '/login/';
+                
+                window.location.href = '/login/';
+            }
+        });
     });
     
     // Load profile on page load

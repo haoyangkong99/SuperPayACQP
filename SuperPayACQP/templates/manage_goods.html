@@ -1,0 +1,761 @@
+{% extends 'base_sidebar.html' %}
+
+{% block title %}SuperPayACQP - Manage Goods{% endblock %}
+
+{% block page_styles %}
+{{ block.super }}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    font-size: 28px;
+    margin: 0 0 10px 0;
+    color: var(--text-primary);
+}
+
+.page-header p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* Toolbar */
+.toolbar {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.toolbar .btn-add {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.toolbar .btn-add:hover {
+    background-color: var(--primary-dark);
+}
+
+.toolbar select {
+    padding: 10px 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text-primary);
+    background-color: white;
+    cursor: pointer;
+}
+
+.toolbar .results-info {
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* Table */
+.goods-table-container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.goods-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.goods-table th {
+    background-color: #f8f9fa;
+    padding: 15px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.goods-table td {
+    padding: 15px;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.goods-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.goods-table .goods-id {
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.goods-table .goods-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.goods-table .goods-image {
+    width: 50px;
+    height: 50px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.goods-table .goods-name {
+    font-weight: 500;
+}
+
+.goods-table .goods-brand {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.goods-table .category-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background-color: #e9ecef;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.goods-table .price {
+    font-weight: 600;
+}
+
+.goods-table .stock {
+    font-weight: 500;
+}
+
+.goods-table .stock.low {
+    color: #dc3545;
+}
+
+.goods-table .stock.critical {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.goods-table .tax-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.goods-table .tax-status.taxable {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.goods-table .tax-status.exempted {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.goods-table .tax-status.suspended {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.goods-table .actions {
+    display: flex;
+    gap: 8px;
+}
+
+.goods-table .actions button {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.goods-table .actions button:hover {
+    background-color: #e9ecef;
+}
+
+.goods-table .actions .btn-edit {
+    color: var(--primary-color);
+}
+
+.goods-table .actions .btn-delete {
+    color: #dc3545;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 20px;
+}
+
+.pagination a, .pagination span {
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.pagination a:hover {
+    background-color: #e9ecef;
+}
+
+.pagination a.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-primary);
+}
+
+.modal-header .close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-footer .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.modal-footer .btn-secondary {
+    background-color: #e9ecef;
+    border: none;
+    color: var(--text-primary);
+}
+
+.modal-footer .btn-primary {
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.empty-state h3 {
+    margin: 0 0 10px 0;
+    color: var(--text-primary);
+}
+
+.empty-state p {
+    margin: 0;
+}
+{% endblock %}
+
+{% block main_content %}
+<div class="page-header">
+    <h1>Goods Catalog</h1>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <button class="btn-add" onclick="openAddModal()">
+        <i class="bi bi-plus-lg"></i> Add Goods
+    </button>
+    <select id="categoryFilter" onchange="filterGoods()">
+        <option value="">All Categories</option>
+    </select>
+    <select id="sortBy" onchange="sortGoods()">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="name">Name A-Z</option>
+        <option value="price-high">Price: High to Low</option>
+        <option value="price-low">Price: Low to High</option>
+        <option value="stock-low">Stock: Low to High</option>
+    </select>
+    <div class="results-info" id="resultsInfo">Displaying 0 results</div>
+</div>
+
+<!-- Goods Table -->
+<div class="goods-table-container">
+    <table class="goods-table">
+        <thead>
+            <tr>
+                <th>Goods ID</th>
+                <th>Name & Brand</th>
+                <th>Category</th>
+                <th>Price (MYR)</th>
+                <th>Stock</th>
+                <th>Tax Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="goodsTableBody">
+            <!-- Dynamic content -->
+        </tbody>
+    </table>
+    
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <i class="bi bi-box"></i>
+        <h3>No Goods Found</h3>
+        <p>Start by adding your first product to the catalog.</p>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="goodsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add New Goods</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="goodsForm">
+                <input type="hidden" id="goodsId" name="goodsId">
+                
+                <div class="form-group">
+                    <label for="goodsName">Goods Name *</label>
+                    <input type="text" id="goodsName" name="goodsName" required placeholder="Enter goods name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="goodsCategory">Category</label>
+                    <input type="text" id="goodsCategory" name="goodsCategory" placeholder="Enter category">
+                </div>
+                
+                <div class="form-group">
+                    <label for="goodsBrand">Brand</label>
+                    <input type="text" id="goodsBrand" name="goodsBrand" placeholder="Enter brand name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="goodsUnitAmountValue">Price (in cents) *</label>
+                    <input type="number" id="goodsUnitAmountValue" name="goodsUnitAmountValue" required placeholder="e.g., 10000 for MYR 100.00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="goodsUnitAmountCurrency">Currency</label>
+                    <select id="goodsUnitAmountCurrency" name="goodsUnitAmountCurrency">
+                        <option value="MYR">MYR - Malaysian Ringgit</option>
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="SGD">SGD - Singapore Dollar</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="stockQuantity">Stock Quantity</label>
+                    <input type="number" id="stockQuantity" name="stockQuantity" placeholder="Enter stock quantity" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="taxRate">Tax Rate (%)</label>
+                    <input type="number" id="taxRate" name="taxRate" step="0.01" placeholder="e.g., 6.00" value="0">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveGoods()">Save Goods</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    let goodsList = [];
+    let categories = new Set();
+    
+    // Load goods on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadGoods();
+    });
+    
+    // Load goods from API
+    async function loadGoods() {
+        showLoading('Loading goods catalog...');
+        try {
+            const response = await fetch('/api/goods/');
+            const data = await response.json();
+            
+            if (data.result && data.result.resultStatus === 'S') {
+                goodsList = data.goods || [];
+                updateCategoryFilter();
+                renderGoodsTable();
+            } else {
+                console.error('Failed to load goods:', data.result);
+            }
+        } catch (error) {
+            console.error('Error loading goods:', error);
+        } finally {
+            hideLoading();
+        }
+    }
+    
+    // Update category filter
+    function updateCategoryFilter() {
+        categories = new Set(goodsList.map(g => g.goodsCategory).filter(c => c));
+        const select = document.getElementById('categoryFilter');
+        
+        // Keep the first option
+        select.innerHTML = '<option value="">All Categories</option>';
+        
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            select.appendChild(option);
+        });
+    }
+    
+    // Render goods table
+    function renderGoodsTable(filteredGoods = null) {
+        const tbody = document.getElementById('goodsTableBody');
+        const emptyState = document.getElementById('emptyState');
+        const goods = filteredGoods || goodsList;
+        
+        if (goods.length === 0) {
+            tbody.innerHTML = '';
+            emptyState.style.display = 'block';
+            document.getElementById('resultsInfo').textContent = 'No results found';
+            return;
+        }
+        
+        emptyState.style.display = 'none';
+        document.getElementById('resultsInfo').textContent = `Displaying ${goods.length} result${goods.length !== 1 ? 's' : ''}`;
+        
+        tbody.innerHTML = goods.map(goods => {
+            const shortId = goods.goodsId.substring(0, 8).toUpperCase();
+            const price = (goods.goodsUnitAmountValue / 100).toFixed(2);
+            const stockClass = goods.stockQuantity === 0 ? 'critical' : goods.stockQuantity <= 10 ? 'low' : '';
+            const taxStatus = goods.taxRate > 0 ? 'taxable' : 'exempted';
+            const taxLabel = goods.taxRate > 0 ? `TAXABLE (${goods.taxRate}%)` : 'EXEMPTED';
+            
+            return `
+                <tr>
+                    <td class="goods-id">#GDS-${shortId}</td>
+                    <td>
+                        <div class="goods-name-cell">
+                            <div>
+                                <div class="goods-name">${escapeHtml(goods.goodsName)}</div>
+                                <div class="goods-brand">${escapeHtml(goods.goodsBrand || 'Unknown Brand')}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="category-badge">${escapeHtml(goods.goodsCategory || 'Uncategorized')}</span></td>
+                    <td class="price">${price}</td>
+                    <td class="stock ${stockClass}">${goods.stockQuantity}</td>
+                    <td><span class="tax-status ${taxStatus}">${taxLabel}</span></td>
+                    <td class="actions">
+                        <button class="btn-edit" onclick="editGoods('${goods.goodsId}')" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn-delete" onclick="deleteGoods('${goods.goodsId}')" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    // Filter goods
+    function filterGoods() {
+        const category = document.getElementById('categoryFilter').value;
+        let filtered = goodsList;
+        
+        if (category) {
+            filtered = goodsList.filter(g => g.goodsCategory === category);
+        }
+        
+        sortGoods(filtered);
+    }
+    
+    // Sort goods
+    function sortGoods(goodsToSort = null) {
+        const sortBy = document.getElementById('sortBy').value;
+        let goods = goodsToSort || [...goodsList];
+        
+        // Apply category filter if not already filtered
+        const category = document.getElementById('categoryFilter').value;
+        if (!goodsToSort && category) {
+            goods = goods.filter(g => g.goodsCategory === category);
+        }
+        
+        switch (sortBy) {
+            case 'newest':
+                goods.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                break;
+            case 'oldest':
+                goods.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                break;
+            case 'name':
+                goods.sort((a, b) => a.goodsName.localeCompare(b.goodsName));
+                break;
+            case 'price-high':
+                goods.sort((a, b) => b.goodsUnitAmountValue - a.goodsUnitAmountValue);
+                break;
+            case 'price-low':
+                goods.sort((a, b) => a.goodsUnitAmountValue - b.goodsUnitAmountValue);
+                break;
+            case 'stock-low':
+                goods.sort((a, b) => a.stockQuantity - b.stockQuantity);
+                break;
+        }
+        
+        renderGoodsTable(goods);
+    }
+    
+    // Open add modal
+    function openAddModal() {
+        document.getElementById('modalTitle').textContent = 'Add New Goods';
+        document.getElementById('goodsForm').reset();
+        document.getElementById('goodsId').value = '';
+        document.getElementById('goodsModal').classList.add('active');
+    }
+    
+    // Edit goods
+    function editGoods(goodsId) {
+        const goods = goodsList.find(g => g.goodsId === goodsId);
+        if (!goods) return;
+        
+        document.getElementById('modalTitle').textContent = 'Edit Goods';
+        document.getElementById('goodsId').value = goods.goodsId;
+        document.getElementById('goodsName').value = goods.goodsName;
+        document.getElementById('goodsCategory').value = goods.goodsCategory || '';
+        document.getElementById('goodsBrand').value = goods.goodsBrand || '';
+        document.getElementById('goodsUnitAmountValue').value = goods.goodsUnitAmountValue;
+        document.getElementById('goodsUnitAmountCurrency').value = goods.goodsUnitAmountCurrency || 'MYR';
+        document.getElementById('stockQuantity').value = goods.stockQuantity;
+        document.getElementById('taxRate').value = goods.taxRate;
+        
+        document.getElementById('goodsModal').classList.add('active');
+    }
+    
+    // Close modal
+    function closeModal() {
+        document.getElementById('goodsModal').classList.remove('active');
+    }
+    
+    // Save goods
+    async function saveGoods() {
+        const form = document.getElementById('goodsForm');
+        const formData = new FormData(form);
+        
+        const data = {
+            goodsId: formData.get('goodsId') || null,
+            goodsName: formData.get('goodsName'),
+            goodsCategory: formData.get('goodsCategory') || '',
+            goodsBrand: formData.get('goodsBrand') || '',
+            goodsUnitAmountValue: parseInt(formData.get('goodsUnitAmountValue')) || 0,
+            goodsUnitAmountCurrency: formData.get('goodsUnitAmountCurrency') || 'MYR',
+            stockQuantity: parseInt(formData.get('stockQuantity')) || 0,
+            taxRate: parseFloat(formData.get('taxRate')) || 0
+        };
+        
+        // Validate required fields
+        if (!data.goodsName) {
+            alert('Goods Name is required');
+            return;
+        }
+        
+        if (!data.goodsUnitAmountValue) {
+            alert('Price is required');
+            return;
+        }
+        
+        try {
+            showLoading('Saving goods...');
+            const csrftoken = getCookie('csrftoken');
+            const response = await fetch('/api/goods/upsert', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.result && result.result.resultStatus === 'S') {
+                closeModal();
+                loadGoods(); // Reload the list
+            } else {
+                hideLoading();
+                alert('Failed to save goods: ' + (result.result?.resultMessage || 'Unknown error'));
+            }
+        } catch (error) {
+            hideLoading();
+            console.error('Error saving goods:', error);
+            alert('Error saving goods');
+        }
+    }
+    
+    // Delete goods
+    async function deleteGoods(goodsId) {
+        showConfirmDialog({
+            title: 'Delete Goods',
+            message: 'Are you sure you want to delete this goods item? This action cannot be undone.',
+            confirmText: 'Delete',
+            confirmClass: 'btn-danger',
+            onConfirm: async function() {
+                try {
+                    showLoading('Deleting goods...');
+                    const csrftoken = getCookie('csrftoken');
+                    const response = await fetch(`/api/goods/${goodsId}/delete`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.result && result.result.resultStatus === 'S') {
+                        loadGoods(); // Reload the list
+                    } else {
+                        hideLoading();
+                        alert('Failed to delete goods: ' + (result.result?.resultMessage || 'Unknown error'));
+                    }
+                } catch (error) {
+                    hideLoading();
+                    console.error('Error deleting goods:', error);
+                    alert('Error deleting goods');
+                }
+            }
+        });
+    }
+    
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Close modal on outside click
+    document.getElementById('goodsModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+</script>
+{% endblock %}

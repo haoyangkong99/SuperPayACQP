@@ -39,6 +39,9 @@ urlpatterns = [
     # Auth Endpoints
     path('api/auth/', include('apps.user_auth.urls')),
     
+    # Goods Endpoints
+    path('api/goods/', include('apps.goods.urls')),
+    
     # Frontend Pages
     path('', include('apps.frontend.urls')),
 ]
