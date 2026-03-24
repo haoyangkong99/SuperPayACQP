@@ -19,11 +19,10 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-dev-key-change-in-p
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-# Add Railway domain automatically if deployed on Railway
-if os.getenv('RAILWAY_SERVICE_ID'):
-    ALLOWED_HOSTS.append('superpayacqp-production.up.railway.app')
-    # Also allow all .railway.app subdomains
-    ALLOWED_HOSTS.append('.railway.app')
+# Add Railway domain - use wildcard to allow all railway.app subdomains
+ALLOWED_HOSTS.append('.railway.app')
+# Also allow the specific production domain
+ALLOWED_HOSTS.append('superpayacqp-production.up.railway.app')
 
 # Application definition
 INSTALLED_APPS = [

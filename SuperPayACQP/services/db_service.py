@@ -90,7 +90,7 @@ class DbService:
                     'paymentNotifyUrl': request_dto.paymentNotifyUrl,
                     'paymentRedirectUrl': request_dto.paymentRedirectUrl,
                     'splitSettlementId': request_dto.splitSettlementId,
-                    'settlementStrategy': request_dto.settlementStrategy,
+                    'settlementStrategy': request_dto.settlementStrategy.model_dump(exclude_none=True) if request_dto.settlementStrategy else None,
                     'paymentId': response_dto.paymentId or None,
                     'paymentTime': response_dto.paymentTime,
                     'pspId': response_dto.pspId or None,

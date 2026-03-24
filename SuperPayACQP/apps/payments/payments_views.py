@@ -119,6 +119,9 @@ class PlaceOrderView(APIView):
                 result_status = result.resultStatus
                 result_code = result.resultCode
             
+            # Save payment request to database FIRST (before spawning background task)
+                db_service.savePaymentRequest(alipay_request_dto, response_dto, payment_request_id)
+            
             # Handle PAYMENT_IN_PROCESS with background task
                 if result_status == 'U' and result_code == 'PAYMENT_IN_PROCESS':
                     # Spawn background task to handle retry
@@ -128,9 +131,6 @@ class PlaceOrderView(APIView):
             # Handle UNKNOWN_EXCEPTION with retry
                 if result_status == 'U' and result_code == 'UNKNOWN_EXCEPTION':
                     response_dto = alipay_client.pay(alipay_request_dto)
-                
-            # Save payment request to database
-                db_service.savePaymentRequest(alipay_request_dto, response_dto, payment_request_id)
             else:
                 result = Result.returnProcessFail()
                 response_dto=PaymentResponseDTO(

@@ -17,6 +17,7 @@ class MerchantAuthMiddleware:
     
     # Paths that don't require merchant authentication
     EXEMPT_PATHS = [
+        '/',
         '/health',
         '/alipay/notifyPayment',
         '/api/schema/',
