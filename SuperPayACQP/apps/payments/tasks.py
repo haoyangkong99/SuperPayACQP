@@ -49,20 +49,24 @@ def handle_payment_in_process_task(payment_request_id, max_retries=10):
                 inquiry_dto = InquiryPaymentRequestDTO(paymentRequestId=payment_request_id)
                 response_dto = alipay_client.inquiry_payment(inquiry_dto)
                 
-                result = response_dto.result
-                logger.debug(f"Inquiry attempt {i+1} for {payment_request_id}: status={result.resultStatus}, code={result.resultCode}")
+                # Check the actual payment result, not the API call result
+                payment_result = response_dto.paymentResult
+                api_result = response_dto.result
+                
+                logger.debug(f"Inquiry attempt {i+1} for {payment_request_id}: payment_status={payment_result.resultStatus if payment_result else 'N/A'}, payment_code={payment_result.resultCode if payment_result else 'N/A'}, api_status={api_result.resultStatus}")
                 
                 # Update database with latest info
                 db_service.updatePaymentRequestResultByInquiryPayment(response_dto)
                 
-                # Check if payment is complete
-                if result.resultStatus == ResultStatus.SUCCESS.value:
-                    logger.info(f"Payment completed successfully: {payment_request_id}")
-                    return
-                
-                if result.resultStatus == ResultStatus.FAILURE.value:
-                    logger.info(f"Payment failed: {payment_request_id}")
-                    return
+                # Check if payment is complete using paymentResult (actual payment status)
+                if payment_result:
+                    if payment_result.resultStatus == ResultStatus.SUCCESS.value:
+                        logger.info(f"Payment completed successfully: {payment_request_id}")
+                        return
+                    
+                    if payment_result.resultStatus == ResultStatus.FAILURE.value:
+                        logger.info(f"Payment failed: {payment_request_id}")
+                        return
                 
                 # Continue retrying for UNKNOWN status (PAYMENT_IN_PROCESS, UNKNOWN_EXCEPTION, etc.)
                 
