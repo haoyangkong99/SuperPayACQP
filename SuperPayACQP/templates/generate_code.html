@@ -287,7 +287,7 @@
         <div class="main-content">
             <div class="page-header">
                 <h2>Generate Entry Code</h2>
-                <p>Generate a temporary secure access token for terminal onboarding and secure verification.</p>
+                
             </div>
             
             <div class="code-card">
@@ -422,8 +422,41 @@
                     // Update token value
                     document.getElementById('tokenValue').textContent = formatToken(codeId || 'Generated');
                     
-                    // Show validity
-                    document.getElementById('codeValidity').style.display = 'block';
+                    // Show validity with actual time
+                    const codeValidity = document.getElementById('codeValidity');
+                    const validityText = document.getElementById('validityText');
+                    codeValidity.style.display = 'block';
+                    
+                    if (data.codeStartTime && data.codeExpireTime) {
+                        const startTime = new Date(data.codeStartTime);
+                        const expireTime = new Date(data.codeExpireTime);
+                        const now = new Date();
+                        
+                        // Calculate remaining time
+                        const diffMs = expireTime - now;
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const diffHours = Math.floor(diffMins / 60);
+                        const remainingMins = diffMins % 60;
+                        
+                        // Format times for display
+                        const formatTime = (date) => {
+                            return date.toLocaleTimeString('en-US', { 
+                                hour: '2-digit', 
+                                minute: '2-digit',
+                                hour12: true 
+                            });
+                        };
+                        
+                        if (diffHours > 0) {
+                            validityText.innerHTML = `<i class="bi bi-clock"></i> Valid until ${formatTime(expireTime)} (${diffHours}h ${remainingMins}m remaining)`;
+                        } else if (diffMins > 0) {
+                            validityText.innerHTML = `<i class="bi bi-clock"></i> Valid until ${formatTime(expireTime)} (${diffMins} minutes remaining)`;
+                        } else {
+                            validityText.innerHTML = `<i class="bi bi-exclamation-triangle"></i> Code expired`;
+                        }
+                    } else {
+                        validityText.innerHTML = '<i class="bi bi-check-circle-fill"></i> Code generated successfully.';
+                    }
                     
                     // Clear any alerts
                     alertContainer.innerHTML = '';
