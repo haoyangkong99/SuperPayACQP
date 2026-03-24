@@ -1,7 +1,7 @@
 """
 URL configuration for SuperPayACQP project.
 """
-from django.urls import path
+from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from apps.payments.payments_views import (
@@ -32,4 +32,7 @@ urlpatterns = [
     path('alipay/notifyPayment', NotifyPaymentView.as_view(), name='notify-payment'),
 
     path('api/merchants', MerchantView.as_view(), name='create-merchant'),
+    
+    # Query Endpoints
+    path('api/query/', include('apps.query.urls')),
 ]
