@@ -38,13 +38,12 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'background_task',
     # Local apps
-    'apps.users',
     'apps.merchants',
     'apps.orders',
     'apps.payments',
     'apps.refunds',
     'apps.api_records',
-    'apps.auth',
+    'apps.user_auth',
     'apps.frontend',
 ]
 

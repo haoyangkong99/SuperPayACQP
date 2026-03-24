@@ -338,38 +338,65 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Check if user is logged in
-        const user = JSON.parse(localStorage.getItem('user'));
-        const token = localStorage.getItem('token');
-        
-        if (!user || !token) {
-            window.location.href = '/login/';
+        // Get CSRF token from cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
         }
         
-        // Display user info
-        document.getElementById('userName').textContent = user.username || 'User';
-        document.getElementById('userEmail').textContent = user.email || '';
-        document.getElementById('welcomeName').textContent = user.username || 'User';
-        document.getElementById('userAvatar').textContent = (user.username || 'U').charAt(0).toUpperCase();
+        // Fetch user profile from API
+        async function loadUserProfile() {
+            try {
+                const response = await fetch('/api/auth/profile');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const user = data.user;
+                    
+                    document.getElementById('userName').textContent = user.username || 'User';
+                    document.getElementById('userEmail').textContent = user.email || '';
+                    document.getElementById('welcomeName').textContent = user.username || 'User';
+                    document.getElementById('userAvatar').textContent = (user.username || 'U').charAt(0).toUpperCase();
+                } else {
+                    // User not authenticated, redirect to login
+                    window.location.href = '/login/';
+                }
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+                window.location.href = '/login/';
+            }
+        }
+        
+        // Load user profile on page load
+        loadUserProfile();
         
         // Handle logout
         document.getElementById('logoutBtn').addEventListener('click', async function(e) {
             e.preventDefault();
             
             try {
+                const csrftoken = getCookie('csrftoken');
+                
                 await fetch('/api/auth/logout', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
                     }
                 });
             } catch (error) {
                 console.error('Logout error:', error);
             }
-            
-            // Clear local storage
-            localStorage.removeItem('user');
-            localStorage.removeItem('token');
             
             // Redirect to login
             window.location.href = '/login/';
