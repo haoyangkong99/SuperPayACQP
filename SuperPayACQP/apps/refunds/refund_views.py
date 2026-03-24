@@ -61,6 +61,7 @@ class RefundView(APIView):
                 
                 # Log API record
                 db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/refund',HTTPMethod.POST,request_dto,response_dto,MessageType.OUTBOUND)
+                db_service.createApiRecordsWithReqRes('/api/refund',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)
                 record=db_service.createRefundRecord(request_dto)
                 return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
         except Exception as e:
@@ -68,4 +69,5 @@ class RefundView(APIView):
                 result = Result.returnProcessFail()
                 response_dto = BaseResponseDTO(result=result
                 )
+                db_service.createApiRecordsWithReqRes('/api/refund',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)
                 return Response (response_dto.model_dump(),status=status.HTTP_200_OK)

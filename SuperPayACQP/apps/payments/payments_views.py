@@ -163,8 +163,8 @@ class PlaceOrderView(APIView):
             paymentMethod=request_dto.paymentMethod,
             paymentFactor=request_dto.paymentFactor,
             paymentExpiryTime=expiry_time.strftime("%Y-%m-%dT%H:%M:%S+08:00"),
-            paymentRedirectUrl="https://docs.alipayplus.com/alipayplus/alipayplus/api_acq_tile/pay_user_presented_mode?role=ACQP&product=Payment1&version=1.6.0",
-            paymentNotifyUrl="https://docs.alipayplus.com/alipayplus/alipayplus/api_acq_tile/pay_user_presented_mode?role=ACQP&product=Payment1&version=1.6.0",
+            paymentRedirectUrl="https://superpayacqp-production.up.railway.app/payment-result",
+            paymentNotifyUrl="https://superpayacqp-production.up.railway.app/alipay/notifyPayment",
             order=AlipayOrderDTO(
                 referenceOrderId=order.referenceOrderId if order.referenceOrderId else str(uuid.uuid4()),
                 orderDescription=order.orderDescription,
@@ -324,14 +324,14 @@ class InquiryPaymentView(APIView):
                 db_service.updatePaymentRequestResultByInquiryPayment(response_dto)
             if result.resultStatus == 'U' and result.resultCode == 'UNKNOWN_EXCEPTION':
                 response_dto = self._handle_inquiry_retry(request_dto, alipay_client,db_service)
-            db_service.createApiRecordsWithReqRes('api/inquiryPayment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)   
+            db_service.createApiRecordsWithReqRes('/api/inquiryPayment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)   
             return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.warning(f"Error: {e}")
             result = Result.returnProcessFail()
             response_dto=InquiryPaymentResponseDTO(result=result)
-            db_service.createApiRecordsWithReqRes('api/inquiryPayment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
+            db_service.createApiRecordsWithReqRes('/api/inquiryPayment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
             return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
 
     
@@ -471,4 +471,8 @@ class NotifyPaymentView(APIView):
             result=result
         )
         db_service.createApiRecordsWithReqRes('/alipay/notifyPayment',HTTPMethod.POST,notification_data,response_dto,MessageType.INBOUND)
-        return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
+        notifyPaymentResponse=Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
+        
+        logger.debug("response header for notifypayment: {notifyPaymentResponse.headers}")
+        logger.debug("response body for notifypayment: {notifyPaymentResponse.data}")
+        return notifyPaymentResponse
