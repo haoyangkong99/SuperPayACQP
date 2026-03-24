@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperPayACQP - Register</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f9f9f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .register-container {
+            max-width: 450px;
+            width: 100%;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header .logo {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #003b6b;
+            margin: 0;
+        }
+        .header p {
+            font-size: 14px;
+            color: #6c757d;
+            margin: 5px 0 0 0;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .card-body {
+            padding: 30px;
+        }
+        .card-title {
+            font-size: 20px;
+            color: #003b6b;
+            margin-bottom: 5px;
+        }
+        .card-subtitle {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 25px;
+        }
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #003b6b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-control {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .form-control:focus {
+            border-color: #003b6b;
+            box-shadow: 0 0 0 0.2rem rgba(0, 59, 107, 0.25);
+        }
+        .form-control.is-invalid {
+            border-color: #dc3545;
+        }
+        .btn-primary {
+            background-color: #003b6b;
+            border-color: #003b6b;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background-color: #002a4f;
+            border-color: #002a4f;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .login-link a {
+            color: #003b6b;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        .alert {
+            border-radius: 8px;
+        }
+        .password-requirements {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 8px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .password-requirements ul {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+        .password-requirements li {
+            margin: 3px 0;
+        }
+        .password-requirements li.valid {
+            color: #198754;
+        }
+        .password-requirements li.invalid {
+            color: #dc3545;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+        }
+        .password-wrapper {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="header">
+            <svg class="logo" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="60" height="60" rx="12" fill="#003b6b"/>
+                <path d="M15 30L25 40L45 20" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h1>SuperPayACQP - Merchant Store</h1>
+            <p>PRECISION CURATOR</p>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Create Account</h4>
+                <p class="card-subtitle">Enter your details to join the precision network.</p>
+                
+                <div id="alert-container"></div>
+                
+                <form id="registerForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">USERNAME</label>
+                        <input type="text" class="form-control" id="username" name="username" placeholder="john_doe" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">EMAIL ADDRESS</label>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="name@company.com" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">PASSWORD</label>
+                        <div class="password-wrapper">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+                            <i class="bi bi-eye-slash password-toggle" id="togglePassword"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">CONFIRM PASSWORD</label>
+                        <div class="password-wrapper">
+                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
+                            <i class="bi bi-eye-slash password-toggle" id="toggleConfirmPassword"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="password-requirements">
+                        <strong>PASSWORD REQUIREMENTS</strong>
+                        <ul>
+                            <li id="req-length">At least 8 characters</li>
+                            <li id="req-number">At least one number</li>
+                            <li id="req-special">At least one special character (!@#$%^&*)</li>
+                        </ul>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 mt-3" id="registerBtn">
+                        Register <i class="bi bi-arrow-right"></i>
+                    </button>
+                </form>
+                
+                <div class="login-link">
+                    Already have an account? <a href="/login/">Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle password visibility
+        document.querySelectorAll('.password-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                this.classList.toggle('bi-eye');
+                this.classList.toggle('bi-eye-slash');
+            });
+        });
+        
+        // Password validation
+        const passwordInput = document.getElementById('password');
+        const reqLength = document.getElementById('req-length');
+        const reqNumber = document.getElementById('req-number');
+        const reqSpecial = document.getElementById('req-special');
+        
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            
+            // Check length
+            if (password.length >= 8) {
+                reqLength.classList.add('valid');
+                reqLength.classList.remove('invalid');
+            } else {
+                reqLength.classList.add('invalid');
+                reqLength.classList.remove('valid');
+            }
+            
+            // Check number
+            if (/\d/.test(password)) {
+                reqNumber.classList.add('valid');
+                reqNumber.classList.remove('invalid');
+            } else {
+                reqNumber.classList.add('invalid');
+                reqNumber.classList.remove('valid');
+            }
+            
+            // Check special character
+            if (/[!@#$%^&*]/.test(password)) {
+                reqSpecial.classList.add('valid');
+                reqSpecial.classList.remove('invalid');
+            } else {
+                reqSpecial.classList.add('invalid');
+                reqSpecial.classList.remove('valid');
+            }
+        });
+        
+        // Handle form submission
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const registerBtn = document.getElementById('registerBtn');
+            const alertContainer = document.getElementById('alert-container');
+            
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        Passwords do not match.
+                    </div>
+                `;
+                return;
+            }
+            
+            // Disable button and show loading
+            registerBtn.disabled = true;
+            registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Registering...';
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        username, 
+                        email, 
+                        password, 
+                        confirmPassword 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Show success message
+                    alertContainer.innerHTML = `
+                        <div class="alert alert-success" role="alert">
+                            Registration successful! Redirecting to login...
+                        </div>
+                    `;
+                    
+                    // Redirect to login
+                    setTimeout(() => {
+                        window.location.href = '/login/';
+                    }, 1500);
+                } else {
+                    // Show error message
+                    let errorMsg = data.error || 'Registration failed. Please try again.';
+                    if (Array.isArray(errorMsg)) {
+                        errorMsg = errorMsg.join('<br>');
+                    }
+                    alertContainer.innerHTML = `
+                        <div class="alert alert-danger" role="alert">
+                            ${errorMsg}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        An error occurred. Please try again.
+                    </div>
+                `;
+            }
+            
+            // Re-enable button
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = 'Register <i class="bi bi-arrow-right"></i>';
+        });
+    </script>
+</body>
+</html>

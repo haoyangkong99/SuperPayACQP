@@ -35,4 +35,10 @@ urlpatterns = [
     
     # Query Endpoints
     path('api/query/', include('apps.query.urls')),
+    
+    # Auth Endpoints
+    path('api/auth/', include('apps.auth.urls')),
+    
+    # Frontend Pages
+    path('', include('apps.frontend.urls')),
 ]

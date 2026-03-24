@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'apps.payments',
     'apps.refunds',
     'apps.api_records',
+    'apps.auth',
+    'apps.frontend',
 ]
 
 MIDDLEWARE = [
