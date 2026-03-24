@@ -11,7 +11,7 @@ pydantic>=2.0
 cryptography>=40.0
 
 # Database
-# SQLite is built-in, no additional package needed
+psycopg2-binary>=2.9
 
 # Background tasks
 django-background-tasks>=1.2

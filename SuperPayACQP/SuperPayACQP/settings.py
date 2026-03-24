@@ -75,11 +75,15 @@ TEMPLATES = [
 WSGI_APPLICATION = 'SuperPayACQP.wsgi.application'
 
 # Database
-# Using SQLite for development (can be changed to H2 or other databases)
+# PostgreSQL configuration (supports both Railway and local development)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('PGDATABASE', os.getenv('POSTGRES_DB', 'superpayacqp')),
+        'USER': os.getenv('PGUSER', os.getenv('POSTGRES_USER', 'postgres')),
+        'PASSWORD': os.getenv('PGPASSWORD', os.getenv('POSTGRES_PASSWORD', '')),
+        'HOST': os.getenv('PGHOST', os.getenv('POSTGRES_HOST', 'localhost')),
+        'PORT': os.getenv('PGPORT', os.getenv('POSTGRES_PORT', '5432')),
     }
 }
 
