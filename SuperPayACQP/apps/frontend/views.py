@@ -1,6 +1,6 @@
 """
 Frontend Views
-Serve HTML templates for login, register, and dashboard pages
+Serve HTML templates for login, register, dashboard, and generate code pages
 """
 from django.views.generic import TemplateView
 
@@ -18,3 +18,8 @@ class RegisterView(TemplateView):
 class DashboardView(TemplateView):
     """Serve dashboard page"""
     template_name = 'dashboard.html'
+
+
+class GenerateCodeView(TemplateView):
+    """Serve generate entry code page"""
+    template_name = 'generate_code.html'
