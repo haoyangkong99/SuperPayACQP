@@ -116,7 +116,7 @@ class RefundRequestDTO(BaseRequestDTO):
 class InquiryPaymentRequestDTO(BaseRequestDTO):
     """Inquiry payment request DTO"""
     paymentId: Optional[str] = None
-    paymentRequestId: str
+    paymentRequestId: Optional[str] = None
 
 
 class SettlementStrategyDTO(BaseModel):
