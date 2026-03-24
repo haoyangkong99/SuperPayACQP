@@ -38,4 +38,34 @@ class Migration(migrations.Migration):
                 'db_table': 'merchants',
             },
         ),
+        migrations.CreateModel(
+            name='Registration',
+            fields=[
+                ('registrationRequestId', models.TextField(primary_key=True, serialize=False)),
+                ('productCodes', models.JSONField(blank=True, null=True)),
+                ('referenceMerchantId', models.TextField()),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+            ],
+            options={
+                'db_table': 'registration_records',
+            },
+        ),
+        migrations.CreateModel(
+            name='EntryCode',
+            fields=[
+                ('codeId', models.TextField(primary_key=True, serialize=False)),
+                ('merchantId', models.TextField()),
+                ('codeStartTime', models.DateTimeField()),
+                ('codeExpireTime', models.DateTimeField()),
+                ('status', models.TextField(default='Active')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+            ],
+            options={
+                'verbose_name': 'Entry Code',
+                'verbose_name_plural': 'Entry Codes',
+                'db_table': 'entry_codes',
+            },
+        ),
     ]
