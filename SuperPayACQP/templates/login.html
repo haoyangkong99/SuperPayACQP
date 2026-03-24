@@ -1,268 +1,112 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperPayACQP - Login</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f9f9f9;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .login-container {
-            max-width: 450px;
-            width: 100%;
-            padding: 20px;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .header .logo {
-            width: 60px;
-            height: 60px;
-            margin-bottom: 15px;
-        }
-        .header h1 {
-            font-size: 24px;
-            color: #003b6b;
-            margin: 0;
-        }
-        .header p {
-            font-size: 14px;
-            color: #6c757d;
-            margin: 5px 0 0 0;
-        }
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        .card-body {
-            padding: 30px;
-        }
-        .card-title {
-            font-size: 20px;
-            color: #003b6b;
-            margin-bottom: 5px;
-        }
-        .card-subtitle {
-            font-size: 14px;
-            color: #6c757d;
-            margin-bottom: 25px;
-        }
-        .form-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #003b6b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .form-control {
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-        }
-        .form-control:focus {
-            border-color: #003b6b;
-            box-shadow: 0 0 0 0.2rem rgba(0, 59, 107, 0.25);
-        }
-        .btn-primary {
-            background-color: #003b6b;
-            border-color: #003b6b;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 600;
-        }
-        .btn-primary:hover {
-            background-color: #002a4f;
-            border-color: #002a4f;
-        }
-        .forgot-link {
-            font-size: 14px;
-            color: #003b6b;
-            text-decoration: none;
-        }
-        .forgot-link:hover {
-            text-decoration: underline;
-        }
-        .register-link {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
-        }
-        .register-link a {
-            color: #003b6b;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .register-link a:hover {
-            text-decoration: underline;
-        }
-        .alert {
-            border-radius: 8px;
-        }
-        .password-toggle {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #6c757d;
-        }
-        .password-wrapper {
-            position: relative;
-        }
-    </style>
-</head>
-<body>
-    <div class="login-container">
-        <div class="header">
-            <svg class="logo" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="60" height="60" rx="12" fill="#003b6b"/>
-                <path d="M15 30L25 40L45 20" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <h1>SuperPayACQP - Merchant Store</h1>
-            <p>PRECISION CURATOR</p>
-        </div>
+{% extends 'base_auth.html' %}
+
+{% block title %}SuperPayACQP - Login{% endblock %}
+
+{% block auth_content %}
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Welcome back</h4>
+        <p class="card-subtitle">Please enter your details to access your dashboard.</p>
         
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">Welcome back</h4>
-                <p class="card-subtitle">Please enter your details to access your dashboard.</p>
-                
-                <div id="alert-container"></div>
-                
-                <form id="loginForm">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">EMAIL ADDRESS</label>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="name@company.com" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="password" class="form-label">PASSWORD</label>
-                        <div class="password-wrapper">
-                            <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
-                            <i class="bi bi-eye-slash password-toggle" id="togglePassword"></i>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="rememberMe">
-                            <label class="form-check-label" for="rememberMe" style="font-size: 14px;">
-                                Remember me
-                            </label>
-                        </div>
-                        <a href="#" class="forgot-link">Forgot?</a>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100" id="loginBtn">
-                        Login <i class="bi bi-arrow-right"></i>
-                    </button>
-                </form>
-                
-                <div class="register-link">
-                    Don't have an account? <a href="/register/">Register</a>
+        <div id="alert-container"></div>
+        
+        <form id="loginForm">
+            <div class="mb-3">
+                <label for="email" class="form-label">EMAIL ADDRESS</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="name@company.com" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">PASSWORD</label>
+                <div class="password-wrapper">
+                    <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+                    <i class="bi bi-eye-slash password-toggle"></i>
                 </div>
             </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="rememberMe">
+                    <label class="form-check-label" for="rememberMe" style="font-size: 14px;">
+                        Remember me
+                    </label>
+                </div>
+                <a href="#" class="forgot-link" style="font-size: 14px; color: var(--primary-color); text-decoration: none;">Forgot?</a>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100" id="loginBtn">
+                Login <i class="bi bi-arrow-right"></i>
+            </button>
+        </form>
+        
+        <div class="auth-link">
+            Don't have an account? <a href="/register/">Register</a>
         </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Get CSRF token from cookie
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // Handle form submission
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
         
-        // Toggle password visibility
-        const togglePassword = document.querySelector('#togglePassword');
-        const password = document.querySelector('#password');
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const loginBtn = document.getElementById('loginBtn');
+        const alertContainer = document.getElementById('alert-container');
         
-        togglePassword.addEventListener('click', function (e) {
-            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-            password.setAttribute('type', type);
-            this.classList.toggle('bi-eye');
-            this.classList.toggle('bi-eye-slash');
-        });
+        // Disable button and show loading
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging in...';
         
-        // Handle form submission
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        try {
+            const csrftoken = getCookie('csrftoken');
             
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const loginBtn = document.getElementById('loginBtn');
-            const alertContainer = document.getElementById('alert-container');
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify({ email, password })
+            });
             
-            // Disable button and show loading
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging in...';
+            const data = await response.json();
             
-            try {
-                const csrftoken = getCookie('csrftoken');
+            if (response.ok) {
+                // Show success message
+                alertContainer.innerHTML = `
+                    <div class="alert alert-success" role="alert">
+                        Login successful! Redirecting...
+                    </div>
+                `;
                 
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken,
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Show success message
-                    alertContainer.innerHTML = `
-                        <div class="alert alert-success" role="alert">
-                            Login successful! Redirecting...
-                        </div>
-                    `;
-                    
-                    // Redirect to dashboard
-                    setTimeout(() => {
-                        window.location.href = '/dashboard/';
-                    }, 1000);
-                } else {
-                    // Show error message
-                    alertContainer.innerHTML = `
-                        <div class="alert alert-danger" role="alert">
-                            ${data.error || 'Login failed. Please try again.'}
-                        </div>
-                    `;
-                }
-            } catch (error) {
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = '/dashboard/';
+                }, 1000);
+            } else {
+                // Show error message
                 alertContainer.innerHTML = `
                     <div class="alert alert-danger" role="alert">
-                        An error occurred. Please try again.
+                        ${data.error || 'Login failed. Please try again.'}
                     </div>
                 `;
             }
-            
-            // Re-enable button
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = 'Login <i class="bi bi-arrow-right"></i>';
-        });
-    </script>
-</body>
-</html>
+        } catch (error) {
+            alertContainer.innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    An error occurred. Please try again.
+                </div>
+            `;
+        }
+        
+        // Re-enable button
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = 'Login <i class="bi bi-arrow-right"></i>';
+    });
+</script>
+{% endblock %}
