@@ -6,6 +6,8 @@ from apps.query.query_views import (
     PaymentListView,
     PaymentDetailView,
     MerchantQueryView,
+    MerchantUpdateView,
+    MerchantDeleteView,
     RefundQueryView
 )
 
@@ -18,6 +20,12 @@ urlpatterns = [
     
     # GET /api/query/merchants - List all merchants or get specific merchant
     path('merchants', MerchantQueryView.as_view(), name='merchant-query'),
+    
+    # PUT /api/query/merchants/update - Update a specific merchant
+    path('merchants/update', MerchantUpdateView.as_view(), name='merchant-update'),
+    
+    # DELETE /api/query/merchants/delete - Delete a specific merchant
+    path('merchants/delete', MerchantDeleteView.as_view(), name='merchant-delete'),
     
     # GET /api/query/refunds - Query refund records
     path('refunds', RefundQueryView.as_view(), name='refund-query'),
