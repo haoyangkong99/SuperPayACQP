@@ -65,7 +65,7 @@ class MerchantView(APIView):
             response=BaseResponseDTO(
                     result=result
                 )
-            dbService.createApiRecordsWithReqRes('api/merchants',HTTPMethod.POST,request_dto,response,MessageType.INBOUND)
+            dbService.createApiRecordsWithReqRes('/api/merchants',HTTPMethod.POST,request_dto,response,MessageType.INBOUND)
             return Response(response.model_dump(exclude_none=True), status=status.HTTP_200_OK)
         except Exception as e:
             logger.warning(f"error: {e}")
@@ -137,12 +137,18 @@ class GenerateEntryCodeView(APIView):
             
             # Construct entry code URL
             base_url = os.getenv('API_BASE_URL')
-            entry_code_url = f"{base_url}/entry-code?merchantId={merchant_id}&codeId={code_id}"
+            entry_code_url = f"{base_url}entry-code?merchantId={merchant_id}&codeId={code_id}"
+            
+            # Get the entry code record for timestamps
+            entry_code_record = EntryCode.objects.filter(codeId=code_id).first()
             
             result = Result.returnSuccess()
             response = {
                 'result': result.model_dump(),
-                'entryCodeUrl': entry_code_url
+                'entryCodeUrl': entry_code_url,
+                'codeId': code_id,
+                'codeStartTime': entry_code_record.codeStartTime.isoformat() if entry_code_record and entry_code_record.codeStartTime else None,
+                'codeExpireTime': entry_code_record.codeExpireTime.isoformat() if entry_code_record and entry_code_record.codeExpireTime else None,
             }
             
             return Response(response, status=status.HTTP_200_OK)

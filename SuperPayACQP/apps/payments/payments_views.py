@@ -137,14 +137,14 @@ class PlaceOrderView(APIView):
                         result=result
                     )
         
-            db_service.createApiRecordsWithReqRes('api/place-order',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
+            db_service.createApiRecordsWithReqRes('/api/place-order',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
             return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.warning(f"Error: {e}")
             result = Result.returnProcessFail()
             response_dto=PaymentResponseDTO(result=result)
-            db_service.createApiRecordsWithReqRes('api/place-order',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
+            db_service.createApiRecordsWithReqRes('/api/place-order',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
             return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
  
     def _build_alipay_request_dto(self, request_dto: PlaceOrderRequestDTO, 
@@ -266,13 +266,13 @@ class CancelPaymentView(APIView):
             if response_dto.result.resultStatus=='S' and request_dto.paymentRequestId:
 
                 db_service.updatePaymentRequestResultByCancelled(request_dto.paymentRequestId,response_dto.result)
-            db_service.createApiRecordsWithReqRes('api/cancel-payment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
+            db_service.createApiRecordsWithReqRes('/api/cancel-payment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
             return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
         except Exception as e:
             logger.warning(f"Error: {e}")
             result = Result.returnProcessFail()
             response_dto=PaymentResponseDTO(result=result)
-            db_service.createApiRecordsWithReqRes('api/cancel-payment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
+            db_service.createApiRecordsWithReqRes('/api/cancel-payment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
             return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
 
     

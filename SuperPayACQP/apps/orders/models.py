@@ -9,6 +9,7 @@ class Order(models.Model):
     Order model for SuperPayACQP
     """
     orderId = models.TextField(primary_key=True)
+    paymentRequestId = models.TextField(blank=True, null=True)
     referenceOrderId = models.TextField(blank=True, null=True)
     orderDescription = models.TextField(blank=True, null=True)
     orderAmountValue = models.IntegerField(null=True)

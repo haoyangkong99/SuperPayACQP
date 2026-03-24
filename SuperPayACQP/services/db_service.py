@@ -111,8 +111,10 @@ class DbService:
                 
                 # Create Order with null checks
                 Order.objects.update_or_create(
-                    orderId=orderId,
+                    paymentRequestId=request_dto.paymentRequestId,
                     defaults={
+                        'paymentRequestId':request_dto.paymentRequestId,
+                        'orderId':orderId,
                         'referenceOrderId': order.referenceOrderId,
                         'orderDescription': order.orderDescription,
                         'orderAmountValue': order.orderAmount.value,

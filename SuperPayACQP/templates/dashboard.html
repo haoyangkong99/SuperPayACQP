@@ -143,7 +143,6 @@
 {% block main_content %}
 <div class="welcome-banner">
     <h2>Welcome back, <span id="welcomeName">User</span>.</h2>
-    <p>Your merchant hub is optimized and ready. You have <strong>12 new orders</strong> pending verification and <strong>4 dispatch codes</strong> generated today.</p>
 </div>
 
 <div class="cards-row">
@@ -151,17 +150,17 @@
         <div class="icon">
             <i class="bi bi-plus-circle"></i>
         </div>
-        <h3>Create Order</h3>
-        <p>Initialize a new procurement request with automated vendor routing and instant SKU validation.</p>
-        <a href="#">LAUNCH ENTRY</a>
+
+
+        <a href="#">Create Order</a>
     </div>
     <div class="action-card">
         <div class="icon">
             <i class="bi bi-list-ul"></i>
         </div>
-        <h3>View Orders</h3>
-        <p>Comprehensive tracking of your order lifecycle with real-time status updates and shipping telemetry.</p>
-        <a href="#">OPEN REGISTRY</a>
+
+
+        <a href="#">View Orders</a>
     </div>
 </div>
 
@@ -170,52 +169,26 @@
         <div class="icon">
             <i class="bi bi-box"></i>
         </div>
-        <h3>Manage Goods</h3>
-        <p>Update inventory levels, modify product metadata, and audit stock levels across all hubs.</p>
+        <a href="#">Manage Goods</a>
+
     </div>
     <div class="action-card">
         <div class="icon">
             <i class="bi bi-shop"></i>
         </div>
-        <h3>Manage Merchant</h3>
-        <p>Adjust store parameters, billing preferences, and authorized operator permissions.</p>
+        <a href="#">Manage Merchant</a>
+
+
     </div>
     <div class="action-card">
         <div class="icon">
             <i class="bi bi-key"></i>
         </div>
-        <h3>Generate Entry Code</h3>
-        <p>Create temporary secure access tokens for terminal onboarding and secure verification.</p>
-        <a href="/generate-code/">LAUNCH ENTRY</a>
+
+        <a href="/generate-code/">Generate Entry Code</a>
     </div>
 </div>
 
-<div class="insights-section">
-    <h4>GLOBAL INSIGHTS</h4>
-    <p>Performance metrics for the last 24 hours</p>
-    <div class="insights-grid">
-        <div class="insight-item">
-            <div class="label">THROUGHPUT</div>
-            <div class="value">$124.5k</div>
-            <div class="change">+14.2% from yesterday</div>
-        </div>
-        <div class="insight-item">
-            <div class="label">AVERAGE DISPATCH</div>
-            <div class="value">2.4h</div>
-            <div class="change">-12m improvement</div>
-        </div>
-        <div class="insight-item">
-            <div class="label">AVERAGE ORDERS</div>
-            <div class="value">89</div>
-            <div class="change">42 In-Transit</div>
-        </div>
-        <div class="insight-item">
-            <div class="label">MERCHANT HEALTH</div>
-            <div class="value">99.8%</div>
-            <div class="change">OPTIMAL</div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}

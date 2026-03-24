@@ -173,7 +173,6 @@
 {% block main_content %}
 <div class="page-header">
     <h2>Generate Entry Code</h2>
-    <p>Generate a temporary secure access token for terminal onboarding and secure verification.</p>
 </div>
 
 <div class="code-card">
@@ -190,9 +189,7 @@
         <i class="bi bi-qr-code"></i>
     </div>
     <img id="qrCode" class="qr-code" style="display: none;" alt="QR Code">
-    
-    <div class="token-label">TOKEN VALUE</div>
-    <div class="token-value" id="tokenValue">--- --- ---</div>
+
     
     <button class="generate-btn" id="generateBtn">
         <i class="bi bi-arrow-clockwise"></i> Generate / Refresh Code
@@ -203,29 +200,7 @@
     </div>
 </div>
 
-<div class="features-row">
-    <div class="feature-item">
-        <div class="icon">
-            <i class="bi bi-shield-lock"></i>
-        </div>
-        <h4>Encrypted</h4>
-        <p>256-bit AES protection</p>
-    </div>
-    <div class="feature-item">
-        <div class="icon">
-            <i class="bi bi-1-circle"></i>
-        </div>
-        <h4>One-Time</h4>
-        <p>Single use per device</p>
-    </div>
-    <div class="feature-item">
-        <div class="icon">
-            <i class="bi bi-arrow-repeat"></i>
-        </div>
-        <h4>Syncing</h4>
-        <p>Real-time terminal link</p>
-    </div>
-</div>
+
 {% endblock %}
 
 {% block extra_js %}
