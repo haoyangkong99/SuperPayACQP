@@ -323,12 +323,29 @@ class DbService:
         if response_dto.settlementAmount:
             # settlementQuote is SettlementQuoteDTO (Pydantic model)
             settlement_quote = response_dto.settlementQuote
+            
+            # Helper to convert datetime string to datetime object
+            def parse_datetime_str(dt_str):
+                if dt_str is None:
+                    return None
+                try:
+                    return format_str_to_datetime(dt_str)
+                except Exception:
+                    return None
+            
+            # Helper to convert price to Decimal
+            def to_decimal(value):
+                from decimal import Decimal
+                if value is None:
+                    return None
+                return Decimal(str(value))
+            
             if settlement_quote:
                 quote_id = settlement_quote.quoteId
-                quote_price = settlement_quote.quotePrice
+                quote_price = to_decimal(settlement_quote.quotePrice)
                 quote_currency_pair = settlement_quote.quoteCurrencyPair
-                quote_start_time = settlement_quote.quoteStartTime
-                quote_expiry_time = settlement_quote.quoteExpiryTime
+                quote_start_time = parse_datetime_str(settlement_quote.quoteStartTime)
+                quote_expiry_time = parse_datetime_str(settlement_quote.quoteExpiryTime)
                 quote_unit = settlement_quote.quoteUnit
                 base_currency = settlement_quote.baseCurrency
             else:
@@ -340,21 +357,37 @@ class DbService:
                 quote_unit = None
                 base_currency = None
             
-            settlement, created = Settlement.objects.update_or_create(
-                paymentRequestId=payment_request_id,
-                defaults={
-                    'settlementAmountValue': response_dto.settlementAmount.value,
-                    'settlementCurrency': response_dto.settlementAmount.currency,
-                    'quoteId': quote_id,
-                    'quotePrice': quote_price,
-                    'quoteCurrencyPair': quote_currency_pair,
-                    'quoteStartTime': quote_start_time,
-                    'quoteExpiryTime': quote_expiry_time,
-                    'quoteUnit': quote_unit,
-                    'baseCurrency': base_currency,
-                }
-            )
-            if created:
+            # Check if settlement already exists for this paymentRequestId
+            existing_settlement = Settlement.objects.filter(paymentRequestId=payment_request_id).first()
+            
+            if existing_settlement:
+                # Update existing settlement
+                existing_settlement.settlementAmountValue = response_dto.settlementAmount.value
+                existing_settlement.settlementCurrency = response_dto.settlementAmount.currency
+                existing_settlement.quoteId = quote_id
+                existing_settlement.quotePrice = quote_price
+                existing_settlement.quoteCurrencyPair = quote_currency_pair
+                existing_settlement.quoteStartTime = quote_start_time
+                existing_settlement.quoteExpiryTime = quote_expiry_time
+                existing_settlement.quoteUnit = quote_unit
+                existing_settlement.baseCurrency = base_currency
+                existing_settlement.save()
+                logger.debug(f"Updated settlement for paymentRequestId: {payment_request_id}")
+            else:
+                # Create new settlement with generated settlementId
+                Settlement.objects.create(
+                    settlementId=str(uuid.uuid4()),
+                    paymentRequestId=payment_request_id,
+                    settlementAmountValue=response_dto.settlementAmount.value,
+                    settlementCurrency=response_dto.settlementAmount.currency,
+                    quoteId=quote_id,
+                    quotePrice=quote_price,
+                    quoteCurrencyPair=quote_currency_pair,
+                    quoteStartTime=quote_start_time,
+                    quoteExpiryTime=quote_expiry_time,
+                    quoteUnit=quote_unit,
+                    baseCurrency=base_currency,
+                )
                 logger.debug(f"Created new settlement for paymentRequestId: {payment_request_id}")
                 updated = True
         
