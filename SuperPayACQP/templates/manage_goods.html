@@ -315,12 +315,20 @@
         
         // Validate required fields
         if (!data.goodsName) {
-            alert('Goods Name is required');
+            showMessageDialog({
+                title: 'Validation Error',
+                message: 'Goods Name is required',
+                type: 'warning'
+            });
             return;
         }
         
         if (!data.goodsUnitAmountValue) {
-            alert('Price is required');
+            showMessageDialog({
+                title: 'Validation Error',
+                message: 'Price is required',
+                type: 'warning'
+            });
             return;
         }
         
@@ -343,12 +351,20 @@
                 loadGoods(); // Reload the list
             } else {
                 hideLoading();
-                alert('Failed to save goods: ' + (result.result?.resultMessage || 'Unknown error'));
+                showMessageDialog({
+                    title: 'Error',
+                    message: 'Failed to save goods: ' + (result.result?.resultMessage || 'Unknown error'),
+                    type: 'error'
+                });
             }
         } catch (error) {
             hideLoading();
             console.error('Error saving goods:', error);
-            alert('Error saving goods');
+            showMessageDialog({
+                title: 'Error',
+                message: 'Error saving goods',
+                type: 'error'
+            });
         }
     }
     
@@ -377,12 +393,20 @@
                         loadGoods(); // Reload the list
                     } else {
                         hideLoading();
-                        alert('Failed to delete goods: ' + (result.result?.resultMessage || 'Unknown error'));
+                        showMessageDialog({
+                            title: 'Error',
+                            message: 'Failed to delete goods: ' + (result.result?.resultMessage || 'Unknown error'),
+                            type: 'error'
+                        });
                     }
                 } catch (error) {
                     hideLoading();
                     console.error('Error deleting goods:', error);
-                    alert('Error deleting goods');
+                    showMessageDialog({
+                        title: 'Error',
+                        message: 'Error deleting goods',
+                        type: 'error'
+                    });
                 }
             }
         });

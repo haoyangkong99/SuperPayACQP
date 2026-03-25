@@ -14,7 +14,10 @@
         <div class="logo-section">
             <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="60" height="60" rx="12" fill="#003b6b"/>
-                <path d="M15 30L25 40L45 20" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Store/Merchant icon -->
+                <path d="M12 22L18 14H42L48 22V26C48 28.2091 46.2091 30 44 30C41.7909 30 40 28.2091 40 26C40 28.2091 38.2091 30 36 30C33.7909 30 32 28.2091 32 26C32 28.2091 30.2091 30 28 30C25.7909 30 24 28.2091 24 26C24 28.2091 22.2091 30 20 30C17.7909 30 16 28.2091 16 26V22H12Z" fill="white"/>
+                <rect x="18" y="32" width="24" height="14" rx="2" fill="white"/>
+                <rect x="26" y="36" width="8" height="6" fill="#003b6b"/>
             </svg>
             <h1>SuperPayACQP - Merchant Store</h1>
         </div>
@@ -305,7 +308,11 @@
         const authCode = document.getElementById('authCode').value;
         
         if (authCode.length < 17 || authCode.length > 32) {
-            alert('Please enter a valid 17-32 digit authorization code.');
+            showMessageDialog({
+                title: 'Validation Error',
+                message: 'Please enter a valid 17-32 digit authorization code.',
+                type: 'warning'
+            });
             return;
         }
         
@@ -369,7 +376,11 @@
                         if (count > maxRetries) {
                             clearInterval(intervalId);
                             hideLoading();
-                            alert('Payment verification timeout. Please try again.');
+                            showMessageDialog({
+                                title: 'Timeout',
+                                message: 'Payment verification timeout. Please try again.',
+                                type: 'warning'
+                            });
                             return;
                         }
                         if (callAPI) {
@@ -446,12 +457,20 @@
             } 
             else {
                 // No result in response
-                alert('Invalid response from payment server. Please try again.');
+                showMessageDialog({
+                    title: 'Error',
+                    message: 'Invalid response from payment server. Please try again.',
+                    type: 'error'
+                });
             }
         } catch (error) {
             hideLoading();
             console.error('Error validating payment code:', error);
-            alert('Error validating payment code. Please try again.');
+            showMessageDialog({
+                title: 'Error',
+                message: 'Error validating payment code. Please try again.',
+                type: 'error'
+            });
         }
     }
     
@@ -566,17 +585,29 @@
                 else if (result.result.resultStatus === 'U' && result.result.resultCode !== 'PAYMENT_IN_PROCESS') {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="bi bi-qr-code"></i> Confirm Payment to Generate QR Code';
-                    alert(result.result?.resultMessage || 'Please try again');                  
+                    showMessageDialog({
+                        title: 'Warning',
+                        message: result.result?.resultMessage || 'Please try again',
+                        type: 'warning'
+                    });
                 }
                 else if (result.result.resultStatus === 'F') {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="bi bi-qr-code"></i> Confirm Payment to Generate QR Code';
-                    alert(result.result?.resultMessage || 'Failed to generate payment code. Please try again.');
+                    showMessageDialog({
+                        title: 'Error',
+                        message: result.result?.resultMessage || 'Failed to generate payment code. Please try again.',
+                        type: 'error'
+                    });
                 }
                 else {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="bi bi-qr-code"></i> Confirm Payment to Generate QR Code';
-                    alert(result.result?.resultMessage || 'Please try again');                  
+                    showMessageDialog({
+                        title: 'Warning',
+                        message: result.result?.resultMessage || 'Please try again',
+                        type: 'warning'
+                    });
                 }
             } 
         } catch (error) {
@@ -584,7 +615,11 @@
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-qr-code"></i> Confirm Payment to Generate QR Code';
             console.error('Error generating QR code:', error);
-            alert('Error generating payment code. Please try again.');
+            showMessageDialog({
+                title: 'Error',
+                message: 'Error generating payment code. Please try again.',
+                type: 'error'
+            });
         }
     }
     
@@ -623,8 +658,14 @@
                     if (count > maxRetries ||now > new Date(qrExpireTime) ) {
                         clearInterval(intervalId);
                         hideLoading();
-                        alert('Payment verification timeout. You will be redirected to the dashboard page.');
-                        window.location.href = '/dashboard';
+                        showMessageDialog({
+                            title: 'Timeout',
+                            message: 'Payment verification timeout. You will be redirected to the dashboard page.',
+                            type: 'warning',
+                            onClose: function() {
+                                window.location.href = '/dashboard';
+                            }
+                        });
                         return;
                     }
                     

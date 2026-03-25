@@ -60,6 +60,38 @@
         </div>
     </div>
     
+    <!-- Message Dialog -->
+    <div class="modal fade" id="messageDialog" tabindex="-1" aria-labelledby="messageDialogTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="messageDialogHeader">
+                    <h5 class="modal-title" id="messageDialogTitle">
+                        <i class="bi me-2" id="messageDialogIcon"></i>
+                        <span id="messageDialogTitleText">Message</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex align-items-start">
+                        <div class="icon-wrapper me-3" id="messageDialogIconWrapper">
+                            <i class="bi" id="messageDialogIconLarge"></i>
+                        </div>
+                        <div>
+                            <p id="messageDialogMessage" style="margin: 0; color: var(--text-primary); font-size: 15px; line-height: 1.5;">
+                                Message content goes here.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" id="messageDialogOkBtn" data-bs-dismiss="modal" style="padding: 10px 24px; border-radius: var(--radius-md); font-weight: 500;">
+                        <i class="bi bi-check-lg me-1"></i> OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -184,6 +216,125 @@
             // Add event listeners
             confirmBtn.addEventListener('click', handleConfirm);
             dialog.addEventListener('hidden.bs.modal', handleCancel, { once: true });
+            
+            // Show dialog
+            bsModal.show();
+            
+            return bsModal;
+        }
+        
+        /**
+         * Show message dialog (success, error, warning, info)
+         * @param {Object} options - Dialog options
+         * @param {string} options.title - Dialog title
+         * @param {string} options.message - Dialog message
+         * @param {string} options.type - Message type: 'success', 'error', 'warning', 'info'
+         * @param {string} options.buttonText - OK button text (default: "OK")
+         * @param {Function} options.onClose - Callback when dialog is closed
+         * @returns {bootstrap.Modal} Modal instance
+         */
+        function showMessageDialog(options = {}) {
+            const defaults = {
+                title: 'Message',
+                message: 'Operation completed.',
+                type: 'info',
+                buttonText: 'OK',
+                onClose: function() {}
+            };
+            
+            const settings = { ...defaults, ...options };
+            
+            // Auto-detect type from title if not specified
+            const titleLower = settings.title.toLowerCase();
+            if (titleLower.includes('error') || titleLower.includes('failed') || titleLower.includes('fail')) {
+                settings.type = 'error';
+            } else if (titleLower.includes('success') || titleLower.includes('complete') || titleLower.includes('created') || titleLower.includes('updated') || titleLower.includes('deleted')) {
+                settings.type = 'success';
+            } else if (titleLower.includes('warning') || titleLower.includes('caution')) {
+                settings.type = 'warning';
+            }
+            
+            // Type configurations
+            const typeConfigs = {
+                success: {
+                    headerBg: 'var(--success-color)',
+                    iconClass: 'bi-check-circle-fill',
+                    iconLargeClass: 'bi-check-lg',
+                    iconWrapperBg: 'var(--success-bg)',
+                    iconWrapperColor: 'var(--success-color)',
+                    buttonBg: 'var(--success-color)'
+                },
+                error: {
+                    headerBg: 'var(--error-color)',
+                    iconClass: 'bi-x-circle-fill',
+                    iconLargeClass: 'bi-x-lg',
+                    iconWrapperBg: 'var(--error-bg)',
+                    iconWrapperColor: 'var(--error-color)',
+                    buttonBg: 'var(--error-color)'
+                },
+                warning: {
+                    headerBg: 'var(--warning-color)',
+                    iconClass: 'bi-exclamation-triangle-fill',
+                    iconLargeClass: 'bi-exclamation-triangle',
+                    iconWrapperBg: 'var(--warning-bg)',
+                    iconWrapperColor: 'var(--warning-color)',
+                    buttonBg: 'var(--warning-color)'
+                },
+                info: {
+                    headerBg: 'var(--primary-color)',
+                    iconClass: 'bi-info-circle-fill',
+                    iconLargeClass: 'bi-info-lg',
+                    iconWrapperBg: 'var(--info-bg)',
+                    iconWrapperColor: 'var(--info-color)',
+                    buttonBg: 'var(--primary-color)'
+                }
+            };
+            
+            const config = typeConfigs[settings.type] || typeConfigs.info;
+            
+            // Get dialog elements
+            const dialog = document.getElementById('messageDialog');
+            const header = document.getElementById('messageDialogHeader');
+            const titleIcon = document.getElementById('messageDialogIcon');
+            const titleText = document.getElementById('messageDialogTitleText');
+            const iconWrapper = document.getElementById('messageDialogIconWrapper');
+            const iconLarge = document.getElementById('messageDialogIconLarge');
+            const messageEl = document.getElementById('messageDialogMessage');
+            const okBtn = document.getElementById('messageDialogOkBtn');
+            
+            // Apply type-specific styles
+            header.style.backgroundColor = config.headerBg;
+            titleIcon.className = `bi ${config.iconClass} me-2`;
+            iconWrapper.style.backgroundColor = config.iconWrapperBg;
+            iconLarge.className = `bi ${config.iconLargeClass}`;
+            iconLarge.style.color = config.iconWrapperColor;
+            okBtn.style.backgroundColor = config.buttonBg;
+            okBtn.style.color = 'white';
+            
+            // Set content
+            titleText.textContent = settings.title;
+            messageEl.textContent = settings.message;
+            okBtn.innerHTML = `<i class="bi bi-check-lg me-1"></i> ${settings.buttonText}`;
+            
+            // Create Bootstrap modal
+            const bsModal = new bootstrap.Modal(dialog, {
+                backdrop: 'static',
+                keyboard: false
+            });
+            
+            // Handle close
+            const handleClose = function() {
+                settings.onClose();
+                cleanup();
+            };
+            
+            // Cleanup event listeners
+            const cleanup = function() {
+                dialog.removeEventListener('hidden.bs.modal', handleClose);
+            };
+            
+            // Add event listener
+            dialog.addEventListener('hidden.bs.modal', handleClose, { once: true });
             
             // Show dialog
             bsModal.show();

@@ -254,7 +254,11 @@
         if (existingItem) {
             // Check stock
             if (existingItem.quantity >= product.stockQuantity) {
-                alert('Cannot add more. Maximum stock reached.');
+                showMessageDialog({
+                    title: 'Stock Limit',
+                    message: 'Cannot add more. Maximum stock reached.',
+                    type: 'warning'
+                });
                 return;
             }
             existingItem.quantity++;
@@ -286,7 +290,11 @@
             // Remove from cart
             cart = cart.filter(i => i.goodsId !== goodsId);
         } else if (newQty > item.maxStock) {
-            alert('Cannot add more. Maximum stock reached.');
+            showMessageDialog({
+                title: 'Stock Limit',
+                message: 'Cannot add more. Maximum stock reached.',
+                type: 'warning'
+            });
             return;
         } else {
             item.quantity = newQty;
@@ -385,7 +393,11 @@
     // Proceed to checkout
     function proceedToCheckout() {
         if (cart.length === 0) {
-            alert('Your cart is empty');
+            showMessageDialog({
+                title: 'Empty Cart',
+                message: 'Your cart is empty',
+                type: 'warning'
+            });
             return;
         }
         

@@ -1,43 +1,33 @@
-{% extends 'base.html' %}
+{% extends 'base_auth.html' %}
 {% load static %}
 
 {% block title %}SuperPayACQP - Entry Code{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'css/entry_code.css' %}">
 {% endblock %}
 
-{% block content %}
-<div class="entry-card">
-    {% if valid %}
-    <!-- Header -->
-    <div class="card-header-custom">
-        <div class="logo">
-            <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" width="50" height="50">
-                <rect width="60" height="60" rx="12" fill="rgba(255,255,255,0.3)"/>
-                <path d="M15 30L25 40L45 20" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </div>
-        <h4>SuperPayACQP - Entry Code</h4>
-        <p>{{ merchant_name }}</p>
-    </div>
-    
-    <!-- Body -->
-    <div class="card-body-custom">
-        <!-- Result Message -->
-        <div class="alert d-none" id="resultMessage" role="alert"></div>
+{% block auth_content %}
+{% if valid %}
+<div class="auth-card card">
+    <div class="card-body">
+        <h4 class="card-title">Collection Code - Entry Code</h4>
+        <p class="card-subtitle">{{ merchant_name }}</p>
         
-        <form id="entryForm" class="entry-form">
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+        
+        <!-- Entry Code Form -->
+        <form id="entryForm" class="auth-form">
             {% csrf_token %}
             <input type="hidden" name="merchantId" value="{{ merchant_id }}">
             <input type="hidden" name="codeId" value="{{ code_id }}">
             
             <!-- Currency Selection -->
-            <div class="mb-4">
-                <label for="currency" class="form-label">
-                    <i class="bi bi-currency-exchange me-1"></i> Currency
-                </label>
-                <select id="currency" name="currency" class="form-select" required>
+            <div class="mb-3">
+                <label for="currency" class="form-label">Currency</label>
+                <select id="currency" name="currency" class="form-control" required>
                     <option value="MYR">MYR - Malaysian Ringgit</option>
                     <option value="PHP">PHP - Philippine Peso</option>
                     <option value="USD">USD - US Dollar</option>
@@ -48,49 +38,50 @@
             </div>
             
             <!-- Amount Input -->
-            <div class="mb-4">
-                <label for="amount" class="form-label">
-                    <i class="bi bi-cash-stack me-1"></i> Transaction Amount
-                </label>
+            <div class="mb-3">
+                <label for="amount" class="form-label">Transaction Amount</label>
                 <div class="amount-input-group">
                     <input type="text" 
                            class="form-control" 
                            id="amount" 
                            name="amount" 
                            placeholder="0.00" 
-                           required
-                           style="padding-right: 70px;">
+                           required>
                     <span class="currency-badge" id="currencyBadge">MYR</span>
                 </div>
+                <div id="amountValidation" class="amount-validation"></div>
                 <small class="text-muted">Enter the amount you wish to pay (max 2 decimal places)</small>
             </div>
             
-            <!-- Confirm Button -->
-            <button type="submit" class="btn btn-primary btn-confirm" id="confirmBtn">
-                <span class="spinner-border spinner-border-sm me-2 d-none" id="spinner"></span>
-                <i class="bi bi-shield-check me-2"></i>Confirm
+            <button type="submit" class="btn btn-primary w-100" id="confirmBtn">
+                Confirm Payment <i class="bi bi-arrow-right"></i>
             </button>
         </form>
     </div>
-    
-    {% else %}
-    <!-- Error State -->
-    <div class="error-container">
+</div>
+{% else %}
+<div class="auth-card card">
+    <div class="card-body text-center">
         <div class="error-icon">
-            <i class="bi bi-x-lg"></i>
+            <i class="bi bi-x-circle text-danger"></i>
         </div>
-        <h4 class="text-danger mb-3">Invalid Link</h4>
-        <p class="text-muted">{{ error_message }}</p>
-        <a href="javascript:history.back()" class="btn btn-outline-secondary mt-3">
+        <h4 class="card-title text-danger">Invalid Link</h4>
+        <p class="card-subtitle">{{ error_message }}</p>
+        <a href="javascript:history.back()" class="btn btn-secondary">
             <i class="bi bi-arrow-left me-2"></i>Go Back
         </a>
     </div>
-    {% endif %}
 </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
+{{ block.super }}
 <script>
+    // Validation constants
+    const MIN_AMOUNT = 0.01;
+    const MAX_AMOUNT = 100.00;
+    
     /**
      * Update currency badge when selection changes
      */
@@ -106,12 +97,96 @@
     }
     
     /**
+     * Validate amount and return validation result
+     */
+    function validateAmount(value) {
+        const result = {
+            isValid: false,
+            message: '',
+            type: 'error'
+        };
+        
+        // Check if empty
+        if (!value || value.trim() === '') {
+            result.message = 'Amount is required';
+            return result;
+        }
+        
+        // Check for valid number format
+        if (!/^\d*\.?\d{0,2}$/.test(value)) {
+            result.message = 'Invalid number format';
+            return result;
+        }
+        
+        const numValue = parseFloat(value);
+        
+        // Check if it's a valid number
+        if (isNaN(numValue)) {
+            result.message = 'Please enter a valid number';
+            return result;
+        }
+        
+        // Check minimum amount
+        if (numValue < MIN_AMOUNT) {
+            result.message = 'Minimum amount is ' + MIN_AMOUNT.toFixed(2);
+            return result;
+        }
+        
+        // Check maximum amount
+        if (numValue > MAX_AMOUNT) {
+            result.message = 'Maximum amount is ' + MAX_AMOUNT.toLocaleString();
+            return result;
+        }
+        
+        // Check for more than 2 decimal places
+        const parts = value.split('.');
+        if (parts.length === 2 && parts[1].length > 2) {
+            result.message = 'Maximum 2 decimal places allowed';
+            return result;
+        }
+        
+        // Valid
+        result.isValid = true;
+        result.message = 'Valid amount';
+        result.type = 'success';
+        return result;
+    }
+    
+    /**
+     * Display validation message
+     */
+    function showValidation(validationDiv, result) {
+        const amountInput = document.getElementById('amount');
+        
+        if (result.isValid) {
+            validationDiv.innerHTML = '<span class="validation-message success"><i class="bi bi-check-circle"></i> ' + result.message + '</span>';
+            amountInput.classList.remove('is-invalid');
+            amountInput.classList.add('is-valid');
+        } else {
+            validationDiv.innerHTML = '<span class="validation-message error"><i class="bi bi-exclamation-circle"></i> ' + result.message + '</span>';
+            amountInput.classList.remove('is-valid');
+            amountInput.classList.add('is-invalid');
+        }
+    }
+    
+    /**
+     * Clear validation message
+     */
+    function clearValidation(validationDiv) {
+        const amountInput = document.getElementById('amount');
+        validationDiv.innerHTML = '';
+        amountInput.classList.remove('is-valid', 'is-invalid');
+    }
+    
+    /**
      * Validate and format amount input
      */
     function initAmountInput() {
         const amountInput = document.getElementById('amount');
+        const validationDiv = document.getElementById('amountValidation');
         
         if (amountInput) {
+            // Format input on input event
             amountInput.addEventListener('input', function(e) {
                 let value = this.value;
                 
@@ -129,23 +204,29 @@
                     value = parts[0] + '.' + parts[1].substring(0, 2);
                 }
                 
+                // Limit integer part to 6 digits
+                if (parts[0].length > 6) {
+                    value = parts[0].substring(0, 6) + (parts.length > 1 ? '.' + parts[1] : '');
+                }
+                
                 this.value = value;
+                
+                // Validate and show feedback
+                if (value.length > 0) {
+                    const validationResult = validateAmount(value);
+                    showValidation(validationDiv, validationResult);
+                } else {
+                    clearValidation(validationDiv);
+                }
             });
-        }
-    }
-    
-    /**
-     * Show result message
-     * @param {string} message - Message to display
-     * @param {string} type - Alert type (success, danger, warning)
-     */
-    function showResult(message, type) {
-        const resultMessage = document.getElementById('resultMessage');
-        if (resultMessage) {
-            resultMessage.textContent = message;
-            resultMessage.className = `alert alert-${type}`;
-            resultMessage.classList.remove('d-none');
-            resultMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            // Validate on blur
+            amountInput.addEventListener('blur', function(e) {
+                if (this.value.length > 0) {
+                    const validationResult = validateAmount(this.value);
+                    showValidation(validationDiv, validationResult);
+                }
+            });
         }
     }
     
@@ -156,7 +237,8 @@
         e.preventDefault();
         
         const confirmBtn = document.getElementById('confirmBtn');
-        const spinner = document.getElementById('spinner');
+        const alertContainer = document.getElementById('alertContainer');
+        const validationDiv = document.getElementById('amountValidation');
         
         // Get form data
         const merchantId = document.querySelector('input[name="merchantId"]')?.value;
@@ -165,59 +247,59 @@
         const amount = document.getElementById('amount')?.value;
         
         // Validate amount
-        if (!amount || parseFloat(amount) <= 0) {
-            showResult('Please enter a valid amount', 'danger');
+        const validationResult = validateAmount(amount);
+        showValidation(validationDiv, validationResult);
+        
+        if (!validationResult.isValid) {
+            alertContainer.innerHTML = '<div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>' + validationResult.message + '</div>';
             return;
         }
         
-        // Validate decimal places
-        const decimalPart = amount.split('.')[1];
-        if (decimalPart && decimalPart.length > 2) {
-            showResult('Amount can only have up to 2 decimal places', 'danger');
-            return;
-        }
+        // Clear any previous alerts
+        alertContainer.innerHTML = '';
         
         // Show loading state
         confirmBtn.disabled = true;
-        spinner.classList.remove('d-none');
-        document.getElementById('resultMessage')?.classList.add('d-none');
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
         
         try {
+            const csrftoken = getCookie('csrftoken');
             const response = await fetch('/entry-code/confirm', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
                 },
                 body: JSON.stringify({
                     merchantId: merchantId,
                     codeId: codeId,
                     currency: currency,
-                    amount: parseFloat(amount)
+                    amount: amount * 100
                 })
             });
             
             const data = await response.json();
             
             if (data.result && data.result.resultStatus === 'S') {
-                showResult('Payment initiated successfully! Redirecting...', 'success');
+                alertContainer.innerHTML = '<div class="alert alert-success" role="alert"><i class="bi bi-check-circle me-2"></i>Payment initiated successfully! Redirecting...</div>';
                 
                 // Handle redirect to payment URL
                 if (data.paymentUrl) {
                     console.log('Redirecting to:', data.paymentUrl);
-                    setTimeout(() => {
+                    setTimeout(function() {
                         window.location.href = data.paymentUrl;
                     }, 1500);
                 }
             } else {
                 const errorMsg = data.result?.resultMessage || 'Payment failed. Please try again.';
-                showResult(errorMsg, 'danger');
+                alertContainer.innerHTML = '<div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>' + escapeHtml(errorMsg) + '</div>';
             }
         } catch (error) {
             console.error('Error:', error);
-            showResult('An error occurred. Please try again.', 'danger');
+            alertContainer.innerHTML = '<div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>An error occurred. Please try again.</div>';
         } finally {
             confirmBtn.disabled = false;
-            spinner.classList.add('d-none');
+            confirmBtn.innerHTML = 'Confirm Payment <i class="bi bi-arrow-right"></i>';
         }
     }
     

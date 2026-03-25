@@ -496,7 +496,11 @@
     function openEditModal(merchantId) {
         const merchant = allMerchants.find(m => m.merchantId === merchantId);
         if (!merchant) {
-            alert('Merchant not found');
+            showMessageDialog({
+                title: 'Error',
+                message: 'Merchant not found',
+                type: 'error'
+            });
             return;
         }
         
@@ -549,7 +553,11 @@
     async function saveMerchant() {
         const form = document.getElementById('merchantForm');
         if (!form.checkValidity()) {
-            alert('Please fill in all required fields.');
+            showMessageDialog({
+                title: 'Validation Error',
+                message: 'Please fill in all required fields.',
+                type: 'warning'
+            });
             return;
         }
         
@@ -602,13 +610,25 @@
             if (data.result && data.result.resultStatus === 'S') {
                 merchantModal.hide();
                 loadMerchants();
-                alert(editMode === 'add' ? 'Merchant created successfully!' : 'Merchant updated successfully!');
+                showMessageDialog({
+                    title: 'Success',
+                    message: editMode === 'add' ? 'Merchant created successfully!' : 'Merchant updated successfully!',
+                    type: 'success'
+                });
             } else {
-                alert('Failed to save merchant: ' + (data.result?.resultMessage || 'Unknown error'));
+                showMessageDialog({
+                    title: 'Error',
+                    message: 'Failed to save merchant: ' + (data.result?.resultMessage || 'Unknown error'),
+                    type: 'error'
+                });
             }
         } catch (error) {
             console.error('Error saving merchant:', error);
-            alert('Error saving merchant');
+            showMessageDialog({
+                title: 'Error',
+                message: 'Error saving merchant',
+                type: 'error'
+            });
         }
     }
     
@@ -638,13 +658,25 @@
             if (data.message || response.ok) {
                 deleteModal.hide();
                 loadMerchants();
-                alert('Merchant deleted successfully!');
+                showMessageDialog({
+                    title: 'Success',
+                    message: 'Merchant deleted successfully!',
+                    type: 'success'
+                });
             } else {
-                alert('Failed to delete merchant: ' + (data.error || 'Unknown error'));
+                showMessageDialog({
+                    title: 'Error',
+                    message: 'Failed to delete merchant: ' + (data.error || 'Unknown error'),
+                    type: 'error'
+                });
             }
         } catch (error) {
             console.error('Error deleting merchant:', error);
-            alert('Error deleting merchant');
+            showMessageDialog({
+                title: 'Error',
+                message: 'Error deleting merchant',
+                type: 'error'
+            });
         }
         
         merchantToDelete = null;

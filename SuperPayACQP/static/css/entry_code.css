@@ -1,158 +1,85 @@
 /* ============================================
    Entry Code Page Styles
+   ============================================
+   
+   This file contains styles for the entry code page
+   extending the auth.css styles.
+   
    ============================================ */
 
-body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+/* ============================================
+   Amount Input Group
+   ============================================ */
 
-/* Entry Code Card */
-.entry-card {
-    background: var(--bg-card);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-xl);
-    overflow: hidden;
-    max-width: 450px;
-    width: 100%;
-    margin: var(--spacing-lg);
-}
-
-/* Card Header */
-.entry-card .card-header-custom {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 30px;
-    text-align: center;
-}
-
-.entry-card .card-header-custom .logo {
-    width: 80px;
-    height: 80px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 15px;
-}
-
-.entry-card .card-header-custom h4 {
-    margin: 0;
-    font-weight: 600;
-}
-
-.entry-card .card-header-custom p {
-    margin: 5px 0 0;
-    opacity: 0.8;
-    font-size: 14px;
-}
-
-/* Card Body */
-.entry-card .card-body-custom {
-    padding: 30px;
-}
-
-/* Form Styles */
-.entry-form .form-label {
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.entry-form .form-control,
-.entry-form .form-select {
-    border-radius: 10px;
-    padding: 12px 15px;
-    border: 2px solid var(--border-light);
-    transition: var(--transition-normal);
-}
-
-.entry-form .form-control:focus,
-.entry-form .form-select:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-}
-
-/* Confirm Button */
-.btn-confirm {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    border-radius: 10px;
-    padding: 15px;
-    font-weight: 600;
-    font-size: 16px;
-    transition: var(--transition-normal);
-    width: 100%;
-    color: white;
-}
-
-.btn-confirm:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-}
-
-.btn-confirm:disabled {
-    opacity: 0.7;
-    transform: none;
-}
-
-/* Amount Input */
 .amount-input-group {
     position: relative;
 }
 
+.amount-input-group .form-control {
+    padding-right: 80px;
+}
+
 .currency-badge {
     position: absolute;
-    right: 15px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    background: #667eea;
+    background-color: var(--primary-color);
     color: white;
-    padding: 5px 12px;
-    border-radius: 5px;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
     font-weight: 600;
 }
 
-/* Error State */
-.error-container {
-    text-align: center;
-    padding: 40px;
+/* ============================================
+   Amount Validation Styles
+   ============================================ */
+
+.amount-validation {
+    min-height: 20px;
+    margin-top: 5px;
 }
 
-.error-icon {
-    width: 100px;
-    height: 100px;
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
-    border-radius: var(--radius-full);
+.amount-validation .validation-message {
+    font-size: 12px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin: 0 auto 20px;
+    gap: 5px;
 }
 
-.error-icon i {
-    font-size: 50px;
-    color: white;
+.amount-validation .validation-message.error {
+    color: var(--error-color);
+}
+
+.amount-validation .validation-message.success {
+    color: var(--success-color);
+}
+
+.amount-validation .validation-message.warning {
+    color: var(--warning-color);
 }
 
 /* ============================================
-   Responsive Design
+   Form Validation States
    ============================================ */
 
-@media (max-width: 576px) {
-    .entry-card {
-        margin: var(--spacing-md);
-    }
-    
-    .entry-card .card-header-custom,
-    .entry-card .card-body-custom {
-        padding: var(--spacing-lg);
-    }
+.form-control.is-invalid {
+    border-color: var(--error-color);
+}
+
+.form-control.is-valid {
+    border-color: var(--success-color);
+}
+
+/* ============================================
+   Error State
+   ============================================ */
+
+.error-icon {
+    margin-bottom: var(--spacing-md);
+}
+
+.error-icon i {
+    font-size: 48px;
 }

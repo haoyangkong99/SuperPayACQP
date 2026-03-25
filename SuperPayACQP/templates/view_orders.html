@@ -450,11 +450,19 @@
                 renderOrderDetail(paymentData.payment, refundData.refunds || []);
                 orderDetailModal.show();
             } else {
-                alert('Order details not found');
+                showMessageDialog({
+                    title: 'Error',
+                    message: 'Order details not found',
+                    type: 'error'
+                });
             }
         } catch (error) {
             console.error('Error loading order details:', error);
-            alert('Error loading order details');
+            showMessageDialog({
+                title: 'Error',
+                message: 'Error loading order details',
+                type: 'error'
+            });
         }
     }
     
@@ -718,15 +726,27 @@
                     const data = await response.json();
                     
                     if (data.result && data.result.resultStatus === 'S') {
-                        alert('Payment cancelled successfully');
+                        showMessageDialog({
+                            title: 'Success',
+                            message: 'Payment cancelled successfully',
+                            type: 'success'
+                        });
                         orderDetailModal.hide();
                         loadOrders(currentPage);
                     } else {
-                        alert('Failed to cancel payment: ' + (data.result?.resultMessage || 'Unknown error'));
+                        showMessageDialog({
+                            title: 'Error',
+                            message: 'Failed to cancel payment: ' + (data.result?.resultMessage || 'Unknown error'),
+                            type: 'error'
+                        });
                     }
                 } catch (error) {
                     console.error('Error cancelling payment:', error);
-                    alert('Error cancelling payment');
+                    showMessageDialog({
+                        title: 'Error',
+                        message: 'Error cancelling payment',
+                        type: 'error'
+                    });
                 }
             }
         });
@@ -795,7 +815,11 @@
         const refundReason = document.getElementById('refundReason').value;
         
         if (!refundAmount || parseFloat(refundAmount) <= 0) {
-            alert('Please enter a valid refund amount');
+            showMessageDialog({
+                title: 'Validation Error',
+                message: 'Please enter a valid refund amount',
+                type: 'warning'
+            });
             return;
         }
         
@@ -805,7 +829,11 @@
         // Validate refund amount does not exceed maximum refundable amount
         if (refundAmountInCents > maxRefundAmountInCents) {
             const maxRefundDisplay = (maxRefundAmountInCents / 100).toFixed(2);
-            alert(`Refund amount exceeds maximum refundable amount. Maximum allowed: ${currency} ${maxRefundDisplay}`);
+            showMessageDialog({
+                title: 'Validation Error',
+                message: `Refund amount exceeds maximum refundable amount. Maximum allowed: ${currency} ${maxRefundDisplay}`,
+                type: 'warning'
+            });
             return;
         }
         
@@ -835,16 +863,28 @@
                 const refundModal = bootstrap.Modal.getInstance(refundModalEl);
                 refundModal.hide();
                 
-                alert('Refund processed successfully');
+                showMessageDialog({
+                    title: 'Success',
+                    message: 'Refund processed successfully',
+                    type: 'success'
+                });
                 
                 // Refresh order details
                 showOrderDetail(paymentRequestId, currentPage);
             } else {
-                alert('Failed to process refund: ' + (data.result?.resultMessage || 'Unknown error'));
+                showMessageDialog({
+                    title: 'Error',
+                    message: 'Failed to process refund: ' + (data.result?.resultMessage || 'Unknown error'),
+                    type: 'error'
+                });
             }
         } catch (error) {
             console.error('Error processing refund:', error);
-            alert('Error processing refund');
+            showMessageDialog({
+                title: 'Error',
+                message: 'Error processing refund',
+                type: 'error'
+            });
         }
     }
 </script>
