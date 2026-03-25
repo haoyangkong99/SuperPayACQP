@@ -44,7 +44,7 @@ def get_service_instances():
     db_service=DbService()
     return db_service
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class MerchantView(APIView):
     def post(self, request):
         try:
@@ -74,7 +74,36 @@ class MerchantView(APIView):
                     result=result
                 )
             return Response(response.model_dump(exclude_none=True), status=status.HTTP_200_OK)
-
+        
+@method_decorator(csrf_exempt, name='dispatch')
+class MerchantDeleteView(APIView):
+    def delete(self, request):
+        merchant_id = request.query_params.get('merchantId')
+        
+        if not merchant_id:
+            return Response({
+                'error': 'merchantId is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            merchant = Merchant.objects.filter(merchantId=merchant_id).first()
+            if not merchant:
+                return Response({
+                    'error': 'Merchant not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            merchant.delete()
+            
+            return Response({
+                'message': 'Merchant deleted successfully',
+                'merchantId': merchant_id
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error deleting merchant: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GenerateEntryCodeView(APIView):
     """

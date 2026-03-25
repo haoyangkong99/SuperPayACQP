@@ -19,6 +19,20 @@ class SettlementQuoteDTO(BaseModel):
 
 class PaymentResponseDTO(BaseResponseDTO):
     """Payment response DTO"""
+    paymentRequestId: Optional[str] = None 
+    paymentId: Optional[str] = None
+    paymentTime: Optional[str] = None
+    paymentExpireTime: Optional[str] = None
+    paymentAmount: Optional[AmountDTO] = None
+    customerId: Optional[str] = None
+    pspId: Optional[str] = None
+    walletBrandName: Optional[str] = None
+    mppPaymentId: Optional[str] = None
+    orderCodeForm: Optional[dict] = None
+
+
+class AlipayPayResponseDTO(BaseResponseDTO):
+    """Payment response DTO"""
     acquirerId: Optional[str] = None
     paymentId: Optional[str] = None
     paymentTime: Optional[str] = None
@@ -30,7 +44,7 @@ class PaymentResponseDTO(BaseResponseDTO):
     settlementQuote: Optional[SettlementQuoteDTO] = None
     customsDeclarationAmount: Optional[AmountDTO] = None
     mppPaymentId: Optional[str] = None
-
+    orderCodeForm: Optional[dict] = None
 
 class CancelPaymentResponseDTO(BaseResponseDTO):
     """Cancel payment response DTO"""

@@ -1,0 +1,365 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}SuperPayACQP - Payment Result{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/payment_result.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <!-- Header -->
+    <div class="result-header">
+        <div class="logo-section">
+            <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="60" height="60" rx="12" fill="#003b6b"/>
+                <path d="M15 30L25 40L45 20" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h1>SuperPayACQP - Merchant Store</h1>
+        </div>
+        <div class="nav-links">
+            <a href="/dashboard/">Dashboard</a>
+
+        </div>
+    </div>
+    
+    <!-- Confirmation Section -->
+    <div class="confirmation">
+        <div class="icon" id="resultIcon">
+            <i class="bi bi-check-lg"></i>
+        </div>
+        <h2>SUPERPAYACQP - MERCHANT STORE</h2>
+        <h3 id="resultTitle">Payment Successful</h3>
+        <p id="resultMessage">Your transaction has been processed securely. A confirmation email has been sent to your registered address.</p>
+    </div>
+    
+    <!-- Actions -->
+    <div class="actions">
+        <a href="/view-orders" class="btn btn-primary" id="viewOrderBtn">
+            <i class="bi bi-receipt"></i> View Order Details
+        </a>
+        <a href="/create-order" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Continue shopping
+        </a>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let paymentResult = {};
+    const MAX_RETRIES = 5;
+    const RETRY_DELAY = 3000; // 3 seconds
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentRequestId = urlParams.get('paymentRequestId');
+        
+        // Priority 1: If paymentRequestId is in URL, call API to get latest status
+        if (paymentRequestId) {
+            await handlePaymentInquiry(paymentRequestId);
+        } 
+        // Priority 2: Try to load from sessionStorage
+        else {
+            loadPaymentResult();
+            // Check if we have actual data (not just empty object)
+            if (Object.keys(paymentResult).length > 0) {
+                renderResult();
+            } else {
+                // No data available, show error
+                renderErrorResult({ 
+                    result: { 
+                        resultMessage: 'No payment information found. Please check your order history.' 
+                    } 
+                });
+            }
+        }
+    });
+    
+    // Call inquiry-payment API
+    async function inquiryPayment(paymentRequestId) {
+        const csrftoken = getCookie('csrftoken');
+        const response = await fetch('/api/inquiry-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({ paymentRequestId: paymentRequestId })
+        });
+        return await response.json();
+    }
+    
+    // Handle payment inquiry with retry logic
+    async function handlePaymentInquiry(paymentRequestId) {
+        showLoading('Checking payment status...');
+        
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                updateLoadingMessage(`Checking payment status... (attempt ${attempt}/${MAX_RETRIES})`);
+                
+                const result = await inquiryPayment(paymentRequestId);
+                
+                if (result.result) {
+                    if (result.result.resultStatus === 'S') {
+                        hideLoading();
+                        // Use paymentResult data to render page
+                        renderPaymentResult(result);
+                        return;
+                    } 
+                    else if (result.result.resultStatus === 'F') {
+                        hideLoading();
+                        // Display error page
+                        renderErrorResult(result);
+                        return;
+                    }
+                    else if (result.result.resultStatus === 'U') {
+                        // Wait and retry
+                        if (attempt < MAX_RETRIES) {
+                            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+                            continue;
+                        }
+                    }
+                } else {
+                    // Invalid response structure
+                    hideLoading();
+                    renderErrorResult({ result: { resultMessage: 'Invalid response from server' } });
+                    return;
+                }
+            } catch (error) {
+                console.error('Error inquiring payment:', error);
+                if (attempt >= MAX_RETRIES) {
+                    hideLoading();
+                    renderErrorResult({ result: { resultMessage: 'Network error. Please try again.' } });
+                    return;
+                }
+                await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+            }
+        }
+        
+        hideLoading();
+        // Max retries reached - show timeout error
+        renderTimeoutError();
+    }
+    
+    // Update loading message
+    function updateLoadingMessage(message) {
+        const loadingMessage = document.getElementById('loadingMessage');
+        if (loadingMessage) {
+            loadingMessage.textContent = message;
+        }
+    }
+    
+    // Render payment result from API response
+    function renderPaymentResult(apiResponse) {
+        const isSuccess = apiResponse.paymentResult && apiResponse.paymentResult.resultStatus === 'S';
+        
+        // Build paymentResult object from API response
+        paymentResult = {
+            success: isSuccess,
+            paymentRequestId: apiResponse.paymentRequestId,
+            paymentId: apiResponse.paymentId,
+            paymentTime: apiResponse.paymentTime,
+            paymentAmount: apiResponse.paymentAmount,
+            customerId: apiResponse.customerId,
+            pspId: apiResponse.pspId,
+            walletBrandName: apiResponse.walletBrandName,
+            mppPaymentId: apiResponse.mppPaymentId,
+            totalAmount: apiResponse.paymentAmount ? (apiResponse.paymentAmount.value / 100).toFixed(2) : '0.00',
+            orderId: apiResponse.paymentRequestId,
+            transactionId: apiResponse.paymentId,
+            resultStatus: apiResponse.paymentResult ? apiResponse.paymentResult.resultStatus : 'U',
+            resultCode: apiResponse.paymentResult ? apiResponse.paymentResult.resultCode : '',
+            resultMessage: apiResponse.paymentResult ? apiResponse.paymentResult.resultMessage : ''
+        };
+        
+        renderResult();
+        
+        // Clear session storage
+        sessionStorage.removeItem('orderCart');
+        sessionStorage.removeItem('shippingInfo');
+        sessionStorage.removeItem('paymentResult');
+    }
+    
+    // Render error result
+    function renderErrorResult(apiResponse) {
+        paymentResult = {
+            success: false,
+            resultStatus: apiResponse.result ? apiResponse.result.resultStatus : 'F',
+            resultCode: apiResponse.result ? apiResponse.result.resultCode : '',
+            resultMessage: apiResponse.result ? apiResponse.result.resultMessage : 'Payment failed'
+        };
+        
+        renderResult();
+        
+        // Clear session storage
+        sessionStorage.removeItem('orderCart');
+        sessionStorage.removeItem('shippingInfo');
+        sessionStorage.removeItem('paymentResult');
+    }
+    
+    // Render timeout error
+    function renderTimeoutError() {
+        paymentResult = {
+            success: false,
+            resultStatus: 'U',
+            resultCode: 'TIMEOUT',
+            resultMessage: 'Payment verification timeout. Please check your order status later.'
+        };
+        
+        renderResult();
+        
+        // Clear session storage
+        sessionStorage.removeItem('orderCart');
+        sessionStorage.removeItem('shippingInfo');
+        sessionStorage.removeItem('paymentResult');
+    }
+    
+    // Load payment result from sessionStorage
+    function loadPaymentResult() {
+        const savedResult = sessionStorage.getItem('paymentResult');
+        if (savedResult) {
+            paymentResult = JSON.parse(savedResult);
+        }
+    }
+    
+    // Render result
+    function renderResult() {
+        const isSuccess = paymentResult.success === true || paymentResult.resultStatus === 'S';
+        const isPending = paymentResult.resultStatus === 'U';
+        
+        // Update icon
+        const iconDiv = document.getElementById('resultIcon');
+        if (isSuccess) {
+            iconDiv.innerHTML = '<i class="bi bi-check-lg"></i>';
+            iconDiv.classList.remove('failed');
+        } else if (isPending) {
+            iconDiv.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+            iconDiv.classList.add('failed');
+        } else {
+            iconDiv.innerHTML = '<i class="bi bi-x-lg"></i>';
+            iconDiv.classList.add('failed');
+        }
+        
+        // Update title
+        let title = 'Payment Successful';
+        if (isPending) {
+            title = 'Payment Pending';
+        } else if (!isSuccess) {
+            title = 'Payment Failed';
+        }
+        document.getElementById('resultTitle').textContent = title;
+        
+        // Update message
+        let message = paymentResult.resultMessage || 
+            (isSuccess ? 'Your transaction has been processed securely.' : 
+             isPending ? 'Your payment is being processed. Please check back later.' :
+             'Your transaction could not be processed. Please try again.');
+        document.getElementById('resultMessage').textContent = message;
+        
+        // Update transaction details
+        updateTransactionDetails();
+        
+        // Update view order button with paymentRequestId
+        const viewOrderBtn = document.getElementById('viewOrderBtn');
+        if (paymentResult.paymentRequestId) {
+            viewOrderBtn.href = `/view-orders?paymentRequestId=${paymentResult.paymentRequestId}&page=1`;
+        } else {
+            window.location.href='/dashboard';
+        }
+    }
+    
+    // Update transaction details
+    function updateTransactionDetails() {
+        const isSuccess = paymentResult.success === true || paymentResult.resultStatus === 'S';
+        const isPending = paymentResult.resultStatus === 'U';
+        
+        // Get or create transaction details section
+        let detailsSection = document.querySelector('.transaction-details');
+        if (!detailsSection) {
+            detailsSection = document.createElement('div');
+            detailsSection.className = 'transaction-details';
+            detailsSection.innerHTML = `
+                <h3>Transaction Details</h3>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <div class="label">Total Amount Paid</div>
+                        <div class="value" id="totalAmount">--</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Payment Status</div>
+                        <div class="value" id="paymentStatus">COMPLETED</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Payment Request ID</div>
+                        <div class="value" id="paymentRequestId">--</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Payment ID</div>
+                        <div class="value" id="paymentId">--</div>
+                    </div>
+                    <div class="detail-item full-width">
+                        <div class="label">Payment Time</div>
+                        <div class="value" id="paymentTime">--</div>
+                    </div>
+                    <div class="detail-item full-width">
+                        <div class="label">Wallet Brand</div>
+                        <div class="value" id="walletBrandName">--</div>
+                    </div>
+                </div>
+            `;
+            
+            // Insert before actions
+            const actionsDiv = document.querySelector('.actions');
+            actionsDiv.parentNode.insertBefore(detailsSection, actionsDiv);
+        }
+        
+        // Update values
+        document.getElementById('totalAmount').textContent = paymentResult.paymentAmount ? paymentResult.paymentAmount.currency + ' ' + (paymentResult.paymentAmount.value / 100).toFixed(2) : '--';
+        
+        const statusEl = document.getElementById('paymentStatus');
+        if (isSuccess) {
+            statusEl.textContent = 'COMPLETED';
+            statusEl.className = 'value success';
+        } else if (isPending) {
+            statusEl.textContent = 'PENDING';
+            statusEl.className = 'value';
+            statusEl.style.color = '#856404';
+        } else {
+            statusEl.textContent = 'FAILED';
+            statusEl.className = 'value failed';
+        }
+        
+        document.getElementById('paymentRequestId').textContent = paymentResult.paymentRequestId || '--';
+        document.getElementById('paymentId').textContent = paymentResult.paymentId ||  '--';
+        document.getElementById('paymentTime').textContent = paymentResult.paymentTime ? formatDateTime(paymentResult.paymentTime) : '--';
+        document.getElementById('walletBrandName').textContent = paymentResult.walletBrandName || '--';
+    }
+    
+    // Format date
+    function formatDate(date) {
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
+    }
+    
+    // Format date time
+    function formatDateTime(dateString) {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (e) {
+            return dateString;
+        }
+    }
+    
+</script>
+{% endblock %}

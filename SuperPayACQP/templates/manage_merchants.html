@@ -1,0 +1,653 @@
+{% extends 'base_sidebar.html' %}
+{% load static %}
+
+{% block title %}SuperPayACQP - Manage Merchants{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/manage_merchants.css' %}">
+{% endblock %}
+
+{% block main_content %}
+<div class="page-header">
+    <h1>Merchant Directory</h1>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <button class="btn btn-primary" onclick="openAddModal()">
+        <i class="bi bi-plus-lg"></i> Add Merchant
+    </button>
+    <div class="search-filter">
+        <div class="search-input-wrapper">
+            <i class="bi bi-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by store name or merchant ID..." oninput="searchMerchants()">
+        </div>
+
+    </div>
+    <div class="results-info" id="resultsInfo">Displaying 0 merchants</div>
+</div>
+
+<!-- Merchants Table -->
+<div class="merchants-table-container">
+    <table class="merchants-table">
+        <thead>
+            <tr>
+                <th>Merchant ID</th>
+                <th>Store Name</th>
+                <th>Category (MCC)</th>
+                <th>Region</th>
+                <th>Currency</th>
+                <th>Onboarding</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="merchantsTableBody">
+            <!-- Dynamic content -->
+        </tbody>
+    </table>
+    
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <i class="bi bi-shop"></i>
+        <h3>No Merchants Found</h3>
+        <p>Start by adding your first merchant to the directory.</p>
+    </div>
+    
+    <!-- Loading State -->
+    <div class="loading-state" id="loadingState">
+        <div class="loading-spinner"></div>
+        <p>Loading merchants...</p>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination-container" id="paginationContainer" style="display: none;">
+    <div class="pagination-info">
+        Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of <span id="totalRecords">0</span> merchants
+    </div>
+    <div class="pagination-controls">
+        <button class="pagination-btn" id="prevBtn" onclick="previousPage()" disabled>
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <div class="pagination-pages" id="paginationPages">
+            <!-- Dynamic page numbers -->
+        </div>
+        <button class="pagination-btn" id="nextBtn" onclick="nextPage()" disabled>
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Add/Edit Merchant Modal -->
+<div class="modal fade" id="merchantModal" tabindex="-1" aria-labelledby="merchantModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="merchantModalTitle">
+                    <i class="bi bi-shop me-2"></i>Add New Merchant
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="merchantForm" class="merchant-form">
+                    <input type="hidden" id="editMode" value="add">
+                    
+                    <h6 class="form-section-title">Basic Information</h6>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="merchantId">Merchant ID *</label>
+                            <input type="text" class="form-control" id="merchantId" name="merchantId" required placeholder="e.g., MC00001-00">
+                            <small class="form-hint">Unique identifier for the merchant</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="currency">Currency *</label>
+                            <select class="form-control" id="currency" name="currency" required>
+                                <option value="MYR">MYR - Malaysian Ringgit</option>
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="SGD">SGD - Singapore Dollar</option>
+                                <option value="CNY">CNY - Chinese Yuan</option>
+                                <option value="JPY">JPY - Japanese Yen</option>
+                                <option value="EUR">EUR - Euro</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="merchantName">Legal Name *</label>
+                            <input type="text" class="form-control" id="merchantName" name="merchantName" required placeholder="e.g., Test Merchant Sdn Bhd">
+                        </div>
+                        <div class="form-group">
+                            <label for="merchantDisplayName">Display Name *</label>
+                            <input type="text" class="form-control" id="merchantDisplayName" name="merchantDisplayName" required placeholder="e.g., Test Merchant">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="merchantMCC">MCC (Merchant Category Code)</label>
+                            <input type="text" class="form-control" id="merchantMCC" name="merchantMCC" placeholder="e.g., 5411 for Grocery Stores">
+                        </div>
+                        <div class="form-group">
+                            <label for="merchantRegisterDate">Registration Date</label>
+                            <input type="date" class="form-control" id="merchantRegisterDate" name="merchantRegisterDate">
+                        </div>
+                    </div>
+                    
+                    <h6 class="form-section-title">Address Information</h6>
+                    <div class="form-group">
+                        <label for="address1">Address Line 1</label>
+                        <input type="text" class="form-control" id="address1" name="address1" placeholder="Street address">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="address2">Address Line 2</label>
+                        <input type="text" class="form-control" id="address2" name="address2" placeholder="Apartment, suite, unit, etc.">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">City</label>
+                            <input type="text" class="form-control" id="city" name="city" placeholder="City">
+                        </div>
+                        <div class="form-group">
+                            <label for="state">State/Province</label>
+                            <input type="text" class="form-control" id="state" name="state" placeholder="State or Province">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="zipCode">Zip/Postal Code</label>
+                            <input type="text" class="form-control" id="zipCode" name="zipCode" placeholder="Postal code">
+                        </div>
+                        <div class="form-group">
+                            <label for="region">Country/Region</label>
+                            <input type="text" class="form-control" id="region" name="region" placeholder="e.g., MY">
+                        </div>
+                    </div>
+                    
+                    <h6 class="form-section-title">Store Information</h6>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="storeReferenceId">Store ID</label>
+                            <input type="text" class="form-control" id="storeReferenceId" name="storeReferenceId" placeholder="e.g., STORE-001">
+                        </div>
+                        <div class="form-group">
+                            <label for="storeName">Store Name</label>
+                            <input type="text" class="form-control" id="storeName" name="storeName" placeholder="Store display name">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="storeMCC">Store MCC</label>
+                            <input type="text" class="form-control" id="storeMCC" name="storeMCC" placeholder="Store category code">
+                        </div>
+                    </div>
+                    
+                    <h6 class="form-section-title">Store Address</h6>
+                    <div class="form-group">
+                        <label for="storeAddress1">Address Line 1</label>
+                        <input type="text" class="form-control" id="storeAddress1" name="storeAddress1" placeholder="Store street address">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="storeAddress2">Address Line 2</label>
+                        <input type="text" class="form-control" id="storeAddress2" name="storeAddress2" placeholder="Apartment, suite, unit, etc.">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="storeCity">City</label>
+                            <input type="text" class="form-control" id="storeCity" name="storeCity" placeholder="City">
+                        </div>
+                        <div class="form-group">
+                            <label for="storeState">State/Province</label>
+                            <input type="text" class="form-control" id="storeState" name="storeState" placeholder="State or Province">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="storeZipCode">Zip/Postal Code</label>
+                            <input type="text" class="form-control" id="storeZipCode" name="storeZipCode" placeholder="Postal code">
+                        </div>
+                        <div class="form-group">
+                            <label for="storeRegion">Country/Region</label>
+                            <input type="text" class="form-control" id="storeRegion" name="storeRegion" placeholder="e.g., MY">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveMerchant()">
+                    <i class="bi bi-check-lg"></i> Save Merchant
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h5 class="modal-title" id="deleteModalTitle">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Delete Merchant
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this merchant?</p>
+                <p class="text-muted"><strong>Merchant ID:</strong> <span id="deleteMerchantId"></span></p>
+                <p class="text-muted"><strong>Merchant Name:</strong> <span id="deleteMerchantName"></span></p>
+                <p class="text-danger"><small>This action cannot be undone.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                    <i class="bi bi-trash"></i> Delete Merchant
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    let allMerchants = [];
+    let filteredMerchants = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    let totalRecords = 0;
+    const itemsPerPage = 10;
+    let currentSearchTerm = '';
+    let currentStatusFilter = '';
+    let merchantModal = null;
+    let deleteModal = null;
+    let merchantToDelete = null;
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        merchantModal = new bootstrap.Modal(document.getElementById('merchantModal'));
+        deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        loadMerchants();
+    });
+    
+    // Load merchants from API
+    async function loadMerchants(page = 1) {
+        showTableLoading(true);
+        try {
+            const response = await fetch('/api/query/merchants');
+            const data = await response.json();
+            
+            if (data.merchants) {
+                allMerchants = data.merchants;
+                applyFilters();
+            } else {
+                console.error('Failed to load merchants:', data.error);
+            }
+        } catch (error) {
+            console.error('Error loading merchants:', error);
+        } finally {
+            showTableLoading(false);
+        }
+    }
+    
+    // Show/hide table loading state
+    function showTableLoading(show) {
+        document.getElementById('loadingState').style.display = show ? 'flex' : 'none';
+        document.getElementById('merchantsTableBody').style.display = show ? 'none' : '';
+    }
+    
+    // Apply all filters
+    function applyFilters() {
+        filteredMerchants = [...allMerchants];
+        
+        // Apply search filter
+        if (currentSearchTerm) {
+            const term = currentSearchTerm.toLowerCase();
+            filteredMerchants = filteredMerchants.filter(m => 
+                (m.merchantId && m.merchantId.toLowerCase().includes(term)) ||
+                (m.merchantName && m.merchantName.toLowerCase().includes(term)) ||
+                (m.merchantDisplayName && m.merchantDisplayName.toLowerCase().includes(term))
+            );
+        }
+        
+        // Apply status filter (if we had status field)
+        // For now, we'll skip this as the model doesn't have a status field
+        
+        // Render table
+        renderMerchants();
+    }
+    
+    // Search merchants
+    function searchMerchants() {
+        currentSearchTerm = document.getElementById('searchInput').value;
+        currentPage = 1;
+        applyFilters();
+    }
+    
+    
+    // Format date
+    function formatDate(dateString) {
+        if (!dateString) return '--';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        } catch (e) {
+            return dateString;
+        }
+    }
+    
+    // Get region from address
+    function getRegion(merchant) {
+        if (merchant.merchantAddress && merchant.merchantAddress.city) {
+            return merchant.merchantAddress.city;
+        }
+        return '--';
+    }
+    
+    // Render merchants table
+    function renderMerchants() {
+        const tbody = document.getElementById('merchantsTableBody');
+        const emptyState = document.getElementById('emptyState');
+        
+        if (filteredMerchants.length === 0) {
+            tbody.innerHTML = '';
+            emptyState.style.display = 'flex';
+            document.getElementById('resultsInfo').textContent = 'No merchants found';
+            document.getElementById('paginationContainer').style.display = 'none';
+            return;
+        }
+        
+        emptyState.style.display = 'none';
+        
+        // Calculate pagination
+        totalPages = Math.ceil(filteredMerchants.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, filteredMerchants.length);
+        const pageMerchants = filteredMerchants.slice(startIndex, endIndex);
+        
+        // Update results info
+        document.getElementById('resultsInfo').textContent = 
+            `Displaying ${startIndex + 1}-${endIndex} of ${filteredMerchants.length} merchants`;
+        
+        // Render table rows
+        tbody.innerHTML = pageMerchants.map(m => {
+            const region = getRegion(m);
+            const onboardingDate = formatDate(m.merchantRegisterDate || m.created_at);
+            
+            return `
+                <tr>
+                    <td>
+                        <span class="merchant-id">${escapeHtml(m.merchantId || '--')}</span>
+                    </td>
+                    <td>
+                        <div class="store-name-cell">
+                            <span class="store-name">${escapeHtml(m.merchantDisplayName || m.merchantName || '--')}</span>
+                            <span class="legal-name">${escapeHtml(m.merchantName || '')}</span>
+                        </div>
+                    </td>
+                    <td>${escapeHtml(m.merchantMCC || '--')}</td>
+                    <td>${escapeHtml(region)}</td>
+                    <td>
+                        <span class="currency-badge">${escapeHtml(m.currency || 'MYR')}</span>
+                    </td>
+                    <td>${escapeHtml(onboardingDate)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-edit" onclick="openEditModal('${escapeHtml(m.merchantId)}')" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn-action btn-delete" onclick="openDeleteModal('${escapeHtml(m.merchantId)}', '${escapeHtml(m.merchantDisplayName || m.merchantName)}')" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        // Update pagination
+        renderPagination();
+    }
+    
+    // Render pagination
+    function renderPagination() {
+        const container = document.getElementById('paginationContainer');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pagesContainer = document.getElementById('paginationPages');
+        
+        if (totalPages <= 1) {
+            container.style.display = 'none';
+            return;
+        }
+        
+        container.style.display = 'flex';
+        
+        // Update showing info
+        const startIndex = (currentPage - 1) * itemsPerPage + 1;
+        const endIndex = Math.min(currentPage * itemsPerPage, filteredMerchants.length);
+        document.getElementById('showingStart').textContent = startIndex;
+        document.getElementById('showingEnd').textContent = endIndex;
+        document.getElementById('totalRecords').textContent = filteredMerchants.length;
+        
+        // Update prev/next buttons
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+        
+        // Render page numbers
+        let pagesHtml = '';
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                pagesHtml += `
+                    <button class="pagination-page ${i === currentPage ? 'active' : ''}" 
+                            onclick="goToPage(${i})">${i}</button>
+                `;
+            } else if (i === currentPage - 2 || i === currentPage + 2) {
+                pagesHtml += '<span class="pagination-ellipsis">...</span>';
+            }
+        }
+        pagesContainer.innerHTML = pagesHtml;
+    }
+    
+    // Pagination navigation
+    function previousPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            renderMerchants();
+        }
+    }
+    
+    function nextPage() {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderMerchants();
+        }
+    }
+    
+    function goToPage(page) {
+        currentPage = page;
+        renderMerchants();
+    }
+    
+    // Open add modal
+    function openAddModal() {
+        document.getElementById('editMode').value = 'add';
+        document.getElementById('merchantModalTitle').innerHTML = '<i class="bi bi-shop me-2"></i>Add New Merchant';
+        document.getElementById('merchantForm').reset();
+        document.getElementById('merchantId').disabled = false;
+        merchantModal.show();
+    }
+    
+    // Open edit modal
+    function openEditModal(merchantId) {
+        const merchant = allMerchants.find(m => m.merchantId === merchantId);
+        if (!merchant) {
+            alert('Merchant not found');
+            return;
+        }
+        
+        document.getElementById('editMode').value = 'edit';
+        document.getElementById('merchantModalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Edit Merchant';
+        
+        // Fill form with merchant data
+        document.getElementById('merchantId').value = merchant.merchantId || '';
+        document.getElementById('merchantId').disabled = true; // Can't change ID
+        document.getElementById('merchantName').value = merchant.merchantName || '';
+        document.getElementById('merchantDisplayName').value = merchant.merchantDisplayName || '';
+        document.getElementById('merchantMCC').value = merchant.merchantMCC || '';
+        document.getElementById('currency').value = merchant.currency || 'MYR';
+        
+        if (merchant.merchantRegisterDate) {
+            document.getElementById('merchantRegisterDate').value = merchant.merchantRegisterDate.split('T')[0];
+        }
+        
+        // Fill address
+        if (merchant.merchantAddress) {
+            document.getElementById('address1').value = merchant.merchantAddress.address1 || '';
+            document.getElementById('address2').value = merchant.merchantAddress.address2 || '';
+            document.getElementById('city').value = merchant.merchantAddress.city || '';
+            document.getElementById('state').value = merchant.merchantAddress.state || '';
+            document.getElementById('zipCode').value = merchant.merchantAddress.zipCode || '';
+            document.getElementById('region').value = merchant.merchantAddress.region || '';
+        }
+        
+        // Fill store info
+        if (merchant.store) {
+            document.getElementById('storeReferenceId').value = merchant.store.referenceStoreId || '';
+            document.getElementById('storeName').value = merchant.store.storeName || '';
+            document.getElementById('storeMCC').value = merchant.store.storeMCC || '';
+            
+            // Fill store address
+            if (merchant.store.storeAddress) {
+                document.getElementById('storeAddress1').value = merchant.store.storeAddress.address1 || '';
+                document.getElementById('storeAddress2').value = merchant.store.storeAddress.address2 || '';
+                document.getElementById('storeCity').value = merchant.store.storeAddress.city || '';
+                document.getElementById('storeState').value = merchant.store.storeAddress.state || '';
+                document.getElementById('storeZipCode').value = merchant.store.storeAddress.zipCode || '';
+                document.getElementById('storeRegion').value = merchant.store.storeAddress.region || '';
+            }
+        }
+        
+        merchantModal.show();
+    }
+    
+    // Save merchant
+    async function saveMerchant() {
+        const form = document.getElementById('merchantForm');
+        if (!form.checkValidity()) {
+            alert('Please fill in all required fields.');
+            return;
+        }
+        
+        const editMode = document.getElementById('editMode').value;
+        
+        // Build merchant data
+        const merchantData = {
+            merchantId: document.getElementById('merchantId').value,
+            merchantName: document.getElementById('merchantName').value,
+            merchantDisplayName: document.getElementById('merchantDisplayName').value,
+            merchantMCC: document.getElementById('merchantMCC').value || '',
+            currency: document.getElementById('currency').value,
+            merchantRegisterDate: document.getElementById('merchantRegisterDate').value || null,
+            merchantAddress: {
+                address1: document.getElementById('address1').value || '',
+                address2: document.getElementById('address2').value || '',
+                city: document.getElementById('city').value || '',
+                state: document.getElementById('state').value || '',
+                zipCode: document.getElementById('zipCode').value || '',
+                region: document.getElementById('region').value || ''
+            },
+            store: {
+                referenceStoreId: document.getElementById('storeReferenceId').value || '',
+                storeName: document.getElementById('storeName').value || '',
+                storeMCC: document.getElementById('storeMCC').value || '',
+                storeAddress: {
+                    address1: document.getElementById('storeAddress1').value || '',
+                    address2: document.getElementById('storeAddress2').value || '',
+                    city: document.getElementById('storeCity').value || '',
+                    state: document.getElementById('storeState').value || '',
+                    zipCode: document.getElementById('storeZipCode').value || '',
+                    region: document.getElementById('storeRegion').value || ''
+                }
+            }
+        };
+        
+        try {
+            const csrftoken = getCookie('csrftoken');
+            const response = await fetch('/api/merchants', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify(merchantData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.result && data.result.resultStatus === 'S') {
+                merchantModal.hide();
+                loadMerchants();
+                alert(editMode === 'add' ? 'Merchant created successfully!' : 'Merchant updated successfully!');
+            } else {
+                alert('Failed to save merchant: ' + (data.result?.resultMessage || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error saving merchant:', error);
+            alert('Error saving merchant');
+        }
+    }
+    
+    // Open delete modal
+    function openDeleteModal(merchantId, merchantName) {
+        merchantToDelete = merchantId;
+        document.getElementById('deleteMerchantId').textContent = merchantId;
+        document.getElementById('deleteMerchantName').textContent = merchantName;
+        deleteModal.show();
+    }
+    
+    // Confirm delete
+    async function confirmDelete() {
+        if (!merchantToDelete) return;
+        
+        try {
+            const csrftoken = getCookie('csrftoken');
+            const response = await fetch(`/api/merchants/delete?merchantId=${encodeURIComponent(merchantToDelete)}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.message || response.ok) {
+                deleteModal.hide();
+                loadMerchants();
+                alert('Merchant deleted successfully!');
+            } else {
+                alert('Failed to delete merchant: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error deleting merchant:', error);
+            alert('Error deleting merchant');
+        }
+        
+        merchantToDelete = null;
+    }
+</script>
+{% endblock %}

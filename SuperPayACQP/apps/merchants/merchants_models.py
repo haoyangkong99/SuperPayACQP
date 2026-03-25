@@ -13,6 +13,7 @@ class Merchant(models.Model):
     merchantDisplayName = models.TextField()
     merchantRegisterDate = models.DateTimeField(null=True, blank=True)
     merchantMCC = models.TextField(blank=True)
+    currency = models.TextField(blank=True, default='MYR')  # Default currency for the merchant
     merchantAddress = models.JSONField(null=True, blank=True)
     store = models.JSONField(null=True, blank=True)
     registrationDetailLegalName = models.TextField(blank=True)

@@ -30,7 +30,9 @@ from dtos.response import (
     PaymentResponseDTO, 
     CancelPaymentResponseDTO, 
     InquiryPaymentResponseDTO,
-    NotifyPaymentResponseDTO
+    NotifyPaymentResponseDTO,
+    AlipayPayResponseDTO,
+    RefundResponseDTO
 )
 from dtos.request import RefundRequestDTO
 logger = logging.getLogger(__name__)
@@ -62,7 +64,7 @@ class DbService:
     @staticmethod
     @transaction.atomic
     def savePaymentRequest(request_dto: AlipayPayRequestDTO,
-                           response_dto: PaymentResponseDTO,
+                           response_dto: AlipayPayResponseDTO,
                            payment_request_id: str):
             status=""
             match response_dto.result.resultStatus:
@@ -216,11 +218,10 @@ class DbService:
 
             paymentRequest=PaymentRequest.objects.filter(paymentRequestId=payment_request_id).first()
             if paymentRequest:
-                paymentRequest.resultStatus=result.resultStatus.value
-                paymentRequest.resultCode=result.resultCode if result.resultCode is not None else ''
-                paymentRequest.resultMessage=result.resultMessage if result.resultMessage is not None else ''
+                paymentRequest.resultStatus=ResultStatus.FAILURE
+                paymentRequest.resultCode='ORDER_IS_CLOSED'
+                paymentRequest.resultMessage="order is closed"
                 paymentRequest.paymentStatus=PaymentStatus.CANCELLED.value
-                logger.debug(f"payment status : {paymentRequest.paymentStatus}")
                 paymentRequest.save()
 
     @staticmethod
@@ -453,7 +454,7 @@ class DbService:
     
     @staticmethod
     @transaction.atomic
-    def createRefundRecord (request_dto:RefundRequestDTO)-> RefundRecord:
+    def createRefundRecord (request_dto:RefundRequestDTO, response_dto: RefundResponseDTO)-> RefundRecord:
         paymentRequestId=request_dto.paymentRequestId
         paymentId=request_dto.paymentId
         if not request_dto.paymentRequestId and request_dto.paymentId:
@@ -461,12 +462,24 @@ class DbService:
         if not request_dto.paymentId and request_dto.paymentRequestId:
             paymentId=PaymentRequest.objects.get(paymentRequestId=request_dto.paymentRequestId).paymentId
 
+        # Extract result fields from response if available
+        resultStatus = None
+        resultCode = None
+        resultMessage = None
+        if response_dto :
+            resultStatus = response_dto.result.resultStatus
+            resultCode = response_dto.result.resultCode
+            resultMessage = response_dto.result.resultMessage
+
         record=RefundRecord.objects.create(
                     refundRequestId=request_dto.refundRequestId,
                     paymentRequestId=paymentRequestId,
                     paymentId=paymentId,
                     refundAmountValue=request_dto.refundAmount.value,
                     refundAmountCurrency=request_dto.refundAmount.currency,
-                    refundReason=request_dto.refundReason or None
+                    refundReason=request_dto.refundReason or None,
+                    resultStatus=resultStatus,
+                    resultCode=resultCode,
+                    resultMessage=resultMessage
                 )
         return record

@@ -1,122 +1,17 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+{% endblock %}
 
 {% block page_styles %}
-.container-fluid {
-    display: flex;
-    min-height: 100vh;
-}
-
-.sidebar {
-    width: 250px;
-    background-color: var(--sidebar-bg);
-    padding: 20px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    flex-shrink: 0;
-}
-
-.sidebar-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.sidebar-header .logo {
-    width: 40px;
-    height: 40px;
-    margin-right: 10px;
-}
-
-.sidebar-header h1 {
-    font-size: 18px;
-    margin: 0;
-    color: var(--text-primary);
-}
-
-.sidebar-header p {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin: 0;
-}
-
-.sidebar-nav {
-    list-style: none;
-    padding: 0;
-    margin-top: 30px;
-}
-
-.sidebar-nav li {
-    margin: 15px 0;
-}
-
-.sidebar-nav a {
-    text-decoration: none;
-    color: var(--text-primary);
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    border-radius: 8px;
-    transition: background-color 0.2s;
-}
-
-.sidebar-nav a:hover {
-    background-color: #e9ecef;
-}
-
-.sidebar-nav a.active {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.sidebar-nav i {
-    margin-right: 10px;
-    font-size: 18px;
-}
-
-.main-content {
-    flex-grow: 1;
-    padding: 30px;
-    overflow-y: auto;
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 15px;
-    background-color: #e9ecef;
-    border-radius: 8px;
-}
-
-.user-info .avatar {
-    width: 40px;
-    height: 40px;
-    background-color: var(--primary-color);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    margin-right: 15px;
-}
-
-.user-info .details h5 {
-    margin: 0;
-    font-size: 14px;
-    color: var(--text-primary);
-}
-
-.user-info .details p {
-    margin: 0;
-    font-size: 12px;
-    color: var(--text-secondary);
-}
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="sidebar">
+<div class="sidebar-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
         <div class="sidebar-header">
             <svg class="logo" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="60" height="60" rx="12" fill="#003b6b"/>
@@ -128,18 +23,21 @@
             </div>
         </div>
         
-        <ul class="sidebar-nav">
-            <li><a href="/dashboard/" {% if active_page == 'dashboard' %}class="active"{% endif %}><i class="bi bi-speedometer2"></i> Dashboard</a></li>
-            <li><a href="#" {% if active_page == 'create_order' %}class="active"{% endif %}><i class="bi bi-plus-circle"></i> Create Order</a></li>
-            <li><a href="#" {% if active_page == 'view_orders' %}class="active"{% endif %}><i class="bi bi-list-ul"></i> View Orders</a></li>
-            <li><a href="/manage-goods/" {% if active_page == 'manage_goods' %}class="active"{% endif %}><i class="bi bi-box"></i> Manage Goods</a></li>
-            <li><a href="#" {% if active_page == 'manage_merchants' %}class="active"{% endif %}><i class="bi bi-shop"></i> Manage Merchants</a></li>
-            <li><a href="/generate-code/" {% if active_page == 'generate_code' %}class="active"{% endif %}><i class="bi bi-key"></i> Generate Codes</a></li>
-            <li><a href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
-        </ul>
-    </div>
+        <nav>
+            <ul class="sidebar-nav">
+                <li><a href="/dashboard" {% if active_page == 'dashboard' %}class="active"{% endif %}><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="/create-order" {% if active_page == 'create_order' %}class="active"{% endif %}><i class="bi bi-plus-circle"></i> Create Order</a></li>
+                <li><a href="/view-orders" {% if active_page == 'view_orders' %}class="active"{% endif %}><i class="bi bi-list-ul"></i> View Orders</a></li>
+                <li><a href="/manage-goods" {% if active_page == 'manage_goods' %}class="active"{% endif %}><i class="bi bi-box"></i> Manage Goods</a></li>
+                <li><a href="/manage-merchants" {% if active_page == 'manage_merchants' %}class="active"{% endif %}><i class="bi bi-shop"></i> Manage Merchants</a></li>
+                <li><a href="/generate-code" {% if active_page == 'generate_code' %}class="active"{% endif %}><i class="bi bi-key"></i> Generate Codes</a></li>
+                <li><a href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
     
-    <div class="main-content">
+    <!-- Main Content -->
+    <main class="main-content">
         <div class="user-info">
             <div class="avatar" id="userAvatar">U</div>
             <div class="details">
@@ -149,29 +47,16 @@
         </div>
         
         {% block main_content %}{% endblock %}
-    </div>
+    </main>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Common functions
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    
-    // Load user profile
+    /**
+     * Load user profile from API
+     * @returns {Promise<Object|null>} User object or null
+     */
     async function loadUserProfile() {
         try {
             const response = await fetch('/api/auth/profile');
@@ -186,18 +71,19 @@
                 
                 return user;
             } else {
-                window.location.href = '/login/';
+                window.location.href = '/login';
             }
         } catch (error) {
             console.error('Error loading user profile:', error);
-            window.location.href = '/login/';
+            window.location.href = '/login';
         }
+        return null;
     }
     
-    // Handle logout
-    document.getElementById('logoutBtn').addEventListener('click', async function(e) {
-        e.preventDefault();
-        
+    /**
+     * Handle logout action
+     */
+    async function handleLogout() {
         showConfirmDialog({
             title: 'Logout Confirmation',
             message: 'Are you sure you want to logout? You will need to login again to access your account.',
@@ -218,12 +104,24 @@
                     console.error('Logout error:', error);
                 }
                 
-                window.location.href = '/login/';
+                window.location.href = '/login';
             }
         });
-    });
+    }
     
-    // Load profile on page load
-    loadUserProfile();
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load user profile
+        loadUserProfile();
+        
+        // Setup logout button
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleLogout();
+            });
+        }
+    });
 </script>
 {% endblock %}

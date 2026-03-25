@@ -1,0 +1,507 @@
+/* ============================================
+   Checkout Page Styles
+   ============================================
+   
+   This file contains styles for the checkout page
+   including shipping form and order summary.
+   
+   ============================================ */
+
+/* ============================================
+   Checkout Container
+   ============================================ */
+
+.checkout-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+}
+
+/* ============================================
+   Checkout Header
+   ============================================ */
+
+.checkout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.checkout-header .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.checkout-header .logo-section svg {
+    width: 40px;
+    height: 40px;
+}
+
+.checkout-header .logo-section h1 {
+    font-size: 16px;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.checkout-header .nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+.checkout-header .nav-links a {
+    font-size: 13px;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition-normal);
+}
+
+.checkout-header .nav-links a:hover {
+    text-decoration: underline;
+}
+
+/* ============================================
+   Progress Steps
+   ============================================ */
+
+.checkout-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.checkout-progress .step {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.checkout-progress .step-number {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    background-color: var(--border-color);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.checkout-progress .step.active .step-number {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.checkout-progress .step.completed .step-number {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.checkout-progress .step-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.checkout-progress .step.active .step-label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.checkout-progress .step-line {
+    width: 60px;
+    height: 2px;
+    background-color: var(--border-color);
+}
+
+.checkout-progress .step-line.completed {
+    background-color: var(--success-color);
+}
+
+/* ============================================
+   Main Content
+   ============================================ */
+
+.checkout-content {
+    display: flex;
+    gap: var(--spacing-lg);
+}
+
+/* ============================================
+   Shipping Panel
+   ============================================ */
+
+.shipping-panel {
+    flex: 1;
+    background-color: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-xl);
+}
+
+.shipping-panel h2 {
+    font-size: 20px;
+    margin: 0 0 var(--spacing-lg) 0;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.shipping-panel h2 i {
+    color: var(--primary-color);
+}
+
+/* Form Row */
+.form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* Form Group */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    color: var(--text-primary);
+    background-color: var(--bg-card);
+    transition: var(--transition-normal);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-light);
+}
+
+.btn-back {
+    padding: 12px var(--spacing-lg);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: var(--transition-normal);
+}
+
+.btn-back:hover {
+    background-color: var(--bg-item);
+}
+
+.btn-proceed {
+    padding: 12px var(--spacing-lg);
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: var(--transition-normal);
+}
+
+.btn-proceed:hover {
+    background-color: var(--primary-dark);
+}
+
+/* ============================================
+   Order Summary Panel
+   ============================================ */
+
+.summary-panel {
+    width: 400px;
+    background-color: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-xl);
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+}
+
+.summary-panel h2 {
+    font-size: 18px;
+    margin: 0 0 5px 0;
+    color: var(--text-primary);
+}
+
+.summary-panel .item-count {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================
+   Order Items Table
+   ============================================ */
+
+.order-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: var(--spacing-lg);
+}
+
+.order-items-table th {
+    text-align: left;
+    padding: 10px;
+    background-color: var(--bg-item);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.order-items-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+    color: var(--text-primary);
+    vertical-align: top;
+}
+
+.order-items-table .item-name {
+    font-weight: 500;
+}
+
+.order-items-table .item-brand {
+    font-size: 11px;
+    color: var(--text-secondary);
+    display: block;
+}
+
+.order-items-table .item-total {
+    font-weight: 600;
+    text-align: right;
+}
+
+/* ============================================
+   Summary Calculations
+   ============================================ */
+
+.summary-calculations {
+    border-top: 1px solid var(--border-light);
+    padding-top: 15px;
+}
+
+.calc-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.calc-row .label {
+    color: var(--text-secondary);
+}
+
+.calc-row .value {
+    color: var(--text-primary);
+}
+
+.calc-row.shipping .value {
+    background-color: #e0f7fa;
+    padding: 3px var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 600;
+    color: #00695c;
+}
+
+.calc-row.grand-total {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-light);
+}
+
+.calc-row.grand-total .label,
+.calc-row.grand-total .value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* ============================================
+   Member Perk
+   ============================================ */
+
+.member-perk {
+    margin-top: var(--spacing-lg);
+    padding: 15px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: var(--radius-md);
+}
+
+.member-perk h4 {
+    font-size: 12px;
+    margin: 0 0 5px 0;
+    font-weight: 600;
+}
+
+.member-perk p {
+    font-size: 13px;
+    margin: 0;
+    opacity: 0.9;
+}
+
+/* ============================================
+   Checkout Footer
+   ============================================ */
+
+.checkout-footer {
+    margin-top: 30px;
+    padding: 15px 20px;
+    background-color: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.checkout-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition-normal);
+}
+
+.checkout-footer a:hover {
+    text-decoration: underline;
+}
+
+.checkout-footer .footer-links {
+    display: flex;
+    gap: var(--spacing-lg);
+}
+
+/* ============================================
+   Empty Cart State
+   ============================================ */
+
+.empty-cart-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-cart-state i {
+    font-size: 64px;
+    color: var(--border-light);
+    margin-bottom: var(--spacing-lg);
+}
+
+.empty-cart-state h2 {
+    font-size: 24px;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.empty-cart-state p {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 992px) {
+    .checkout-content {
+        flex-direction: column;
+    }
+    
+    .summary-panel {
+        width: 100%;
+        position: static;
+    }
+    
+    .checkout-footer {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .checkout-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .checkout-header .nav-links {
+        justify-content: center;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn-back,
+    .form-actions .btn-proceed {
+        width: 100%;
+        justify-content: center;
+    }
+}

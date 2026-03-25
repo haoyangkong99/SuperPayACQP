@@ -1,0 +1,399 @@
+{% extends 'base_sidebar.html' %}
+{% load static %}
+
+{% block title %}SuperPayACQP - Create Order{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/create_order.css' %}">
+{% endblock %}
+
+{% block main_content %}
+<div class="page-header">
+    <h1>Create Order</h1>
+</div>
+
+<div class="create-order-container">
+    <!-- Product Section -->
+    <div class="product-section">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search goods by name or SKU..." oninput="filterProducts()">
+            <select id="categoryFilter" onchange="filterProducts()">
+                <option value="">All Categories</option>
+            </select>
+            <select id="sortBy" onchange="sortProducts()">
+                <option value="name">Name A-Z</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="stock-low">Stock: Low to High</option>
+            </select>
+        </div>
+        
+        <!-- Category Tabs -->
+        <div class="category-tabs" id="categoryTabs">
+            <button class="tab-btn active" data-category="" onclick="selectCategory('')">ALL ITEMS</button>
+        </div>
+        
+        <!-- Product Grid -->
+        <div class="product-grid" id="productGrid">
+            <!-- Products will be loaded here -->
+        </div>
+    </div>
+    
+    <!-- Order Summary Sidebar -->
+    <div class="order-summary">
+        <div class="order-summary-header">
+            <h2><i class="bi bi-basket3"></i> Order Summary</h2>
+            <p>Checkout for <span id="merchantName">Merchant Store</span></p>
+        </div>
+        
+        <div class="order-summary-items" id="orderItems">
+            <!-- Empty Cart State -->
+            <div class="empty-cart" id="emptyCart">
+                <i class="bi bi-cart3"></i>
+                <p>Your cart is empty</p>
+            </div>
+        </div>
+        
+        <div class="order-summary-calculations" id="orderCalculations" style="display: none;">
+            <div class="calc-row">
+                <span class="label">Subtotal</span>
+                <span class="value" id="subtotal">MYR 0.00</span>
+            </div>
+            <div class="calc-row">
+                <span class="label">Tax Amount</span>
+                <span class="value" id="taxAmount">MYR 0.00</span>
+            </div>
+            <div class="calc-row total">
+                <span class="label">Total Amount</span>
+                <span class="value" id="totalAmount">MYR 0.00</span>
+            </div>
+        </div>
+        
+        <div class="order-summary-footer">
+            <button class="checkout-btn" id="checkoutBtn" onclick="proceedToCheckout()" disabled>
+                <i class="bi bi-check-circle"></i> Finalize Checkout
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    let allProducts = [];
+    let cart = [];
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        loadProducts();
+        loadCartFromStorage();
+    });
+    
+    // Load products from API
+    async function loadProducts() {
+        showLoading('Loading products...');
+        try {
+            const response = await fetch('/api/goods/');
+            const data = await response.json();
+            
+            if (data.result && data.result.resultStatus === 'S') {
+                allProducts = data.goods || [];
+                updateCategoryTabs();
+                renderProducts();
+            } else {
+                console.error('Failed to load products:', data.result);
+            }
+        } catch (error) {
+            console.error('Error loading products:', error);
+        } finally {
+            hideLoading();
+        }
+    }
+    
+    // Update category tabs
+    function updateCategoryTabs() {
+        const categories = [...new Set(allProducts.map(p => p.goodsCategory).filter(c => c))];
+        const tabsContainer = document.getElementById('categoryTabs');
+        
+        // Keep the "ALL ITEMS" tab
+        let html = '<button class="tab-btn active" data-category="" onclick="selectCategory(\'\')">ALL ITEMS</button>';
+        
+        categories.forEach(category => {
+            html += `<button class="tab-btn" data-category="${escapeHtml(category)}" onclick="selectCategory('${escapeHtml(category)}')">${escapeHtml(category.toUpperCase())}</button>`;
+        });
+        
+        tabsContainer.innerHTML = html;
+        
+        // Update category filter dropdown
+        const filterSelect = document.getElementById('categoryFilter');
+        filterSelect.innerHTML = '<option value="">All Categories</option>';
+        categories.forEach(category => {
+            filterSelect.innerHTML += `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`;
+        });
+    }
+    
+    // Select category tab
+    function selectCategory(category) {
+        // Update active tab
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.category === category);
+        });
+        
+        // Update filter dropdown
+        document.getElementById('categoryFilter').value = category;
+        
+        filterProducts();
+    }
+    
+    // Filter products
+    function filterProducts() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const category = document.getElementById('categoryFilter').value;
+        
+        let filtered = allProducts.filter(p => {
+            const matchesSearch = p.goodsName.toLowerCase().includes(searchTerm) || 
+                                  (p.goodsBrand && p.goodsBrand.toLowerCase().includes(searchTerm));
+            const matchesCategory = !category || p.goodsCategory === category;
+            return matchesSearch && matchesCategory;
+        });
+        
+        sortProducts(filtered);
+    }
+    
+    // Sort products
+    function sortProducts(productsToSort = null) {
+        const sortBy = document.getElementById('sortBy').value;
+        let products = productsToSort || [...allProducts];
+        
+        // Apply current filter if not already filtered
+        if (!productsToSort) {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            
+            products = allProducts.filter(p => {
+                const matchesSearch = p.goodsName.toLowerCase().includes(searchTerm) || 
+                                      (p.goodsBrand && p.goodsBrand.toLowerCase().includes(searchTerm));
+                const matchesCategory = !category || p.goodsCategory === category;
+                return matchesSearch && matchesCategory;
+            });
+        }
+        
+        switch (sortBy) {
+            case 'name':
+                products.sort((a, b) => a.goodsName.localeCompare(b.goodsName));
+                break;
+            case 'price-low':
+                products.sort((a, b) => a.goodsUnitAmountValue - b.goodsUnitAmountValue);
+                break;
+            case 'price-high':
+                products.sort((a, b) => b.goodsUnitAmountValue - a.goodsUnitAmountValue);
+                break;
+            case 'stock-low':
+                products.sort((a, b) => a.stockQuantity - b.stockQuantity);
+                break;
+        }
+        
+        renderProducts(products);
+    }
+    
+    // Render products
+    function renderProducts(products = allProducts) {
+        const grid = document.getElementById('productGrid');
+        
+        if (products.length === 0) {
+            grid.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-secondary);">
+                    <i class="bi bi-box" style="font-size: 48px;"></i>
+                    <p style="margin-top: 10px;">No products found</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = products.map(product => {
+            const price = (product.goodsUnitAmountValue / 100).toFixed(2);
+            const stockStatus = product.stockQuantity === 0 ? 'out-of-stock' : 
+                               product.stockQuantity <= 10 ? 'low-stock' : 'in-stock';
+            const stockLabel = product.stockQuantity === 0 ? 'Out of Stock' : 
+                              product.stockQuantity <= 10 ? 'Low Stock' : 'In Stock';
+            const isInCart = cart.some(item => item.goodsId === product.goodsId);
+            const isDisabled = product.stockQuantity === 0;
+            
+            return `
+                <div class="product-card">
+                    <div class="product-image">
+                        <i class="bi bi-box"></i>
+                    </div>
+                    <div class="product-body">
+                        <span class="stock-status ${stockStatus}">${stockLabel}</span>
+                        <div class="product-brand">${escapeHtml(product.goodsBrand || 'Unknown Brand')}</div>
+                        <div class="product-name" title="${escapeHtml(product.goodsName)}">${escapeHtml(product.goodsName)}</div>
+                        <div class="product-price">MYR ${price}</div>
+                        <div class="product-stock">Stock: ${product.stockQuantity} units</div>
+                        <button class="add-btn" onclick="addToCart('${product.goodsId}')" ${isDisabled ? 'disabled' : ''}>
+                            ${isInCart ? '<i class="bi bi-check"></i> Added' : '<i class="bi bi-plus"></i> Add'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        grid.innerHTML = html;
+    }
+    
+    // Add to cart
+    function addToCart(goodsId) {
+        const product = allProducts.find(p => p.goodsId === goodsId);
+        if (!product) return;
+        
+        const existingItem = cart.find(item => item.goodsId === goodsId);
+        
+        if (existingItem) {
+            // Check stock
+            if (existingItem.quantity >= product.stockQuantity) {
+                alert('Cannot add more. Maximum stock reached.');
+                return;
+            }
+            existingItem.quantity++;
+        } else {
+            cart.push({
+                goodsId: product.goodsId,
+                goodsName: product.goodsName,
+                goodsBrand: product.goodsBrand || 'Unknown Brand',
+                unitPrice: product.goodsUnitAmountValue,
+                taxRate: product.taxRate || 0,
+                quantity: 1,
+                maxStock: product.stockQuantity
+            });
+        }
+        
+        saveCartToStorage();
+        updateOrderSummary();
+        renderProducts(); // Update button state
+    }
+    
+    // Update quantity
+    function updateQuantity(goodsId, delta) {
+        const item = cart.find(i => i.goodsId === goodsId);
+        if (!item) return;
+        
+        const newQty = item.quantity + delta;
+        
+        if (newQty <= 0) {
+            // Remove from cart
+            cart = cart.filter(i => i.goodsId !== goodsId);
+        } else if (newQty > item.maxStock) {
+            alert('Cannot add more. Maximum stock reached.');
+            return;
+        } else {
+            item.quantity = newQty;
+        }
+        
+        saveCartToStorage();
+        updateOrderSummary();
+        renderProducts();
+    }
+    
+    // Remove from cart
+    function removeFromCart(goodsId) {
+        cart = cart.filter(i => i.goodsId !== goodsId);
+        saveCartToStorage();
+        updateOrderSummary();
+        renderProducts();
+    }
+    
+    // Update order summary
+    function updateOrderSummary() {
+        const itemsContainer = document.getElementById('orderItems');
+        const calculationsDiv = document.getElementById('orderCalculations');
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        
+        if (cart.length === 0) {
+            itemsContainer.innerHTML = `
+                <div class="empty-cart">
+                    <i class="bi bi-cart3"></i>
+                    <p>Your cart is empty</p>
+                </div>
+            `;
+            calculationsDiv.style.display = 'none';
+            checkoutBtn.disabled = true;
+            return;
+        }
+        
+        calculationsDiv.style.display = 'block';
+        checkoutBtn.disabled = false;
+        
+        // Render cart items
+        let itemsHtml = cart.map(item => {
+            const itemTotal = item.unitPrice * item.quantity;
+            return `
+                <div class="summary-item" data-goods-id="${item.goodsId}">
+                    <div class="item-image">
+                        <i class="bi bi-box"></i>
+                    </div>
+                    <div class="item-details">
+                        <div class="item-name">${escapeHtml(item.goodsName)}</div>
+                        <div class="item-price">Unit: MYR ${(item.unitPrice / 100).toFixed(2)}</div>
+                    </div>
+                    <div class="item-quantity">
+                        <button class="qty-btn" onclick="updateQuantity('${item.goodsId}', -1)">-</button>
+                        <span class="qty-value">${item.quantity}</span>
+                        <button class="qty-btn" onclick="updateQuantity('${item.goodsId}', 1)">+</button>
+                    </div>
+                    <div class="item-total">MYR ${(itemTotal / 100).toFixed(2)}</div>
+                </div>
+            `;
+        }).join('');
+        
+        itemsContainer.innerHTML = itemsHtml;
+        
+        // Calculate totals
+        let subtotal = 0;
+        let totalTax = 0;
+        
+        cart.forEach(item => {
+            const lineTotal = item.unitPrice * item.quantity;
+            subtotal += lineTotal;
+            // Tax = unit price * quantity * tax rate / 100
+            totalTax += Math.round(item.unitPrice * item.quantity * (item.taxRate / 100));
+        });
+        
+        const total = subtotal + totalTax;
+        
+        document.getElementById('subtotal').textContent = `MYR ${(subtotal / 100).toFixed(2)}`;
+        document.getElementById('taxAmount').textContent = `MYR ${(totalTax / 100).toFixed(2)}`;
+        document.getElementById('totalAmount').textContent = `MYR ${(total / 100).toFixed(2)}`;
+    }
+    
+    // Save cart to sessionStorage
+    function saveCartToStorage() {
+        sessionStorage.setItem('orderCart', JSON.stringify(cart));
+    }
+    
+    // Load cart from sessionStorage
+    function loadCartFromStorage() {
+        const savedCart = sessionStorage.getItem('orderCart');
+        if (savedCart) {
+            cart = JSON.parse(savedCart);
+            updateOrderSummary();
+        }
+    }
+    
+    // Proceed to checkout
+    function proceedToCheckout() {
+        if (cart.length === 0) {
+            alert('Your cart is empty');
+            return;
+        }
+        
+        // Save cart to sessionStorage (already saved, but ensure it's current)
+        saveCartToStorage();
+        
+        // Redirect to checkout page
+        window.location.href = '/checkout';
+    }
+</script>
+{% endblock %}

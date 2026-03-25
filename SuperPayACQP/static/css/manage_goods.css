@@ -1,0 +1,343 @@
+/* ============================================
+   Manage Goods Page Styles
+   ============================================
+   
+   This file contains styles for the manage goods page
+   including goods table and modal forms.
+   
+   ============================================ */
+
+/* ============================================
+   Page Header
+   ============================================ */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.page-header h1 {
+    font-size: 24px;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.page-header-actions {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+/* ============================================
+   Toolbar
+   ============================================ */
+
+.toolbar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: var(--spacing-lg);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.toolbar .search-input {
+    flex: 1;
+    min-width: 200px;
+}
+
+.toolbar select {
+    min-width: 120px;
+}
+
+/* ============================================
+   Category Tabs
+   ============================================ */
+
+.category-tabs {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.category-tabs .tab-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    background-color: var(--bg-card);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-normal);
+}
+
+.category-tabs .tab-btn:hover {
+    background-color: var(--bg-item);
+}
+
+.category-tabs .tab-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* ============================================
+   Goods Table
+   ============================================ */
+
+.goods-table-container {
+    background-color: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.goods-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.goods-table th {
+    text-align: left;
+    padding: 12px 15px;
+    background-color: var(--bg-item);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.goods-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+
+.goods-table tr:hover {
+    background-color: var(--bg-item);
+}
+
+.goods-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Table Cell Styles */
+.goods-table .goods-name {
+    font-weight: 500;
+}
+
+.goods-table .goods-brand {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.goods-table .goods-price {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.goods-table .goods-category {
+    font-size: 12px;
+    background-color: var(--bg-item);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+}
+
+/* ============================================
+   Action Buttons
+   ============================================ */
+
+.action-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.btn-action {
+    padding: 6px 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-edit {
+    background-color: var(--info-bg);
+    color: var(--info-text);
+}
+
+.btn-edit:hover {
+    background-color: var(--info-color);
+    color: white;
+}
+
+.btn-delete {
+    background-color: var(--error-bg);
+    color: var(--error-text);
+}
+
+.btn-delete:hover {
+    background-color: var(--error-color);
+    color: white;
+}
+
+/* ============================================
+   Modal Styles
+   ============================================ */
+
+.modal-content {
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: var(--shadow-xl);
+}
+
+.modal-header {
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.modal-header .modal-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+.modal-body {
+    padding: var(--spacing-lg);
+}
+
+.modal-footer {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid var(--border-light);
+    background-color: var(--bg-item);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* ============================================
+   Form Styles
+   ============================================ */
+
+.goods-form .form-group {
+    margin-bottom: 15px;
+}
+
+.goods-form .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.goods-form .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    transition: var(--transition-normal);
+}
+
+.goods-form .form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 59, 107, 0.25);
+}
+
+.goods-form textarea.form-control {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Form Row */
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: var(--spacing-md);
+}
+
+.empty-state h3 {
+    font-size: 18px;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.empty-state p {
+    font-size: 14px;
+    margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 992px) {
+    .goods-table-container {
+        overflow-x: auto;
+    }
+    
+    .goods-table {
+        min-width: 800px;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-header {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .toolbar .search-input,
+    .toolbar select {
+        width: 100%;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+}

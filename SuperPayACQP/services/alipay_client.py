@@ -15,7 +15,8 @@ from dtos.response import (
     PaymentResponseDTO, 
     CancelPaymentResponseDTO, 
     RefundResponseDTO, 
-    InquiryPaymentResponseDTO
+    InquiryPaymentResponseDTO,
+    AlipayPayResponseDTO
 )
 
 logger = logging.getLogger(__name__)
@@ -200,7 +201,7 @@ class AlipayClient:
                 }
             }
     
-    def pay(self, request_dto: AlipayPayRequestDTO) -> PaymentResponseDTO:
+    def pay(self, request_dto: AlipayPayRequestDTO) -> AlipayPayResponseDTO:
         """
         Call Alipay+ Pay API
         
@@ -212,7 +213,7 @@ class AlipayClient:
         """
         payload = request_dto.to_alipay_dict()
         response_data = self._make_request(self.PAY_ENDPOINT, payload,8)
-        return PaymentResponseDTO(**response_data)
+        return AlipayPayResponseDTO(**response_data)
     
     def cancel_payment(self, request_dto: CancelPaymentRequestDTO) -> CancelPaymentResponseDTO:
         """

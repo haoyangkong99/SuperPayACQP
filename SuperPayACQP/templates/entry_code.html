@@ -1,335 +1,235 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Page - SuperPay</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .payment-card {
-            background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            max-width: 450px;
-            width: 100%;
-        }
-        .card-header-custom {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        .card-header-custom .logo {
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-        }
-        .card-header-custom h4 {
-            margin: 0;
-            font-weight: 600;
-        }
-        .card-header-custom p {
-            margin: 5px 0 0;
-            opacity: 0.8;
-            font-size: 14px;
-        }
-        .card-body-custom {
-            padding: 30px;
-        }
-        .form-label {
-            font-weight: 600;
-            color: #333;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .form-control, .form-select {
-            border-radius: 10px;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            transition: all 0.3s ease;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-        .btn-confirm {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 10px;
-            padding: 15px;
-            font-weight: 600;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-        .btn-confirm:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-        .btn-confirm:disabled {
-            opacity: 0.7;
-            transform: none;
-        }
-        .info-section {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-        }
-        .info-section i {
-            color: #667eea;
-        }
-        .error-container {
-            text-align: center;
-            padding: 40px;
-        }
-        .error-icon {
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-        }
-        .error-icon i {
-            font-size: 50px;
-            color: white;
-        }
-        .spinner-border {
-            width: 20px;
-            height: 20px;
-        }
-        .amount-input-group {
-            position: relative;
-        }
-        .currency-badge {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: #667eea;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 5px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-    </style>
-</head>
-<body>
-    <div class="payment-card">
-        {% if valid %}
-        <!-- Header -->
-        <div class="card-header-custom">
+{% extends 'base.html' %}
+{% load static %}
 
+{% block title %}SuperPayACQP - Entry Code{% endblock %}
 
-            <h4>SuperPayACQP - Entry Code</h4>
-            <p>{{ merchant_name }}</p>
-        </div>
-        
-        <!-- Body -->
-        <div class="card-body-custom">
-            <!-- Result Message -->
-            <div class="alert d-none" id="resultMessage" role="alert"></div>
-            
-            <form id="paymentForm">
-                {% csrf_token %}
-                <input type="hidden" name="merchantId" value="{{ merchant_id }}">
-                <input type="hidden" name="codeId" value="{{ code_id }}">
-                
-                <!-- Currency Selection -->
-                <div class="mb-4">
-                    <label for="currency" class="form-label">
-                        <i class="bi bi-currency-exchange me-1"></i> Currency
-                    </label>
-                    <select id="currency" name="currency" class="form-select" required>
-                        <option value="MYR">MYR - Malaysian Ringgit</option>
-                        <option value="PHP">PHP - Philippine Peso</option>
-                        <option value="USD">USD - US Dollar</option>
-                        <option value="SGD">SGD - Singapore Dollar</option>
-                        <option value="THB">THB - Thai Baht</option>
-                        <option value="CNY">CNY - Chinese Yuan</option>
-                    </select>
-                </div>
-                
-                <!-- Amount Input -->
-                <div class="mb-4">
-                    <label for="amount" class="form-label">
-                        <i class="bi bi-cash-stack me-1"></i> Transaction Amount
-                    </label>
-                    <div class="amount-input-group">
-                        <input type="text" 
-                               class="form-control" 
-                               id="amount" 
-                               name="amount" 
-                               placeholder="0.00" 
-                               required
-                               style="padding-right: 70px;">
-                        <span class="currency-badge" id="currencyBadge">MYR</span>
-                    </div>
-                    <small class="text-muted">Enter the amount you wish to pay (max 2 decimal places)</small>
-                </div>
-                
-                <!-- Confirm Button -->
-                <button type="submit" class="btn btn-primary btn-confirm" id="confirmBtn">
-                    <span class="spinner-border spinner-border-sm me-2 d-none" id="spinner"></span>
-                    <i class="bi bi-shield-check me-2"></i>Confirm
-                </button>
-            </form>
-            
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/entry_code.css' %}">
+{% endblock %}
 
+{% block content %}
+<div class="entry-card">
+    {% if valid %}
+    <!-- Header -->
+    <div class="card-header-custom">
+        <div class="logo">
+            <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" width="50" height="50">
+                <rect width="60" height="60" rx="12" fill="rgba(255,255,255,0.3)"/>
+                <path d="M15 30L25 40L45 20" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
         </div>
-        
-        {% else %}
-        <!-- Error State -->
-        <div class="error-container">
-            <div class="error-icon">
-                <i class="bi bi-x-lg"></i>
-            </div>
-            <h4 class="text-danger mb-3">Invalid Link</h4>
-            <p class="text-muted">{{ error_message }}</p>
-            <a href="javascript:history.back()" class="btn btn-outline-secondary mt-3">
-                <i class="bi bi-arrow-left me-2"></i>Go Back
-            </a>
-        </div>
-        {% endif %}
+        <h4>SuperPayACQP - Entry Code</h4>
+        <p>{{ merchant_name }}</p>
     </div>
     
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Body -->
+    <div class="card-body-custom">
+        <!-- Result Message -->
+        <div class="alert d-none" id="resultMessage" role="alert"></div>
+        
+        <form id="entryForm" class="entry-form">
+            {% csrf_token %}
+            <input type="hidden" name="merchantId" value="{{ merchant_id }}">
+            <input type="hidden" name="codeId" value="{{ code_id }}">
+            
+            <!-- Currency Selection -->
+            <div class="mb-4">
+                <label for="currency" class="form-label">
+                    <i class="bi bi-currency-exchange me-1"></i> Currency
+                </label>
+                <select id="currency" name="currency" class="form-select" required>
+                    <option value="MYR">MYR - Malaysian Ringgit</option>
+                    <option value="PHP">PHP - Philippine Peso</option>
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="SGD">SGD - Singapore Dollar</option>
+                    <option value="THB">THB - Thai Baht</option>
+                    <option value="CNY">CNY - Chinese Yuan</option>
+                </select>
+            </div>
+            
+            <!-- Amount Input -->
+            <div class="mb-4">
+                <label for="amount" class="form-label">
+                    <i class="bi bi-cash-stack me-1"></i> Transaction Amount
+                </label>
+                <div class="amount-input-group">
+                    <input type="text" 
+                           class="form-control" 
+                           id="amount" 
+                           name="amount" 
+                           placeholder="0.00" 
+                           required
+                           style="padding-right: 70px;">
+                    <span class="currency-badge" id="currencyBadge">MYR</span>
+                </div>
+                <small class="text-muted">Enter the amount you wish to pay (max 2 decimal places)</small>
+            </div>
+            
+            <!-- Confirm Button -->
+            <button type="submit" class="btn btn-primary btn-confirm" id="confirmBtn">
+                <span class="spinner-border spinner-border-sm me-2 d-none" id="spinner"></span>
+                <i class="bi bi-shield-check me-2"></i>Confirm
+            </button>
+        </form>
+    </div>
     
-    <script>
-        // Update currency badge when selection changes
-        document.getElementById('currency')?.addEventListener('change', function() {
-            document.getElementById('currencyBadge').textContent = this.value;
-        });
-        
-        // Validate and format amount input to 2 decimal places
-        document.getElementById('amount')?.addEventListener('input', function(e) {
-            let value = this.value;
-            
-            // Remove any characters that are not digits or decimal point
-            value = value.replace(/[^0-9.]/g, '');
-            
-            // Ensure only one decimal point
-            const parts = value.split('.');
-            if (parts.length > 2) {
-                value = parts[0] + '.' + parts.slice(1).join('');
-            }
-            
-            // Limit to 2 decimal places
-            if (parts.length === 2 && parts[1].length > 2) {
-                value = parts[0] + '.' + parts[1].substring(0, 2);
-            }
-            
-            this.value = value;
-        });
-        
-        // Handle form submission
-        document.getElementById('paymentForm')?.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const confirmBtn = document.getElementById('confirmBtn');
-            const spinner = document.getElementById('spinner');
-            const resultMessage = document.getElementById('resultMessage');
-            
-            // Get form data
-            const merchantId = document.querySelector('input[name="merchantId"]').value;
-            const codeId = document.querySelector('input[name="codeId"]').value;
-            const currency = document.getElementById('currency').value;
-            const amount = document.getElementById('amount').value;
-            
-            // Validate amount
-            if (!amount || parseFloat(amount) <= 0) {
-                showResult('Please enter a valid amount', 'danger');
-                return;
-            }
-            
-            // Validate decimal places
-            const decimalPart = amount.split('.')[1];
-            if (decimalPart && decimalPart.length > 2) {
-                showResult('Amount can only have up to 2 decimal places', 'danger');
-                return;
-            }
-            
-            // Show loading state
-            confirmBtn.disabled = true;
-            spinner.classList.remove('d-none');
-            resultMessage.classList.add('d-none');
-            
-            try {
-                const response = await fetch('/entry-code/confirm', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        merchantId: merchantId,
-                        codeId: codeId,
-                        currency: currency,
-                        amount: parseFloat(amount)
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.result && data.result.resultStatus === 'S') {
-                    showResult('Payment initiated successfully! Redirecting...', 'success');
-                    
-                    // Handle redirect to payment URL
-                    let paymentUrl = null;
-                    
-                    // Check for paymentUrl field
-                    if (data.paymentUrl) {
-                        paymentUrl = data.paymentUrl;
-                        console.log('Redirecting to:', paymentUrl);
-                        setTimeout(() => {
-                            window.location.href = paymentUrl;
-                        }, 1500);
-                    }
+    {% else %}
+    <!-- Error State -->
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="bi bi-x-lg"></i>
+        </div>
+        <h4 class="text-danger mb-3">Invalid Link</h4>
+        <p class="text-muted">{{ error_message }}</p>
+        <a href="javascript:history.back()" class="btn btn-outline-secondary mt-3">
+            <i class="bi bi-arrow-left me-2"></i>Go Back
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
 
-                } else {
-                    const errorMsg = data.result?.resultMessage || 'Payment failed. Please try again.';
-                    showResult(errorMsg, 'danger');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showResult('An error occurred. Please try again.', 'danger');
-            } finally {
-                confirmBtn.disabled = false;
-                spinner.classList.add('d-none');
-            }
-        });
+{% block extra_js %}
+<script>
+    /**
+     * Update currency badge when selection changes
+     */
+    function initCurrencySelector() {
+        const currencySelect = document.getElementById('currency');
+        const currencyBadge = document.getElementById('currencyBadge');
         
-        function showResult(message, type) {
-            const resultMessage = document.getElementById('resultMessage');
+        if (currencySelect && currencyBadge) {
+            currencySelect.addEventListener('change', function() {
+                currencyBadge.textContent = this.value;
+            });
+        }
+    }
+    
+    /**
+     * Validate and format amount input
+     */
+    function initAmountInput() {
+        const amountInput = document.getElementById('amount');
+        
+        if (amountInput) {
+            amountInput.addEventListener('input', function(e) {
+                let value = this.value;
+                
+                // Remove any characters that are not digits or decimal point
+                value = value.replace(/[^0-9.]/g, '');
+                
+                // Ensure only one decimal point
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                    value = parts[0] + '.' + parts.slice(1).join('');
+                }
+                
+                // Limit to 2 decimal places
+                if (parts.length === 2 && parts[1].length > 2) {
+                    value = parts[0] + '.' + parts[1].substring(0, 2);
+                }
+                
+                this.value = value;
+            });
+        }
+    }
+    
+    /**
+     * Show result message
+     * @param {string} message - Message to display
+     * @param {string} type - Alert type (success, danger, warning)
+     */
+    function showResult(message, type) {
+        const resultMessage = document.getElementById('resultMessage');
+        if (resultMessage) {
             resultMessage.textContent = message;
             resultMessage.className = `alert alert-${type}`;
             resultMessage.classList.remove('d-none');
-            
-            // Scroll to top to show message
             resultMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-    </script>
-</body>
-</html>
+    }
+    
+    /**
+     * Handle form submission
+     */
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        const confirmBtn = document.getElementById('confirmBtn');
+        const spinner = document.getElementById('spinner');
+        
+        // Get form data
+        const merchantId = document.querySelector('input[name="merchantId"]')?.value;
+        const codeId = document.querySelector('input[name="codeId"]')?.value;
+        const currency = document.getElementById('currency')?.value;
+        const amount = document.getElementById('amount')?.value;
+        
+        // Validate amount
+        if (!amount || parseFloat(amount) <= 0) {
+            showResult('Please enter a valid amount', 'danger');
+            return;
+        }
+        
+        // Validate decimal places
+        const decimalPart = amount.split('.')[1];
+        if (decimalPart && decimalPart.length > 2) {
+            showResult('Amount can only have up to 2 decimal places', 'danger');
+            return;
+        }
+        
+        // Show loading state
+        confirmBtn.disabled = true;
+        spinner.classList.remove('d-none');
+        document.getElementById('resultMessage')?.classList.add('d-none');
+        
+        try {
+            const response = await fetch('/entry-code/confirm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    merchantId: merchantId,
+                    codeId: codeId,
+                    currency: currency,
+                    amount: parseFloat(amount)
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.result && data.result.resultStatus === 'S') {
+                showResult('Payment initiated successfully! Redirecting...', 'success');
+                
+                // Handle redirect to payment URL
+                if (data.paymentUrl) {
+                    console.log('Redirecting to:', data.paymentUrl);
+                    setTimeout(() => {
+                        window.location.href = data.paymentUrl;
+                    }, 1500);
+                }
+            } else {
+                const errorMsg = data.result?.resultMessage || 'Payment failed. Please try again.';
+                showResult(errorMsg, 'danger');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showResult('An error occurred. Please try again.', 'danger');
+        } finally {
+            confirmBtn.disabled = false;
+            spinner.classList.add('d-none');
+        }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        initCurrencySelector();
+        initAmountInput();
+        
+        const entryForm = document.getElementById('entryForm');
+        if (entryForm) {
+            entryForm.addEventListener('submit', handleFormSubmit);
+        }
+    });
+</script>
+{% endblock %}

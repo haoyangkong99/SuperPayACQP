@@ -2,57 +2,29 @@
 
 {% block title %}SuperPayACQP - Register{% endblock %}
 
-{% block page_styles %}
-{{ block.super }}
-
-.password-requirements {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-top: 8px;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-}
-
-.password-requirements ul {
-    margin-bottom: 0;
-    padding-left: 20px;
-}
-
-.password-requirements li {
-    margin: 3px 0;
-}
-
-.password-requirements li.valid {
-    color: #198754;
-}
-
-.password-requirements li.invalid {
-    color: #dc3545;
-}
-{% endblock %}
-
 {% block auth_content %}
-<div class="card">
+<div class="auth-card card">
     <div class="card-body">
         <h4 class="card-title">Create Account</h4>
         <p class="card-subtitle">Enter your details to join the precision network.</p>
         
-        <div id="alert-container"></div>
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
         
-        <form id="registerForm">
+        <!-- Register Form -->
+        <form id="registerForm" class="auth-form">
             <div class="mb-3">
-                <label for="username" class="form-label">USERNAME</label>
+                <label for="username" class="form-label">Username</label>
                 <input type="text" class="form-control" id="username" name="username" placeholder="john_doe" required>
             </div>
             
             <div class="mb-3">
-                <label for="email" class="form-label">EMAIL ADDRESS</label>
+                <label for="email" class="form-label">Email Address</label>
                 <input type="email" class="form-control" id="email" name="email" placeholder="name@company.com" required>
             </div>
             
             <div class="mb-3">
-                <label for="password" class="form-label">PASSWORD</label>
+                <label for="password" class="form-label">Password</label>
                 <div class="password-wrapper">
                     <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
                     <i class="bi bi-eye-slash password-toggle"></i>
@@ -60,19 +32,20 @@
             </div>
             
             <div class="mb-3">
-                <label for="confirmPassword" class="form-label">CONFIRM PASSWORD</label>
+                <label for="confirmPassword" class="form-label">Confirm Password</label>
                 <div class="password-wrapper">
                     <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
                     <i class="bi bi-eye-slash password-toggle"></i>
                 </div>
             </div>
             
+            <!-- Password Requirements -->
             <div class="password-requirements">
-                <strong>PASSWORD REQUIREMENTS</strong>
+                <strong>Password Requirements</strong>
                 <ul>
-                    <li id="req-length">At least 8 characters</li>
-                    <li id="req-number">At least one number</li>
-                    <li id="req-special">At least one special character (!@#$%^&*)</li>
+                    <li id="req-length" class="invalid">At least 8 characters</li>
+                    <li id="req-number" class="invalid">At least one number</li>
+                    <li id="req-special" class="invalid">At least one special character (!@#$%^&*)</li>
                 </ul>
             </div>
             
@@ -82,7 +55,7 @@
         </form>
         
         <div class="auth-link">
-            Already have an account? <a href="/login/">Login</a>
+            Already have an account? <a href="/login">Login</a>
         </div>
     </div>
 </div>
@@ -91,45 +64,52 @@
 {% block extra_js %}
 {{ block.super }}
 <script>
-    // Password validation
-    const passwordInput = document.getElementById('password');
-    const reqLength = document.getElementById('req-length');
-    const reqNumber = document.getElementById('req-number');
-    const reqSpecial = document.getElementById('req-special');
+    /**
+     * Password validation state
+     */
+    const passwordRequirements = {
+        length: false,
+        number: false,
+        special: false
+    };
     
-    passwordInput.addEventListener('input', function() {
-        const password = this.value;
+    /**
+     * Validate password requirements
+     * @param {string} password - Password to validate
+     */
+    function validatePassword(password) {
+        const reqLength = document.getElementById('req-length');
+        const reqNumber = document.getElementById('req-number');
+        const reqSpecial = document.getElementById('req-special');
         
         // Check length
-        if (password.length >= 8) {
-            reqLength.classList.add('valid');
-            reqLength.classList.remove('invalid');
-        } else {
-            reqLength.classList.add('invalid');
-            reqLength.classList.remove('valid');
-        }
+        passwordRequirements.length = password.length >= 8;
+        reqLength.classList.toggle('valid', passwordRequirements.length);
+        reqLength.classList.toggle('invalid', !passwordRequirements.length);
         
         // Check number
-        if (/\d/.test(password)) {
-            reqNumber.classList.add('valid');
-            reqNumber.classList.remove('invalid');
-        } else {
-            reqNumber.classList.add('invalid');
-            reqNumber.classList.remove('valid');
-        }
+        passwordRequirements.number = /\d/.test(password);
+        reqNumber.classList.toggle('valid', passwordRequirements.number);
+        reqNumber.classList.toggle('invalid', !passwordRequirements.number);
         
         // Check special character
-        if (/[!@#$%^&*]/.test(password)) {
-            reqSpecial.classList.add('valid');
-            reqSpecial.classList.remove('invalid');
-        } else {
-            reqSpecial.classList.add('invalid');
-            reqSpecial.classList.remove('valid');
-        }
-    });
+        passwordRequirements.special = /[!@#$%^&*]/.test(password);
+        reqSpecial.classList.toggle('valid', passwordRequirements.special);
+        reqSpecial.classList.toggle('invalid', !passwordRequirements.special);
+    }
     
-    // Handle form submission
-    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+    /**
+     * Check if all password requirements are met
+     * @returns {boolean} True if all requirements are met
+     */
+    function isPasswordValid() {
+        return passwordRequirements.length && passwordRequirements.number && passwordRequirements.special;
+    }
+    
+    /**
+     * Handle register form submission
+     */
+    async function handleRegister(e) {
         e.preventDefault();
         
         const username = document.getElementById('username').value;
@@ -137,13 +117,23 @@
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
         const registerBtn = document.getElementById('registerBtn');
-        const alertContainer = document.getElementById('alert-container');
+        const alertContainer = document.getElementById('alertContainer');
         
         // Validate passwords match
         if (password !== confirmPassword) {
             alertContainer.innerHTML = `
-                <div class="alert alert-danger" role="alert">
+                <div class="alert alert-danger alert-custom" role="alert">
                     Passwords do not match.
+                </div>
+            `;
+            return;
+        }
+        
+        // Validate password requirements
+        if (!isPasswordValid()) {
+            alertContainer.innerHTML = `
+                <div class="alert alert-danger alert-custom" role="alert">
+                    Please meet all password requirements.
                 </div>
             `;
             return;
@@ -175,14 +165,14 @@
             if (response.ok) {
                 // Show success message
                 alertContainer.innerHTML = `
-                    <div class="alert alert-success" role="alert">
+                    <div class="alert alert-success alert-custom" role="alert">
                         Registration successful! Redirecting to login...
                     </div>
                 `;
                 
                 // Redirect to login
                 setTimeout(() => {
-                    window.location.href = '/login/';
+                    window.location.href = '/login';
                 }, 1500);
             } else {
                 // Show error message
@@ -191,14 +181,14 @@
                     errorMsg = errorMsg.join('<br>');
                 }
                 alertContainer.innerHTML = `
-                    <div class="alert alert-danger" role="alert">
-                        ${errorMsg}
+                    <div class="alert alert-danger alert-custom" role="alert">
+                        ${escapeHtml(errorMsg)}
                     </div>
                 `;
             }
         } catch (error) {
             alertContainer.innerHTML = `
-                <div class="alert alert-danger" role="alert">
+                <div class="alert alert-danger alert-custom" role="alert">
                     An error occurred. Please try again.
                 </div>
             `;
@@ -207,6 +197,22 @@
         // Re-enable button
         registerBtn.disabled = false;
         registerBtn.innerHTML = 'Register <i class="bi bi-arrow-right"></i>';
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordInput = document.getElementById('password');
+        const registerForm = document.getElementById('registerForm');
+        
+        if (passwordInput) {
+            passwordInput.addEventListener('input', function() {
+                validatePassword(this.value);
+            });
+        }
+        
+        if (registerForm) {
+            registerForm.addEventListener('submit', handleRegister);
+        }
     });
 </script>
 {% endblock %}

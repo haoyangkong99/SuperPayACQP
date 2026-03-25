@@ -1,0 +1,851 @@
+{% extends 'base_sidebar.html' %}
+{% load static %}
+
+{% block title %}SuperPayACQP - View Orders{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/view_orders.css' %}">
+{% endblock %}
+
+{% block main_content %}
+<div class="page-header">
+    <h1>View Orders</h1>
+    <p class="page-subtitle">Transaction Ledger - View all payment orders</p>
+</div>
+
+<!-- Search Bar -->
+<div class="search-bar">
+    <i class="bi bi-search"></i>
+    <input type="text" id="globalSearch" placeholder="Search by Order ID, Payment ID, or Payment Request ID..." oninput="searchOrders()">
+</div>
+
+<!-- Filter Tabs -->
+<div class="filter-bar">
+    <button class="filter-btn active" data-filter="all" onclick="filterByStatus('all')">
+        All Orders
+    </button>
+    <button class="filter-btn" data-filter="pending" onclick="filterByStatus('pending')">
+        <i class="bi bi-clock"></i> Pending
+    </button>
+    <button class="filter-btn" data-filter="success" onclick="filterByStatus('success')">
+        <i class="bi bi-check-circle"></i> Success
+    </button>
+    <button class="filter-btn" data-filter="failed" onclick="filterByStatus('failed')">
+        <i class="bi bi-x-circle"></i> Failed
+    </button>
+    <div class="filter-spacer"></div>
+    <select id="scenarioFilter" onchange="filterByScenario()">
+        <option value="">All Scenarios</option>
+        <option value="OrderCode">Order Code</option>
+        <option value="PaymentCode">Payment Code</option>
+        <option value="EntryCode">Entry Code</option>
+    </select>
+    <select id="sortBy" onchange="sortOrders()">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="amount-high">Amount: High to Low</option>
+        <option value="amount-low">Amount: Low to High</option>
+    </select>
+</div>
+
+<!-- Results Info -->
+<div class="results-info" id="resultsInfo">
+    Displaying 0 orders
+</div>
+
+<!-- Orders Table -->
+<div class="orders-table-container">
+    <table class="orders-table">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Payment Request ID</th>
+                <th>Amount</th>
+                <th>Scenario</th>
+                <th>Payment Time</th>
+                <th>Wallet</th>
+                <th>Status</th>
+                <th>Merchant</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="ordersTableBody">
+            <!-- Dynamic content -->
+        </tbody>
+    </table>
+    
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <i class="bi bi-receipt"></i>
+        <h3>No Orders Found</h3>
+        <p>There are no orders matching your criteria.</p>
+    </div>
+    
+    <!-- Loading State -->
+    <div class="loading-state" id="loadingState">
+        <div class="loading-spinner"></div>
+        <p>Loading orders...</p>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination-container" id="paginationContainer" style="display: none;">
+    <div class="pagination-info">
+        Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of <span id="totalRecords">0</span> entries
+    </div>
+    <div class="pagination-controls">
+        <button class="pagination-btn" id="prevBtn" onclick="previousPage()" disabled>
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <div class="pagination-pages" id="paginationPages">
+            <!-- Dynamic page numbers -->
+        </div>
+        <button class="pagination-btn" id="nextBtn" onclick="nextPage()" disabled>
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Order Detail Modal -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderDetailModalTitle">
+                    <i class="bi bi-receipt me-2"></i>Order Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="orderDetailBody">
+                <!-- Dynamic content -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    let allOrders = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    let totalRecords = 0;
+    const itemsPerPage = 10;
+    let currentStatusFilter = 'all';
+    let currentScenarioFilter = '';
+    let currentSearchTerm = '';
+    let orderDetailModal = null;
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        orderDetailModal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+        loadOrders().then(() => {
+            // Check if there's a paymentRequestId in URL and show details
+            const urlParams = new URLSearchParams(window.location.search);
+            const paymentRequestId = urlParams.get('paymentRequestId');
+            const pageParam = urlParams.get('page');
+            if (pageParam) {
+                currentPage = parseInt(pageParam) || 1;
+            }
+            if (paymentRequestId) {
+                // Find the order and show details
+                setTimeout(() => {
+                    showOrderDetail(paymentRequestId, currentPage);
+                }, 500);
+            }
+        });
+    });
+    
+    // Load orders from API with pagination
+    async function loadOrders(page = 1) {
+        showTableLoading(true);
+        try {
+            // Build query parameters
+            let queryParams = new URLSearchParams({
+                page: page,
+                page_size: itemsPerPage
+            });
+            
+            // Add search parameter
+            if (currentSearchTerm) {
+                queryParams.append('search', currentSearchTerm);
+            }
+            
+            // Add status filter
+            if (currentStatusFilter !== 'all') {
+                const statusMap = {
+                    'success': 'S',
+                    'failed': 'F',
+                    'pending': 'U'
+                };
+                if (statusMap[currentStatusFilter]) {
+                    queryParams.append('status', statusMap[currentStatusFilter]);
+                }
+            }
+            
+            // Add scenario filter
+            if (currentScenarioFilter) {
+                queryParams.append('scenario', currentScenarioFilter);
+            }
+            
+            const response = await fetch(`/api/query/payments?${queryParams.toString()}`);
+            const data = await response.json();
+            
+            if (data.payments) {
+                allOrders = data.payments;
+                currentPage = data.page;
+                totalPages = data.total_pages;
+                totalRecords = data.total;
+                renderOrders();
+            } else {
+                console.error('Failed to load orders:', data.error);
+            }
+        } catch (error) {
+            console.error('Error loading orders:', error);
+        } finally {
+            showTableLoading(false);
+        }
+    }
+    
+    // Show/hide table loading state
+    function showTableLoading(show) {
+        document.getElementById('loadingState').style.display = show ? 'flex' : 'none';
+        document.getElementById('ordersTableBody').style.display = show ? 'none' : '';
+    }
+    
+    // Apply all filters (client-side for now, reloads first page)
+    function applyFilters() {
+        loadOrders(1);
+    }
+    
+    // Filter by status
+    function filterByStatus(status) {
+        currentStatusFilter = status;
+        
+        // Update active button
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.filter === status) {
+                btn.classList.add('active');
+            }
+        });
+        
+        loadOrders(1);
+    }
+    
+    // Filter by scenario
+    function filterByScenario() {
+        currentScenarioFilter = document.getElementById('scenarioFilter').value;
+        loadOrders(1);
+    }
+    
+    // Search orders
+    function searchOrders() {
+        currentSearchTerm = document.getElementById('globalSearch').value;
+        loadOrders(1);
+    }
+    
+    // Sort orders
+    function sortOrders() {
+        loadOrders(currentPage);
+    }
+    
+    // Get status from order
+    function getStatus(order) {
+        if (order.resultStatus === 'S') return 'Success';
+        if (order.resultStatus === 'F') return 'Failed';
+        if (order.resultStatus === 'U') return 'Pending';
+        return 'Unknown';
+    }
+    
+    // Get status class
+    function getStatusClass(order) {
+        if (order.resultStatus === 'S') return 'status-success';
+        if (order.resultStatus === 'F') return 'status-failed';
+        if (order.resultStatus === 'U') return 'status-pending';
+        return 'status-unknown';
+    }
+    
+    // Format amount
+    function formatAmount(order) {
+        const value = order.paymentAmountValue || 0;
+        const currency = order.paymentAmountCurrency || 'MYR';
+        return `${currency} ${(value / 100).toFixed(2)}`;
+    }
+    
+    // Format date time
+    function formatDateTime(dateString) {
+        if (!dateString) return '--';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (e) {
+            return dateString;
+        }
+    }
+    
+    // Get scenario display name
+    function getScenarioDisplay(scenario) {
+        if (!scenario) return '--';
+        if (scenario === 'OrderCode') return 'Order Code';
+        if (scenario === 'PaymentCode') return 'Payment Code';
+        return scenario;
+    }
+    
+    // Render orders table
+    function renderOrders() {
+        const tbody = document.getElementById('ordersTableBody');
+        const emptyState = document.getElementById('emptyState');
+        
+        if (allOrders.length === 0) {
+            tbody.innerHTML = '';
+            emptyState.style.display = 'flex';
+            document.getElementById('resultsInfo').textContent = 'No orders found';
+            document.getElementById('paginationContainer').style.display = 'none';
+            return;
+        }
+        
+        emptyState.style.display = 'none';
+        
+        // Calculate display range
+        const startIndex = (currentPage - 1) * itemsPerPage + 1;
+        const endIndex = Math.min(currentPage * itemsPerPage, totalRecords);
+        
+        // Update results info
+        document.getElementById('resultsInfo').textContent = 
+            `Displaying ${startIndex}-${endIndex} of ${totalRecords} orders`;
+        
+        // Render table rows
+        tbody.innerHTML = allOrders.map(order => {
+            const status = getStatus(order);
+            const statusClass = getStatusClass(order);
+            const amount = formatAmount(order);
+            const paymentTime = formatDateTime(order.paymentTime || order.created_at);
+            const scenario = getScenarioDisplay(order.inStorePaymentScenario);
+            const orderId = order.referenceOrderId || '--';
+            const merchantId = order.merchantId || '--';
+            const walletBrand = order.walletBrandName || '--';
+            const shortPaymentId = order.paymentRequestId ? 
+                order.paymentRequestId.substring(0, 8).toUpperCase() : '--';
+            
+            return `
+                <tr onclick="showOrderDetail('${order.paymentRequestId}', ${currentPage})" style="cursor: pointer;">
+                    <td>
+                        <div class="order-id-cell">
+                            <span class="order-id">${escapeHtml(orderId.substring(0, 8).toUpperCase())}</span>
+                            <span class="order-desc">${escapeHtml(order.orderDescription || '')}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="payment-request-id" title="${escapeHtml(order.paymentRequestId)}">
+                            ${escapeHtml(shortPaymentId)}
+                        </span>
+                    </td>
+                    <td class="amount">${escapeHtml(amount)}</td>
+                    <td>${escapeHtml(scenario)}</td>
+                    <td>${escapeHtml(paymentTime)}</td>
+                    <td>
+                        <span class="wallet-badge">${escapeHtml(walletBrand)}</span>
+                    </td>
+                    <td>
+                        <span class="status-badge ${statusClass}">${escapeHtml(status)}</span>
+                    </td>
+                    <td>
+                        <span class="merchant-id">${escapeHtml(merchantId)}</span>
+                    </td>
+                    <td>
+                        <button class="btn-action btn-view" onclick="event.stopPropagation(); showOrderDetail('${order.paymentRequestId}', ${currentPage})" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        // Update pagination
+        renderPagination();
+    }
+    
+    // Render pagination
+    function renderPagination() {
+        const container = document.getElementById('paginationContainer');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pagesContainer = document.getElementById('paginationPages');
+        
+        if (totalPages <= 1) {
+            container.style.display = 'none';
+            return;
+        }
+        
+        container.style.display = 'flex';
+        
+        // Update showing info
+        const startIndex = (currentPage - 1) * itemsPerPage + 1;
+        const endIndex = Math.min(currentPage * itemsPerPage, totalRecords);
+        document.getElementById('showingStart').textContent = startIndex;
+        document.getElementById('showingEnd').textContent = endIndex;
+        document.getElementById('totalRecords').textContent = totalRecords;
+        
+        // Update prev/next buttons
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+        
+        // Render page numbers
+        let pagesHtml = '';
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                pagesHtml += `
+                    <button class="pagination-page ${i === currentPage ? 'active' : ''}" 
+                            onclick="goToPage(${i})">${i}</button>
+                `;
+            } else if (i === currentPage - 2 || i === currentPage + 2) {
+                pagesHtml += '<span class="pagination-ellipsis">...</span>';
+            }
+        }
+        pagesContainer.innerHTML = pagesHtml;
+    }
+    
+    // Pagination navigation
+    function previousPage() {
+        if (currentPage > 1) {
+            loadOrders(currentPage - 1);
+        }
+    }
+    
+    function nextPage() {
+        if (currentPage < totalPages) {
+            loadOrders(currentPage + 1);
+        }
+    }
+    
+    function goToPage(page) {
+        loadOrders(page);
+    }
+    
+    // Show order detail
+    async function showOrderDetail(paymentRequestId,currentPage) {
+        try {
+            // Fetch both payment details and refund records
+            const [paymentResponse, refundResponse] = await Promise.all([
+                fetch(`/api/query/payments/detail?paymentRequestId=${paymentRequestId}&page=${currentPage}`),
+                fetch(`/api/query/refunds?paymentRequestId=${paymentRequestId}`)
+            ]);
+            
+            const paymentData = await paymentResponse.json();
+            const refundData = await refundResponse.json();
+            
+            if (paymentData.payment) {
+                renderOrderDetail(paymentData.payment, refundData.refunds || []);
+                orderDetailModal.show();
+            } else {
+                alert('Order details not found');
+            }
+        } catch (error) {
+            console.error('Error loading order details:', error);
+            alert('Error loading order details');
+        }
+    }
+    
+    // Render order detail modal
+    function renderOrderDetail(order, refunds = []) {
+        const body = document.getElementById('orderDetailBody');
+        const status = getStatus(order);
+        const statusClass = getStatusClass(order);
+        const amount = formatAmount(order);
+        const paymentTime = formatDateTime(order.paymentTime || order.created_at);
+        const scenario = getScenarioDisplay(order.inStorePaymentScenario);
+        
+        // Build goods list
+        let goodsHtml = '';
+        if (order.order?.goods && order.order.goods.length > 0) {
+            goodsHtml = `
+                <div class="detail-section">
+                    <h6><i class="bi bi-box me-2"></i>Order Items</h6>
+                    <div class="goods-list">
+                        ${order.order.goods.map(g => `
+                            <div class="goods-item">
+                                <div class="goods-info">
+                                    <span class="goods-name">${escapeHtml(g.goodsName)}</span>
+                                    <span class="goods-brand">${escapeHtml(g.goodsBrand || 'No Brand')}</span>
+                                </div>
+                                <div class="goods-qty">x${g.goodsQuantity}</div>
+                                <div class="goods-price">${g.goodsUnitAmountCurrency || 'MYR'} ${((g.goodsUnitAmountValue || 0) / 100).toFixed(2)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Build shipping info
+        let shippingHtml = '';
+        if (order.order?.shippingAddress) {
+            const addr = order.order.shippingAddress;
+            shippingHtml = `
+                <div class="detail-section">
+                    <h6><i class="bi bi-geo-alt me-2"></i>Shipping Address</h6>
+                    <div class="shipping-info">
+                        <p><strong>${escapeHtml(order.order.shippingName?.fullName || 'N/A')}</strong></p>
+                        <p>${escapeHtml(addr.address1 || '')} ${escapeHtml(addr.address2 || '')}</p>
+                        <p>${escapeHtml(addr.city || '')}, ${escapeHtml(addr.state || '')} ${escapeHtml(addr.zipCode || '')}</p>
+                        <p>${escapeHtml(addr.region || '')}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Build refund history section
+        let refundHtml = '';
+        let accumulatedRefundAmount = 0;
+        if (refunds.length > 0) {
+            refundHtml = `
+                <div class="detail-section">
+                    <h6><i class="bi bi-arrow-counterclockwise me-2"></i>Refund History</h6>
+                    <div class="refund-list">
+                        ${refunds.map(r => {
+                            if (r.resultStatus=='S'){
+                                accumulatedRefundAmount += r.refundAmountValue || 0;
+                            }
+                            
+                            // Get refund status class
+                            const refundStatusClass = r.resultStatus === 'S' ? 'refund-status-success' : 
+                                                      r.resultStatus === 'F' ? 'refund-status-failed' : 
+                                                      'refund-status-pending';
+                            const refundStatusText = r.resultStatus === 'S' ? 'Success' : 
+                                                     r.resultStatus === 'F' ? 'Failed' : 
+                                                     r.resultStatus === 'U' ? 'Pending' : 'Unknown';
+                            return `
+                            <div class="refund-item ${refundStatusClass}">
+                                <div class="refund-info">
+                                    <div class="refund-id">
+                                        <span class="refund-label">Refund ID:</span>
+                                        <span class="refund-value">${escapeHtml(r.refundRequestId)}</span>
+                                    </div>
+                                    <div class="refund-amount">
+                                        <span class="refund-label">Amount:</span>
+                                        <span class="refund-value">${escapeHtml(r.refundAmountCurrency || 'MYR')} ${((r.refundAmountValue || 0) / 100).toFixed(2)}</span>
+                                    </div>
+                                    ${r.refundReason ? `
+                                        <div class="refund-reason">
+                                            <span class="refund-label">Reason:</span>
+                                            <span class="refund-value">${escapeHtml(r.refundReason)}</span>
+                                        </div>
+                                    ` : ''}
+                                    <div class="refund-status">
+                                        <span class="refund-label">Status:</span>
+                                        <span class="refund-value status-badge ${r.resultStatus === 'S' ? 'status-success' : r.resultStatus === 'F' ? 'status-failed' : 'status-pending'}">${refundStatusText}</span>
+                                    </div>
+                                    ${r.resultCode ? `
+                                        <div class="refund-code">
+                                            <span class="refund-label">Result Code:</span>
+                                            <span class="refund-value">${escapeHtml(r.resultCode)}</span>
+                                        </div>
+                                    ` : ''}
+                                    ${r.resultMessage ? `
+                                        <div class="refund-message">
+                                            <span class="refund-label">Message:</span>
+                                            <span class="refund-value">${escapeHtml(r.resultMessage)}</span>
+                                        </div>
+                                    ` : ''}
+                                    <div class="refund-time">
+                                        <span class="refund-label">Created:</span>
+                                        <span class="refund-value">${formatDateTime(r.created_at)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        body.innerHTML = `
+            <div class="order-detail-content">
+                <!-- Status Banner -->
+                <div class="status-banner ${statusClass}">
+                    <div class="status-icon">
+                        <i class="bi ${order.resultStatus === 'S' ? 'bi-check-circle' : order.resultStatus === 'F' ? 'bi-x-circle' : 'bi-clock'}"></i>
+                    </div>
+                    <div class="status-info">
+                        <h4>${escapeHtml(status)}</h4>
+                        <p>${escapeHtml(order.resultMessage || 'No message')}</p>
+                    </div>
+                    <div class="status-amount">
+                        <span class="amount-label">Total Amount</span>
+                        <span class="amount-value">${escapeHtml(amount)}</span>
+                    </div>
+                </div>
+                
+                <!-- Payment Info -->
+                <div class="detail-section">
+                    <h6><i class="bi bi-credit-card me-2"></i>Payment Information</h6>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Payment Request ID</span>
+                            <span class="detail-value">${escapeHtml(order.paymentRequestId)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Payment ID</span>
+                            <span class="detail-value">${escapeHtml(order.paymentId || '--')}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Payment Time</span>
+                            <span class="detail-value">${escapeHtml(paymentTime)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Payment Scenario</span>
+                            <span class="detail-value">${escapeHtml(scenario)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Wallet Brand</span>
+                            <span class="detail-value">${escapeHtml(order.walletBrandName || '--')}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Result Code</span>
+                            <span class="detail-value">${escapeHtml(order.resultCode || '--')}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Info -->
+                <div class="detail-section">
+                    <h6><i class="bi bi-bag me-2"></i>Order Information</h6>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Reference Order ID</span>
+                            <span class="detail-value">${escapeHtml(order.order?.referenceOrderId || '--')}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Order Description</span>
+                            <span class="detail-value">${escapeHtml(order.order?.orderDescription || '--')}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Merchant ID</span>
+                            <span class="detail-value">${escapeHtml(order.order?.merchantId || '--')}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Order Amount</span>
+                            <span class="detail-value">${order.order?.orderAmountCurrency || 'MYR'} ${((order.order?.orderAmountValue || 0) / 100).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                ${goodsHtml}
+                ${shippingHtml}
+                ${refundHtml}
+                
+                <!-- Action Buttons -->
+                ${buildActionButtons(order,accumulatedRefundAmount)}
+            </div>
+        `;
+    }
+    
+    // Build action buttons based on order status
+    function buildActionButtons(order,accumulatedRefundAmount) {
+        const isSuccess = order.resultStatus === 'S';
+        const isPending = order.resultStatus === 'U';
+        
+        let buttonsHtml = '';
+        
+        if (isPending || isSuccess) {
+            buttonsHtml = `
+                <div class="detail-section action-buttons-section">
+                    <h6><i class="bi bi-gear me-2"></i>Actions</h6>
+                    <div class="action-buttons-container">
+            `;
+            
+            // Cancel button - show for pending and success status
+            if (isPending || isSuccess) {
+                buttonsHtml += `
+                    <button class="btn btn-cancel" onclick="cancelPayment('${order.paymentRequestId}')">
+                        <i class="bi bi-x-circle"></i> Cancel Payment
+                    </button>
+                `;
+            }
+            
+            // Refund button - only show for success status
+            if (isSuccess) {
+                buttonsHtml += `
+                    <button class="btn btn-refund" onclick="showRefundModal('${order.paymentRequestId}', ${order.paymentAmountValue}, '${order.paymentAmountCurrency}', ${accumulatedRefundAmount})">
+                        <i class="bi bi-arrow-counterclockwise"></i> Request Refund
+                    </button>
+                `;
+            }
+            
+            buttonsHtml += `
+                    </div>
+                </div>
+            `;
+        }
+        
+        return buttonsHtml;
+    }
+    
+    // Cancel payment
+    async function cancelPayment(paymentRequestId) {
+        showConfirmDialog({
+            title: 'Cancel Payment',
+            message: 'Are you sure you want to cancel this payment? This action cannot be undone.',
+            confirmText: 'Cancel Payment',
+            confirmClass: 'btn-danger',
+            onConfirm: async function() {
+                try {
+                    const csrftoken = getCookie('csrftoken');
+                    const response = await fetch('/api/cancel-payment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken
+                        },
+                        body: JSON.stringify({
+                            paymentRequestId: paymentRequestId
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.result && data.result.resultStatus === 'S') {
+                        alert('Payment cancelled successfully');
+                        orderDetailModal.hide();
+                        loadOrders(currentPage);
+                    } else {
+                        alert('Failed to cancel payment: ' + (data.result?.resultMessage || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Error cancelling payment:', error);
+                    alert('Error cancelling payment');
+                }
+            }
+        });
+    }
+    
+    // Show refund modal
+    function showRefundModal(paymentRequestId, paymentAmountValue, paymentAmountCurrency, accumulatedRefundAmount = 0) {
+        // Calculate remaining refundable amount (both values are in cents)
+        const remainingAmountInCents = paymentAmountValue - accumulatedRefundAmount;
+        const maxRefundAmount = (remainingAmountInCents / 100).toFixed(2);
+        
+        // Create modal HTML
+        const modalHtml = `
+            <div class="modal fade" id="refundModal" tabindex="-1" aria-labelledby="refundModalTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="refundModalTitle">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>Request Refund
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="refundForm">
+                                <div class="form-group mb-3">
+                                    <label for="refundAmount">Refund Amount (${paymentAmountCurrency})</label>
+                                    <input type="number" class="form-control" id="refundAmount" name="refundAmount" 
+                                           step="0.01" min="0.01" max="${maxRefundAmount}" value="${maxRefundAmount}" required>
+                                    <small class="text-muted">Maximum refundable: ${paymentAmountCurrency} ${maxRefundAmount}</small>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="refundReason">Refund Reason</label>
+                                    <textarea class="form-control" id="refundReason" name="refundReason" rows="3" 
+                                              placeholder="Enter reason for refund"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-refund" onclick="processRefund('${paymentRequestId}', '${paymentAmountCurrency}', ${remainingAmountInCents})">
+                                <i class="bi bi-arrow-counterclockwise"></i> Process Refund
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('refundModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Show modal
+        const refundModal = new bootstrap.Modal(document.getElementById('refundModal'));
+        refundModal.show();
+    }
+    
+    // Process refund
+    async function processRefund(paymentRequestId, currency, maxRefundAmountInCents) {
+        const refundAmount = document.getElementById('refundAmount').value;
+        const refundReason = document.getElementById('refundReason').value;
+        
+        if (!refundAmount || parseFloat(refundAmount) <= 0) {
+            alert('Please enter a valid refund amount');
+            return;
+        }
+        
+        // Convert amount to cents
+        const refundAmountInCents = Math.round(parseFloat(refundAmount) * 100);
+        
+        // Validate refund amount does not exceed maximum refundable amount
+        if (refundAmountInCents > maxRefundAmountInCents) {
+            const maxRefundDisplay = (maxRefundAmountInCents / 100).toFixed(2);
+            alert(`Refund amount exceeds maximum refundable amount. Maximum allowed: ${currency} ${maxRefundDisplay}`);
+            return;
+        }
+        
+        try {
+            const csrftoken = getCookie('csrftoken');
+            const response = await fetch('/api/refund', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    paymentRequestId: paymentRequestId,
+                    refundAmount: {
+                        currency: currency,
+                        value: refundAmountInCents
+                    },
+                    refundReason: refundReason || 'Customer request'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.result && data.result.resultStatus === 'S') {
+                // Close refund modal
+                const refundModalEl = document.getElementById('refundModal');
+                const refundModal = bootstrap.Modal.getInstance(refundModalEl);
+                refundModal.hide();
+                
+                alert('Refund processed successfully');
+                
+                // Refresh order details
+                showOrderDetail(paymentRequestId, currentPage);
+            } else {
+                alert('Failed to process refund: ' + (data.result?.resultMessage || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error processing refund:', error);
+            alert('Error processing refund');
+        }
+    }
+</script>
+{% endblock %}

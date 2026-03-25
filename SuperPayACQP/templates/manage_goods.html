@@ -1,368 +1,11 @@
 {% extends 'base_sidebar.html' %}
+{% load static %}
 
 {% block title %}SuperPayACQP - Manage Goods{% endblock %}
 
-{% block page_styles %}
+{% block extra_css %}
 {{ block.super }}
-
-.page-header {
-    margin-bottom: 30px;
-}
-
-.page-header h1 {
-    font-size: 28px;
-    margin: 0 0 10px 0;
-    color: var(--text-primary);
-}
-
-.page-header p {
-    margin: 0;
-    font-size: 14px;
-    color: var(--text-secondary);
-}
-
-/* Toolbar */
-.toolbar {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.toolbar .btn-add {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: background-color 0.2s;
-}
-
-.toolbar .btn-add:hover {
-    background-color: var(--primary-dark);
-}
-
-.toolbar select {
-    padding: 10px 15px;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    font-size: 14px;
-    color: var(--text-primary);
-    background-color: white;
-    cursor: pointer;
-}
-
-.toolbar .results-info {
-    margin-left: auto;
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-/* Table */
-.goods-table-container {
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    overflow: hidden;
-}
-
-.goods-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.goods-table th {
-    background-color: #f8f9fa;
-    padding: 15px;
-    text-align: left;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.goods-table td {
-    padding: 15px;
-    border-bottom: 1px solid #dee2e6;
-    font-size: 14px;
-    color: var(--text-primary);
-}
-
-.goods-table tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-.goods-table .goods-id {
-    font-family: monospace;
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-.goods-table .goods-name-cell {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.goods-table .goods-image {
-    width: 50px;
-    height: 50px;
-    background-color: #e9ecef;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-}
-
-.goods-table .goods-name {
-    font-weight: 500;
-}
-
-.goods-table .goods-brand {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.goods-table .category-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    background-color: #e9ecef;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-}
-
-.goods-table .price {
-    font-weight: 600;
-}
-
-.goods-table .stock {
-    font-weight: 500;
-}
-
-.goods-table .stock.low {
-    color: #dc3545;
-}
-
-.goods-table .stock.critical {
-    color: #dc3545;
-    font-weight: bold;
-}
-
-.goods-table .tax-status {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.goods-table .tax-status.taxable {
-    background-color: #d1ecf1;
-    color: #0c5460;
-}
-
-.goods-table .tax-status.exempted {
-    background-color: #fff3cd;
-    color: #856404;
-}
-
-.goods-table .tax-status.suspended {
-    background-color: #f8d7da;
-    color: #721c24;
-}
-
-.goods-table .actions {
-    display: flex;
-    gap: 8px;
-}
-
-.goods-table .actions button {
-    background: none;
-    border: none;
-    padding: 8px;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: background-color 0.2s;
-}
-
-.goods-table .actions button:hover {
-    background-color: #e9ecef;
-}
-
-.goods-table .actions .btn-edit {
-    color: var(--primary-color);
-}
-
-.goods-table .actions .btn-delete {
-    color: #dc3545;
-}
-
-/* Pagination */
-.pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    padding: 20px;
-}
-
-.pagination a, .pagination span {
-    padding: 8px 12px;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    text-decoration: none;
-    color: var(--text-primary);
-    font-size: 14px;
-}
-
-.pagination a:hover {
-    background-color: #e9ecef;
-}
-
-.pagination a.active {
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-}
-
-/* Modal */
-.modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-overlay.active {
-    display: flex;
-}
-
-.modal-content {
-    background-color: white;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.modal-header {
-    padding: 20px;
-    border-bottom: 1px solid #dee2e6;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.modal-header h3 {
-    margin: 0;
-    font-size: 18px;
-    color: var(--text-primary);
-}
-
-.modal-header .close-btn {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: var(--text-secondary);
-}
-
-.modal-body {
-    padding: 20px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.form-group input, .form-group select {
-    width: 100%;
-    padding: 10px 15px;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    font-size: 14px;
-}
-
-.form-group input:focus, .form-group select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-}
-
-.modal-footer {
-    padding: 20px;
-    border-top: 1px solid #dee2e6;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
-.modal-footer .btn {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.modal-footer .btn-secondary {
-    background-color: #e9ecef;
-    border: none;
-    color: var(--text-primary);
-}
-
-.modal-footer .btn-primary {
-    background-color: var(--primary-color);
-    border: none;
-    color: white;
-}
-
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-secondary);
-}
-
-.empty-state i {
-    font-size: 48px;
-    margin-bottom: 20px;
-}
-
-.empty-state h3 {
-    margin: 0 0 10px 0;
-    color: var(--text-primary);
-}
-
-.empty-state p {
-    margin: 0;
-}
+<link rel="stylesheet" href="{% static 'css/manage_goods.css' %}">
 {% endblock %}
 
 {% block main_content %}
@@ -372,7 +15,7 @@
 
 <!-- Toolbar -->
 <div class="toolbar">
-    <button class="btn-add" onclick="openAddModal()">
+    <button class="btn btn-primary" onclick="openAddModal()">
         <i class="bi bi-plus-lg"></i> Add Goods
     </button>
     <select id="categoryFilter" onchange="filterGoods()">
@@ -417,59 +60,64 @@
 </div>
 
 <!-- Add/Edit Modal -->
-<div class="modal-overlay" id="goodsModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="modalTitle">Add New Goods</h3>
-            <button class="close-btn" onclick="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="goodsForm">
-                <input type="hidden" id="goodsId" name="goodsId">
-                
-                <div class="form-group">
-                    <label for="goodsName">Goods Name *</label>
-                    <input type="text" id="goodsName" name="goodsName" required placeholder="Enter goods name">
-                </div>
-                
-                <div class="form-group">
-                    <label for="goodsCategory">Category</label>
-                    <input type="text" id="goodsCategory" name="goodsCategory" placeholder="Enter category">
-                </div>
-                
-                <div class="form-group">
-                    <label for="goodsBrand">Brand</label>
-                    <input type="text" id="goodsBrand" name="goodsBrand" placeholder="Enter brand name">
-                </div>
-                
-                <div class="form-group">
-                    <label for="goodsUnitAmountValue">Price (in cents) *</label>
-                    <input type="number" id="goodsUnitAmountValue" name="goodsUnitAmountValue" required placeholder="e.g., 10000 for MYR 100.00">
-                </div>
-                
-                <div class="form-group">
-                    <label for="goodsUnitAmountCurrency">Currency</label>
-                    <select id="goodsUnitAmountCurrency" name="goodsUnitAmountCurrency">
-                        <option value="MYR">MYR - Malaysian Ringgit</option>
-                        <option value="USD">USD - US Dollar</option>
-                        <option value="SGD">SGD - Singapore Dollar</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="stockQuantity">Stock Quantity</label>
-                    <input type="number" id="stockQuantity" name="stockQuantity" placeholder="Enter stock quantity" value="0">
-                </div>
-                
-                <div class="form-group">
-                    <label for="taxRate">Tax Rate (%)</label>
-                    <input type="number" id="taxRate" name="taxRate" step="0.01" placeholder="e.g., 6.00" value="0">
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="saveGoods()">Save Goods</button>
+<div class="modal fade" id="goodsModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Add New Goods</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="goodsForm" class="goods-form">
+                    <input type="hidden" id="goodsId" name="goodsId">
+                    
+                    <div class="form-group">
+                        <label for="goodsName">Goods Name *</label>
+                        <input type="text" class="form-control" id="goodsName" name="goodsName" required placeholder="Enter goods name">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="goodsCategory">Category</label>
+                            <input type="text" class="form-control" id="goodsCategory" name="goodsCategory" placeholder="Enter category">
+                        </div>
+                        <div class="form-group">
+                            <label for="goodsBrand">Brand</label>
+                            <input type="text" class="form-control" id="goodsBrand" name="goodsBrand" placeholder="Enter brand name">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="goodsUnitAmountValue">Price (in cents) *</label>
+                            <input type="number" class="form-control" id="goodsUnitAmountValue" name="goodsUnitAmountValue" required placeholder="e.g., 10000 for MYR 100.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="goodsUnitAmountCurrency">Currency</label>
+                            <select class="form-control" id="goodsUnitAmountCurrency" name="goodsUnitAmountCurrency">
+                                <option value="MYR">MYR - Malaysian Ringgit</option>
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="SGD">SGD - Singapore Dollar</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="stockQuantity">Stock Quantity</label>
+                            <input type="number" class="form-control" id="stockQuantity" name="stockQuantity" placeholder="Enter stock quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="taxRate">Tax Rate (%)</label>
+                            <input type="number" class="form-control" id="taxRate" name="taxRate" step="0.01" placeholder="e.g., 6.00" value="0">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveGoods()">Save Goods</button>
+            </div>
         </div>
     </div>
 </div>
@@ -480,9 +128,11 @@
 <script>
     let goodsList = [];
     let categories = new Set();
+    let goodsModal = null;
     
     // Load goods on page load
     document.addEventListener('DOMContentLoaded', function() {
+        goodsModal = new bootstrap.Modal(document.getElementById('goodsModal'));
         loadGoods();
     });
     
@@ -562,10 +212,10 @@
                     <td class="stock ${stockClass}">${goods.stockQuantity}</td>
                     <td><span class="tax-status ${taxStatus}">${taxLabel}</span></td>
                     <td class="actions">
-                        <button class="btn-edit" onclick="editGoods('${goods.goodsId}')" title="Edit">
+                        <button class="btn-action btn-edit" onclick="editGoods('${goods.goodsId}')" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn-delete" onclick="deleteGoods('${goods.goodsId}')" title="Delete">
+                        <button class="btn-action btn-delete" onclick="deleteGoods('${goods.goodsId}')" title="Delete">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -626,7 +276,7 @@
         document.getElementById('modalTitle').textContent = 'Add New Goods';
         document.getElementById('goodsForm').reset();
         document.getElementById('goodsId').value = '';
-        document.getElementById('goodsModal').classList.add('active');
+        goodsModal.show();
     }
     
     // Edit goods
@@ -644,12 +294,7 @@
         document.getElementById('stockQuantity').value = goods.stockQuantity;
         document.getElementById('taxRate').value = goods.taxRate;
         
-        document.getElementById('goodsModal').classList.add('active');
-    }
-    
-    // Close modal
-    function closeModal() {
-        document.getElementById('goodsModal').classList.remove('active');
+        goodsModal.show();
     }
     
     // Save goods
@@ -694,7 +339,7 @@
             const result = await response.json();
             
             if (result.result && result.result.resultStatus === 'S') {
-                closeModal();
+                goodsModal.hide();
                 loadGoods(); // Reload the list
             } else {
                 hideLoading();
@@ -742,20 +387,5 @@
             }
         });
     }
-    
-    // Escape HTML to prevent XSS
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    // Close modal on outside click
-    document.getElementById('goodsModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeModal();
-        }
-    });
 </script>
 {% endblock %}

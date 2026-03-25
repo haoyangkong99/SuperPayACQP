@@ -14,6 +14,9 @@ class RefundRecord(models.Model):
     refundAmountValue = models.IntegerField()
     refundAmountCurrency = models.TextField()
     refundReason = models.TextField(blank=True,null=True)
+    resultStatus = models.TextField(blank=True, null=True)  # S=Success, F=Failed, U=Unknown/Pending
+    resultCode = models.TextField(blank=True, null=True)
+    resultMessage = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

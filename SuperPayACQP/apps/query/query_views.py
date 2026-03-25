@@ -22,12 +22,75 @@ class PaymentListView(APIView):
     """
     GET /api/query/payments
     Returns all payment request records joined with Orders table
+    
+    Query Parameters:
+    - page: Page number (default: 1)
+    - page_size: Number of items per page (default: 10, max: 100)
+    - search: Search term for order ID, payment request ID, merchant ID, or payment ID
+    - status: Filter by result status (S, F, U)
+    - scenario: Filter by in-store payment scenario (OrderCode, PaymentCode)
     """
     
     def get(self, request):
         try:
+            # Get pagination parameters
+            page = int(request.query_params.get('page', 1))
+            page_size = int(request.query_params.get('page_size', 10))
+            
+            # Get filter parameters
+            search = request.query_params.get('search', '').strip()
+            status_filter = request.query_params.get('status', '').strip()
+            scenario_filter = request.query_params.get('scenario', '').strip()
+            
+            # Validate pagination parameters
+            if page < 1:
+                page = 1
+            if page_size < 1:
+                page_size = 10
+            if page_size > 100:
+                page_size = 100
+            
             # Query all payment requests with related orders
             payment_requests = PaymentRequest.objects.all().order_by('-created_at')
+            
+            # Apply status filter
+            if status_filter:
+                payment_requests = payment_requests.filter(resultStatus=status_filter)
+            
+            # Apply scenario filter
+            if scenario_filter:
+                payment_requests = payment_requests.filter(inStorePaymentScenario=scenario_filter)
+            
+            # Apply search filter
+            if search:
+                # Get payment request IDs that match via order
+                matching_order_ids = Order.objects.filter(
+                    referenceOrderId__icontains=search
+                ).values_list('paymentRequestId', flat=True)
+                
+                matching_merchant_ids = Order.objects.filter(
+                    merchantId__icontains=search
+                ).values_list('paymentRequestId', flat=True)
+                
+                # Filter by payment request ID, payment ID, or related order IDs
+                from django.db.models import Q
+                payment_requests = payment_requests.filter(
+                    Q(paymentRequestId__icontains=search) |
+                    Q(paymentId__icontains=search) |
+                    Q(paymentRequestId__in=matching_order_ids) |
+                    Q(paymentRequestId__in=matching_merchant_ids)
+                )
+            
+            # Get total count before pagination
+            total_count = payment_requests.count()
+            
+            # Calculate pagination
+            total_pages = (total_count + page_size - 1) // page_size if total_count > 0 else 1
+            start_index = (page - 1) * page_size
+            end_index = start_index + page_size
+            
+            # Apply pagination
+            payment_requests = payment_requests[start_index:end_index]
             
             payments_data = []
             for pr in payment_requests:
@@ -39,25 +102,15 @@ class PaymentListView(APIView):
                     'acquirerId': pr.acquirerId,
                     'paymentAmountValue': pr.paymentAmountValue,
                     'paymentAmountCurrency': pr.paymentAmountCurrency,
-                    'paymentMethodType': pr.paymentMethodType,
                     'paymentMethodId': pr.paymentMethodId,
                     'customerId': pr.customerId,
-                    'paymentMethodMetaData': pr.paymentMethodMetaData,
                     'isInStorePayment': pr.isInStorePayment,
                     'isCashierPayment': pr.isCashierPayment,
                     'inStorePaymentScenario': pr.inStorePaymentScenario,
-                    'paymentExpiryTime': pr.paymentExpiryTime.isoformat() if pr.paymentExpiryTime else None,
-                    'paymentNotifyUrl': pr.paymentNotifyUrl,
-                    'paymentRedirectUrl': pr.paymentRedirectUrl,
-                    'splitSettlementId': pr.splitSettlementId,
-                    'settlementStrategy': pr.settlementStrategy,
                     'paymentId': pr.paymentId,
                     'paymentTime': pr.paymentTime.isoformat() if pr.paymentTime else None,
-                    'pspId': pr.pspId,
                     'walletBrandName': pr.walletBrandName,
                     'mppPaymentId': pr.mppPaymentId,
-                    'customsDeclarationAmountValue': pr.customsDeclarationAmountValue,
-                    'customsDeclarationAmountCurrency': pr.customsDeclarationAmountCurrency,
                     'resultStatus': pr.resultStatus,
                     'resultCode': pr.resultCode,
                     'resultMessage': pr.resultMessage,
@@ -68,33 +121,23 @@ class PaymentListView(APIView):
                 }
                 
                 if order:
-                    payment_dict['order'] = {
-                        'orderId': order.orderId,
-                        'paymentRequestId': order.paymentRequestId,
-                        'referenceOrderId': order.referenceOrderId,
-                        'orderDescription': order.orderDescription,
-                        'orderAmountValue': order.orderAmountValue,
-                        'orderAmountCurrency': order.orderAmountCurrency,
-                        'merchantId': order.merchantId,
-                        'shippingName': order.shippingName,
-                        'shippingPhoneNo': order.shippingPhoneNo,
-                        'shippingAddress': order.shippingAddress,
-                        'shippingCarrier': order.shippingCarrier,
-                        'referenceBuyerId': order.referenceBuyerId,
-                        'buyerName': order.buyerName,
-                        'buyerPhoneNo': order.buyerPhoneNo,
-                        'buyerEmail': order.buyerEmail,
-                        'env': order.env,
-                        'indirectAcquirer': order.indirectAcquirer,
-                        'created_at': order.created_at.isoformat() if order.created_at else None,
-                        'updated_at': order.updated_at.isoformat() if order.updated_at else None,
-                    }
+                    payment_dict['orderId'] = order.orderId
+                    payment_dict['referenceOrderId'] = order.referenceOrderId
+                    payment_dict['orderDescription'] = order.orderDescription
+                    payment_dict['orderAmountValue'] = order.orderAmountValue
+                    payment_dict['orderAmountCurrency'] = order.orderAmountCurrency
+                    payment_dict['merchantId'] = order.merchantId
                 
                 payments_data.append(payment_dict)
             
             return Response({
                 'payments': payments_data,
-                'total': len(payments_data)
+                'total': total_count,
+                'page': page,
+                'page_size': page_size,
+                'total_pages': total_pages,
+                'has_next': page < total_pages,
+                'has_previous': page > 1
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -271,16 +314,9 @@ class MerchantQueryView(APIView):
                     'merchantDisplayName': merchant.merchantDisplayName,
                     'merchantRegisterDate': merchant.merchantRegisterDate.isoformat() if merchant.merchantRegisterDate else None,
                     'merchantMCC': merchant.merchantMCC,
+                    'currency': merchant.currency,
                     'merchantAddress': merchant.merchantAddress,
                     'store': merchant.store,
-                    'registrationDetailLegalName': merchant.registrationDetailLegalName,
-                    'registrationDetailRegistrationType': merchant.registrationDetailRegistrationType,
-                    'registrationDetailRegistrationNo': merchant.registrationDetailRegistrationNo,
-                    'registrationDetailRegistrationAddress': merchant.registrationDetailRegistrationAddress,
-                    'registrationDetailBusinessType': merchant.registrationDetailBusinessType,
-                    'websites': merchant.websites,
-                    'productCodes': merchant.productCodes,
-                    'registrationNotifyUrl': merchant.registrationNotifyUrl,
                     'created_at': merchant.created_at.isoformat() if merchant.created_at else None,
                     'updated_at': merchant.updated_at.isoformat() if merchant.updated_at else None,
                 }]
@@ -295,16 +331,9 @@ class MerchantQueryView(APIView):
                         'merchantDisplayName': m.merchantDisplayName,
                         'merchantRegisterDate': m.merchantRegisterDate.isoformat() if m.merchantRegisterDate else None,
                         'merchantMCC': m.merchantMCC,
+                        'currency': m.currency,
                         'merchantAddress': m.merchantAddress,
                         'store': m.store,
-                        'registrationDetailLegalName': m.registrationDetailLegalName,
-                        'registrationDetailRegistrationType': m.registrationDetailRegistrationType,
-                        'registrationDetailRegistrationNo': m.registrationDetailRegistrationNo,
-                        'registrationDetailRegistrationAddress': m.registrationDetailRegistrationAddress,
-                        'registrationDetailBusinessType': m.registrationDetailBusinessType,
-                        'websites': m.websites,
-                        'productCodes': m.productCodes,
-                        'registrationNotifyUrl': m.registrationNotifyUrl,
                         'created_at': m.created_at.isoformat() if m.created_at else None,
                         'updated_at': m.updated_at.isoformat() if m.updated_at else None,
                     })
@@ -321,129 +350,96 @@ class MerchantQueryView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class MerchantUpdateView(APIView):
-    """
-    PUT /api/query/merchants/update
-    Update a specific merchant by ID
-    Query params: merchantId (required)
-    Request body: fields to update
-    """
+# @method_decorator(csrf_exempt, name='dispatch')
+# class MerchantUpdateView(APIView):
+#     """
+#     PUT /api/query/merchants/update
+#     Update a specific merchant by ID
+#     Query params: merchantId (required)
+#     Request body: fields to update
+#     """
     
-    def put(self, request):
-        merchant_id = request.query_params.get('merchantId')
+#     def put(self, request):
+#         merchant_id = request.query_params.get('merchantId')
         
-        if not merchant_id:
-            return Response({
-                'error': 'merchantId is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
+#         if not merchant_id:
+#             return Response({
+#                 'error': 'merchantId is required'
+#             }, status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            merchant = Merchant.objects.filter(merchantId=merchant_id).first()
-            if not merchant:
-                return Response({
-                    'error': 'Merchant not found'
-                }, status=status.HTTP_404_NOT_FOUND)
+#         try:
+#             merchant = Merchant.objects.filter(merchantId=merchant_id).first()
+#             if not merchant:
+#                 return Response({
+#                     'error': 'Merchant not found'
+#                 }, status=status.HTTP_404_NOT_FOUND)
             
-            # Update fields if provided in request body
-            data = request.data
+#             # Update fields if provided in request body
+#             data = request.data
             
-            if 'merchantName' in data:
-                merchant.merchantName = data['merchantName']
-            if 'merchantDisplayName' in data:
-                merchant.merchantDisplayName = data['merchantDisplayName']
-            if 'merchantRegisterDate' in data:
-                merchant.merchantRegisterDate = data['merchantRegisterDate']
-            if 'merchantMCC' in data:
-                merchant.merchantMCC = data['merchantMCC']
-            if 'merchantAddress' in data:
-                merchant.merchantAddress = data['merchantAddress']
-            if 'store' in data:
-                merchant.store = data['store']
-            if 'registrationDetailLegalName' in data:
-                merchant.registrationDetailLegalName = data['registrationDetailLegalName']
-            if 'registrationDetailRegistrationType' in data:
-                merchant.registrationDetailRegistrationType = data['registrationDetailRegistrationType']
-            if 'registrationDetailRegistrationNo' in data:
-                merchant.registrationDetailRegistrationNo = data['registrationDetailRegistrationNo']
-            if 'registrationDetailRegistrationAddress' in data:
-                merchant.registrationDetailRegistrationAddress = data['registrationDetailRegistrationAddress']
-            if 'registrationDetailBusinessType' in data:
-                merchant.registrationDetailBusinessType = data['registrationDetailBusinessType']
-            if 'websites' in data:
-                merchant.websites = data['websites']
-            if 'productCodes' in data:
-                merchant.productCodes = data['productCodes']
-            if 'registrationNotifyUrl' in data:
-                merchant.registrationNotifyUrl = data['registrationNotifyUrl']
+#             if 'merchantName' in data:
+#                 merchant.merchantName = data['merchantName']
+#             if 'merchantDisplayName' in data:
+#                 merchant.merchantDisplayName = data['merchantDisplayName']
+#             if 'merchantRegisterDate' in data:
+#                 merchant.merchantRegisterDate = data['merchantRegisterDate']
+#             if 'merchantMCC' in data:
+#                 merchant.merchantMCC = data['merchantMCC']
+#             if 'merchantAddress' in data:
+#                 merchant.merchantAddress = data['merchantAddress']
+#             if 'store' in data:
+#                 merchant.store = data['store']
+#             if 'registrationDetailLegalName' in data:
+#                 merchant.registrationDetailLegalName = data['registrationDetailLegalName']
+#             if 'registrationDetailRegistrationType' in data:
+#                 merchant.registrationDetailRegistrationType = data['registrationDetailRegistrationType']
+#             if 'registrationDetailRegistrationNo' in data:
+#                 merchant.registrationDetailRegistrationNo = data['registrationDetailRegistrationNo']
+#             if 'registrationDetailRegistrationAddress' in data:
+#                 merchant.registrationDetailRegistrationAddress = data['registrationDetailRegistrationAddress']
+#             if 'registrationDetailBusinessType' in data:
+#                 merchant.registrationDetailBusinessType = data['registrationDetailBusinessType']
+#             if 'websites' in data:
+#                 merchant.websites = data['websites']
+#             if 'productCodes' in data:
+#                 merchant.productCodes = data['productCodes']
+#             if 'registrationNotifyUrl' in data:
+#                 merchant.registrationNotifyUrl = data['registrationNotifyUrl']
             
-            merchant.save()
+#             merchant.save()
             
-            return Response({
-                'message': 'Merchant updated successfully',
-                'merchant': {
-                    'merchantId': merchant.merchantId,
-                    'merchantName': merchant.merchantName,
-                    'merchantDisplayName': merchant.merchantDisplayName,
-                    'merchantRegisterDate': merchant.merchantRegisterDate.isoformat() if merchant.merchantRegisterDate else None,
-                    'merchantMCC': merchant.merchantMCC,
-                    'merchantAddress': merchant.merchantAddress,
-                    'store': merchant.store,
-                    'registrationDetailLegalName': merchant.registrationDetailLegalName,
-                    'registrationDetailRegistrationType': merchant.registrationDetailRegistrationType,
-                    'registrationDetailRegistrationNo': merchant.registrationDetailRegistrationNo,
-                    'registrationDetailRegistrationAddress': merchant.registrationDetailRegistrationAddress,
-                    'registrationDetailBusinessType': merchant.registrationDetailBusinessType,
-                    'websites': merchant.websites,
-                    'productCodes': merchant.productCodes,
-                    'registrationNotifyUrl': merchant.registrationNotifyUrl,
-                    'created_at': merchant.created_at.isoformat() if merchant.created_at else None,
-                    'updated_at': merchant.updated_at.isoformat() if merchant.updated_at else None,
-                }
-            }, status=status.HTTP_200_OK)
+#             return Response({
+#                 'message': 'Merchant updated successfully',
+#                 'merchant': {
+#                     'merchantId': merchant.merchantId,
+#                     'merchantName': merchant.merchantName,
+#                     'merchantDisplayName': merchant.merchantDisplayName,
+#                     'merchantRegisterDate': merchant.merchantRegisterDate.isoformat() if merchant.merchantRegisterDate else None,
+#                     'merchantMCC': merchant.merchantMCC,
+#                     'merchantAddress': merchant.merchantAddress,
+#                     'store': merchant.store,
+#                     'registrationDetailLegalName': merchant.registrationDetailLegalName,
+#                     'registrationDetailRegistrationType': merchant.registrationDetailRegistrationType,
+#                     'registrationDetailRegistrationNo': merchant.registrationDetailRegistrationNo,
+#                     'registrationDetailRegistrationAddress': merchant.registrationDetailRegistrationAddress,
+#                     'registrationDetailBusinessType': merchant.registrationDetailBusinessType,
+#                     'websites': merchant.websites,
+#                     'productCodes': merchant.productCodes,
+#                     'registrationNotifyUrl': merchant.registrationNotifyUrl,
+#                     'created_at': merchant.created_at.isoformat() if merchant.created_at else None,
+#                     'updated_at': merchant.updated_at.isoformat() if merchant.updated_at else None,
+#                 }
+#             }, status=status.HTTP_200_OK)
             
-        except Exception as e:
-            logger.error(f"Error updating merchant: {e}")
-            return Response({
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#         except Exception as e:
+#             logger.error(f"Error updating merchant: {e}")
+#             return Response({
+#                 'error': str(e)
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class MerchantDeleteView(APIView):
-    """
-    DELETE /api/query/merchants/delete
-    Delete a specific merchant by ID
-    Query params: merchantId (required)
-    """
-    
-    def delete(self, request):
-        merchant_id = request.query_params.get('merchantId')
-        
-        if not merchant_id:
-            return Response({
-                'error': 'merchantId is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            merchant = Merchant.objects.filter(merchantId=merchant_id).first()
-            if not merchant:
-                return Response({
-                    'error': 'Merchant not found'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            merchant.delete()
-            
-            return Response({
-                'message': 'Merchant deleted successfully',
-                'merchantId': merchant_id
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            logger.error(f"Error deleting merchant: {e}")
-            return Response({
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -481,6 +477,9 @@ class RefundQueryView(APIView):
                     'refundAmountValue': r.refundAmountValue,
                     'refundAmountCurrency': r.refundAmountCurrency,
                     'refundReason': r.refundReason,
+                    'resultStatus': r.resultStatus,
+                    'resultCode': r.resultCode,
+                    'resultMessage': r.resultMessage,
                     'created_at': r.created_at.isoformat() if r.created_at else None,
                     'updated_at': r.updated_at.isoformat() if r.updated_at else None,
                 })

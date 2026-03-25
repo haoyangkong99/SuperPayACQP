@@ -1,0 +1,120 @@
+/* ============================================
+   Dashboard Page Styles
+   ============================================ */
+
+/* Welcome Banner */
+.welcome-banner {
+    background: linear-gradient(135deg, #1a3b5d 0%, var(--primary-color) 100%);
+    color: white;
+    padding: 30px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 30px;
+}
+
+.welcome-banner h2 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.welcome-banner p {
+    margin: 10px 0 0 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* Action Cards Grid */
+.cards-row {
+    display: flex;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Action Card */
+.action-card {
+    background-color: var(--bg-card);
+    padding: 25px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    flex: 1;
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.action-card .icon {
+    width: 50px;
+    height: 50px;
+    background-color: var(--bg-item);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.action-card .icon i {
+    font-size: 24px;
+    color: var(--primary-color);
+}
+
+.action-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    color: var(--text-primary);
+}
+
+.action-card p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.action-card a {
+    display: inline-block;
+    margin-top: 15px;
+    text-decoration: none;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 14px;
+    transition: var(--transition-normal);
+}
+
+.action-card a:hover {
+    text-decoration: underline;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 992px) {
+    .cards-row {
+        flex-wrap: wrap;
+    }
+    
+    .action-card {
+        flex: 1 1 calc(50% - var(--spacing-lg));
+        min-width: 200px;
+    }
+}
+
+@media (max-width: 576px) {
+    .welcome-banner {
+        padding: var(--spacing-lg);
+    }
+    
+    .welcome-banner h2 {
+        font-size: 22px;
+    }
+    
+    .cards-row {
+        flex-direction: column;
+    }
+    
+    .action-card {
+        flex: 1 1 100%;
+    }
+}

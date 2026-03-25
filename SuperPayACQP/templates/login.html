@@ -3,21 +3,23 @@
 {% block title %}SuperPayACQP - Login{% endblock %}
 
 {% block auth_content %}
-<div class="card">
+<div class="auth-card card">
     <div class="card-body">
         <h4 class="card-title">Welcome back</h4>
         <p class="card-subtitle">Please enter your details to access your dashboard.</p>
         
-        <div id="alert-container"></div>
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
         
-        <form id="loginForm">
+        <!-- Login Form -->
+        <form id="loginForm" class="auth-form">
             <div class="mb-3">
-                <label for="email" class="form-label">EMAIL ADDRESS</label>
+                <label for="email" class="form-label">Email Address</label>
                 <input type="email" class="form-control" id="email" name="email" placeholder="name@company.com" required>
             </div>
             
             <div class="mb-3">
-                <label for="password" class="form-label">PASSWORD</label>
+                <label for="password" class="form-label">Password</label>
                 <div class="password-wrapper">
                     <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
                     <i class="bi bi-eye-slash password-toggle"></i>
@@ -40,7 +42,7 @@
         </form>
         
         <div class="auth-link">
-            Don't have an account? <a href="/register/">Register</a>
+            Don't have an account? <a href="/register">Register</a>
         </div>
     </div>
 </div>
@@ -49,14 +51,16 @@
 {% block extra_js %}
 {{ block.super }}
 <script>
-    // Handle form submission
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    /**
+     * Handle login form submission
+     */
+    async function handleLogin(e) {
         e.preventDefault();
         
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const loginBtn = document.getElementById('loginBtn');
-        const alertContainer = document.getElementById('alert-container');
+        const alertContainer = document.getElementById('alertContainer');
         
         // Disable button and show loading
         loginBtn.disabled = true;
@@ -79,26 +83,26 @@
             if (response.ok) {
                 // Show success message
                 alertContainer.innerHTML = `
-                    <div class="alert alert-success" role="alert">
+                    <div class="alert alert-success alert-custom" role="alert">
                         Login successful! Redirecting...
                     </div>
                 `;
                 
                 // Redirect to dashboard
                 setTimeout(() => {
-                    window.location.href = '/dashboard/';
+                    window.location.href = '/dashboard';
                 }, 1000);
             } else {
                 // Show error message
                 alertContainer.innerHTML = `
-                    <div class="alert alert-danger" role="alert">
-                        ${data.error || 'Login failed. Please try again.'}
+                    <div class="alert alert-danger alert-custom" role="alert">
+                        ${escapeHtml(data.error || 'Login failed. Please try again.')}
                     </div>
                 `;
             }
         } catch (error) {
             alertContainer.innerHTML = `
-                <div class="alert alert-danger" role="alert">
+                <div class="alert alert-danger alert-custom" role="alert">
                     An error occurred. Please try again.
                 </div>
             `;
@@ -107,6 +111,14 @@
         // Re-enable button
         loginBtn.disabled = false;
         loginBtn.innerHTML = 'Login <i class="bi bi-arrow-right"></i>';
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', handleLogin);
+        }
     });
 </script>
 {% endblock %}

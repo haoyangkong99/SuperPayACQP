@@ -1,0 +1,615 @@
+/* ============================================
+   Manage Merchants Page Styles
+   ============================================
+   
+   This file contains styles for the manage merchants page
+   including stats cards, merchants table, and modals.
+   
+   ============================================ */
+
+/* ============================================
+   Page Header
+   ============================================ */
+
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    font-size: 24px;
+    margin: 0;
+    color: #0b1f3b;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: #6c757d;
+    margin: 4px 0 0 0;
+}
+
+/* ============================================
+   Stats Cards
+   ============================================ */
+
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0b1f3b;
+}
+
+.stat-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.stat-badge.success {
+    background-color: #d4edda;
+    color: #198754;
+}
+
+.stat-badge.live {
+    background-color: #d4edda;
+    color: #198754;
+}
+
+.stat-badge.warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+/* ============================================
+   Toolbar
+   ============================================ */
+
+.toolbar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.toolbar .btn-primary {
+    padding: 10px 20px;
+    background-color: #003b6b;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toolbar .btn-primary:hover {
+    background-color: #002a52;
+}
+
+.search-filter {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+    min-width: 300px;
+}
+
+.search-input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.search-input-wrapper i {
+    color: #6c757d;
+    margin-right: 8px;
+}
+
+.search-input-wrapper input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: #0b1f3b;
+}
+
+.search-input-wrapper input::placeholder {
+    color: #adb5bd;
+}
+
+.toolbar select {
+    padding: 8px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #0b1f3b;
+    background-color: white;
+    cursor: pointer;
+    min-width: 140px;
+}
+
+.toolbar select:focus {
+    outline: none;
+    border-color: #003b6b;
+}
+
+.results-info {
+    font-size: 13px;
+    color: #6c757d;
+    margin-left: auto;
+}
+
+/* ============================================
+   Merchants Table
+   ============================================ */
+
+.merchants-table-container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.merchants-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.merchants-table th {
+    text-align: left;
+    padding: 14px 16px;
+    background-color: #f8f9fa;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.merchants-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+    color: #0b1f3b;
+    vertical-align: middle;
+}
+
+.merchants-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.merchants-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Merchant ID */
+.merchant-id {
+    font-family: monospace;
+    font-size: 13px;
+    background-color: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: #003b6b;
+    font-weight: 500;
+}
+
+/* Store Name Cell */
+.store-name-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.store-name {
+    font-weight: 600;
+    color: #0b1f3b;
+}
+
+.legal-name {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* Currency Badge */
+.currency-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background-color: #e3f2fd;
+    color: #1565c0;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-action {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-edit {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.btn-edit:hover {
+    background-color: #1565c0;
+    color: white;
+}
+
+.btn-delete {
+    background-color: #f8d7da;
+    color: #dc3545;
+}
+
+.btn-delete:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.empty-state h3 {
+    font-size: 18px;
+    color: #0b1f3b;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    font-size: 14px;
+}
+
+/* ============================================
+   Loading State
+   ============================================ */
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.loading-state .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e9ecef;
+    border-top: 3px solid #003b6b;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Pagination
+   ============================================ */
+
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background-color: white;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 12px 12px;
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-btn {
+    padding: 8px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    background-color: white;
+    color: #0b1f3b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background-color: #f8f9fa;
+    border-color: #003b6b;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-pages {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pagination-page {
+    padding: 8px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    background-color: white;
+    color: #0b1f3b;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pagination-page:hover {
+    background-color: #f8f9fa;
+}
+
+.pagination-page.active {
+    background-color: #003b6b;
+    color: white;
+    border-color: #003b6b;
+}
+
+.pagination-ellipsis {
+    padding: 0 8px;
+    color: #6c757d;
+}
+
+/* ============================================
+   Merchant Modal
+   ============================================ */
+
+#merchantModal .modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+#merchantModal .modal-header {
+    background-color: #003b6b;
+    color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 16px 24px;
+}
+
+#merchantModal .modal-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#merchantModal .modal-body {
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+#merchantModal .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+}
+
+/* Form Styles */
+.merchant-form .form-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #003b6b;
+    margin: 20px 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.merchant-form .form-section-title:first-of-type {
+    margin-top: 0;
+}
+
+.merchant-form .form-group {
+    margin-bottom: 16px;
+}
+
+.merchant-form .form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.merchant-form label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #0b1f3b;
+    margin-bottom: 6px;
+}
+
+.merchant-form .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #0b1f3b;
+    transition: border-color 0.2s ease;
+}
+
+.merchant-form .form-control:focus {
+    outline: none;
+    border-color: #003b6b;
+    box-shadow: 0 0 0 3px rgba(0, 59, 107, 0.1);
+}
+
+.merchant-form .form-control:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+.merchant-form .form-hint {
+    display: block;
+    font-size: 11px;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+/* ============================================
+   Delete Modal
+   ============================================ */
+
+#deleteModal .modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+#deleteModal .modal-header {
+    background-color: #dc3545;
+    color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 16px 24px;
+}
+
+#deleteModal .modal-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#deleteModal .modal-body {
+    padding: 24px;
+}
+
+#deleteModal .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 1200px) {
+    .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .merchants-table-container {
+        overflow-x: auto;
+    }
+    
+    .merchants-table {
+        min-width: 800px;
+    }
+    
+    .merchant-form .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-filter {
+        flex-direction: column;
+    }
+    
+    .results-info {
+        margin-left: 0;
+        text-align: center;
+    }
+    
+    .pagination-container {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .stats-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-header h1 {
+        font-size: 20px;
+    }
+    
+    .stat-value {
+        font-size: 24px;
+    }
+}

@@ -9,9 +9,10 @@ from apps.payments.payments_views import (
     CancelPaymentView, 
     InquiryPaymentView,
     NotifyPaymentView,
+
     
 )
-from apps.merchants.merchants_views import MerchantView, GenerateEntryCodeView, EntryCodeView, EntryCodeConfirmView
+from apps.merchants.merchants_views import MerchantView, GenerateEntryCodeView, EntryCodeView, EntryCodeConfirmView,MerchantDeleteView
 from apps.refunds.refund_views import RefundView
 
 urlpatterns = [
@@ -33,6 +34,7 @@ urlpatterns = [
 
     path('api/merchants', MerchantView.as_view(), name='create-merchant'),
     
+    path('api/merchants/delete', MerchantDeleteView.as_view(), name='delete-merchant'),
     # Query Endpoints
     path('api/query/', include('apps.query.urls')),
     

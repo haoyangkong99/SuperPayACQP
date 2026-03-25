@@ -38,7 +38,8 @@ from dtos.response import (
     CancelPaymentResponseDTO, 
     InquiryPaymentResponseDTO,
     NotifyPaymentResponseDTO,
-    BaseResponseDTO
+    BaseResponseDTO,
+    AlipayPayResponseDTO
 )
 
 from utils.constants import Result,MessageType,HTTPMethod
@@ -109,33 +110,33 @@ class PlaceOrderView(APIView):
                     expiry_time
                 )
             # Call Alipay+ Pay API
-                response_dto = alipay_client.pay(alipay_request_dto)
-            
+                alipay_response_dto = alipay_client.pay(alipay_request_dto)
+                response_dto=self._map_AlipayPayResponseDTO_to_PaymentResponseDTO(alipay_request_dto,alipay_response_dto)  
             # Log API record
-                db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/pay',HTTPMethod.POST,alipay_request_dto,response_dto,MessageType.OUTBOUND)
+                db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/pay',HTTPMethod.POST,alipay_request_dto,alipay_response_dto,MessageType.OUTBOUND)
             
             # Process result
-                result = response_dto.result
+                result = alipay_response_dto.result
                 result_status = result.resultStatus
                 result_code = result.resultCode
             
             # Save payment request to database FIRST (before spawning background task)
-                db_service.savePaymentRequest(alipay_request_dto, response_dto, payment_request_id)
+                db_service.savePaymentRequest(alipay_request_dto, alipay_response_dto, payment_request_id)
             
             # Handle PAYMENT_IN_PROCESS with background task
-                if result_status == 'U' and result_code == 'PAYMENT_IN_PROCESS':
-                    # Spawn background task to handle retry
-                    handle_payment_in_process_task(payment_request_id)
-                    logger.info(f"Spawned background task for PAYMENT_IN_PROCESS: {payment_request_id}")
-            
+                # if result_status == 'U' and result_code == 'PAYMENT_IN_PROCESS':
+                #     # Spawn background task to handle retry
+                #     handle_payment_in_process_task(payment_request_id)
+                #     logger.info(f"Spawned background task for PAYMENT_IN_PROCESS: {payment_request_id}")
+                
             # Handle UNKNOWN_EXCEPTION with retry
                 if result_status == 'U' and result_code == 'UNKNOWN_EXCEPTION':
-                    response_dto = alipay_client.pay(alipay_request_dto)
+                    alipay_response_dto = alipay_client.pay(alipay_request_dto)
+                    response_dto=self._map_AlipayPayResponseDTO_to_PaymentResponseDTO(alipay_request_dto,alipay_response_dto)  
             else:
                 result = Result.returnProcessFail()
                 response_dto=PaymentResponseDTO(
-                        result=result
-                    )
+                        result=result) 
         
             db_service.createApiRecordsWithReqRes('/api/place-order',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
             return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
@@ -163,7 +164,7 @@ class PlaceOrderView(APIView):
             paymentMethod=request_dto.paymentMethod,
             paymentFactor=request_dto.paymentFactor,
             paymentExpiryTime=expiry_time.strftime("%Y-%m-%dT%H:%M:%S+08:00"),
-            paymentRedirectUrl="https://superpayacqp-production.up.railway.app/payment-result",
+            paymentRedirectUrl="https://superpayacqp-production.up.railway.app/payment-result?paymentRequestId="+payment_request_id,
             paymentNotifyUrl="https://superpayacqp-production.up.railway.app/alipay/notifyPayment",
             order=AlipayOrderDTO(
                 referenceOrderId=order.referenceOrderId if order.referenceOrderId else str(uuid.uuid4()),
@@ -175,7 +176,8 @@ class PlaceOrderView(APIView):
                     goodsName=g.goodsName,
                     goodsCategory=g.goodsCategory,
                     goodsUnitAmount=g.goodsUnitAmount,
-                    goodsQuantity=g.goodsQuantity
+                    goodsQuantity=g.goodsQuantity,
+                    goodsBrand=g.goodsBrand
                 ) for g in order.goods] if order.goods else None,
                 shipping=order.shipping,
                 buyer=order.buyer,
@@ -185,7 +187,20 @@ class PlaceOrderView(APIView):
                 settlementCurrency='MYR'
             ) if request_dto.paymentAmount.currency !='MYR' else None
         )
-    
+    def _map_AlipayPayResponseDTO_to_PaymentResponseDTO(self, request_dto: AlipayPayRequestDTO, response_dto: AlipayPayResponseDTO) -> PaymentResponseDTO:
+        return PaymentResponseDTO(
+            result=response_dto.result,
+            paymentRequestId=request_dto.paymentRequestId,
+            paymentId=response_dto.paymentId,
+            paymentTime=response_dto.paymentTime,
+            paymentAmount=response_dto.paymentAmount,
+            customerId=response_dto.customerId,
+            pspId=response_dto.pspId,
+            walletBrandName=response_dto.walletBrandName,
+            mppPaymentId=response_dto.mppPaymentId,
+            orderCodeForm=response_dto.orderCodeForm,
+            paymentExpireTime=request_dto.paymentExpiryTime
+        )
     def _handle_payment_in_process(self, payment_request_id: str, alipay_client: AlipayClient) -> PaymentResponseDTO:
         """Handle PAYMENT_IN_PROCESS with inquiry retry"""
         intervals = [2, 2, 3, 3, 5, 5, 10, 10, 10, 10]

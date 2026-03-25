@@ -5,60 +5,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}SuperPayACQP{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="{% static 'css/shared.css' %}">
+    
     {% block extra_css %}{% endblock %}
-    <style>
-        :root {
-            --primary-color: #003b6b;
-            --primary-dark: #002a4f;
-            --sidebar-bg: #f1f3f5;
-            --text-primary: #0b1f3b;
-            --text-secondary: #6c757d;
-            --bg-light: #f9fafc;
-        }
-        
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-light);
-        }
-        
-        {% block page_styles %}{% endblock %}
-    </style>
 </head>
+
 <body class="{% block body_class %}{% endblock %}">
     {% block content %}{% endblock %}
     
-    <!-- Reusable Loading Overlay -->
-    <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.8); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
-        <div class="loading-spinner" style="width: 50px; height: 50px; border: 4px solid #e9ecef; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-        <div id="loadingMessage" style="margin-top: 16px; font-size: 14px; color: var(--text-secondary); font-weight: 500;">Loading...</div>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div id="loadingMessage">Loading...</div>
     </div>
     
-    <style>
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
-    
-    <!-- Reusable Confirmation Dialog -->
+    <!-- Confirmation Dialog -->
     <div class="modal fade" id="confirmDialog" tabindex="-1" aria-labelledby="confirmDialogTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
-                <div class="modal-header" style="background-color: var(--primary-color); color: white; border-radius: 12px 12px 0 0; border: none; padding: 16px 20px;">
+            <div class="modal-content">
+                <div class="modal-header">
                     <h5 class="modal-title" id="confirmDialogTitle">
                         <i class="bi bi-question-circle me-2"></i>
                         <span id="confirmDialogTitleText">Confirm Action</span>
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" style="padding: 24px 20px;">
+                <div class="modal-body">
                     <div class="d-flex align-items-start">
-                        <div class="me-3" style="width: 48px; height: 48px; background-color: #fff3cd; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-exclamation-triangle" style="font-size: 24px; color: #856404;"></i>
+                        <div class="icon-wrapper me-3">
+                            <i class="bi bi-exclamation-triangle"></i>
                         </div>
                         <div>
                             <p id="confirmDialogMessage" style="margin: 0; color: var(--text-primary); font-size: 15px; line-height: 1.5;">
@@ -67,11 +48,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer" style="border: none; padding: 16px 20px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px; border-radius: 8px; font-weight: 500;">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px; border-radius: var(--radius-md); font-weight: 500;">
                         <i class="bi bi-x-lg me-1"></i> Cancel
                     </button>
-                    <button type="button" class="btn" id="confirmDialogConfirmBtn" style="background-color: var(--primary-color); color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500;">
+                    <button type="button" class="btn" id="confirmDialogConfirmBtn" style="background-color: var(--primary-color); color: white; padding: 10px 24px; border-radius: var(--radius-md); font-weight: 500;">
                         <i class="bi bi-check-lg me-1"></i> <span id="confirmDialogConfirmText">Confirm</span>
                     </button>
                 </div>
@@ -79,17 +60,18 @@
         </div>
     </div>
     
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
     {% block extra_js %}{% endblock %}
     
-    <!-- Reusable Confirmation Dialog Script -->
+    <!-- ============================================
+         Global JavaScript Utilities
+         ============================================ -->
     <script>
         /**
-         * Reusable Loading Indicator
-         * Usage: showLoading(message) / hideLoading()
-         * 
-         * Parameters:
-         * - message: Optional loading message (default: "Loading...")
+         * Show loading overlay
+         * @param {string} message - Optional loading message (default: "Loading...")
          */
         function showLoading(message = 'Loading...') {
             const overlay = document.getElementById('loadingOverlay');
@@ -102,6 +84,9 @@
             }
         }
         
+        /**
+         * Hide loading overlay
+         */
         function hideLoading() {
             const overlay = document.getElementById('loadingOverlay');
             if (overlay) {
@@ -110,16 +95,35 @@
         }
         
         /**
-         * Reusable Confirmation Dialog
-         * Usage: showConfirmDialog(options)
-         * 
-         * Options:
-         * - title: Dialog title (default: "Confirm Action")
-         * - message: Dialog message (default: "Are you sure you want to proceed?")
-         * - confirmText: Confirm button text (default: "Confirm")
-         * - confirmClass: Additional CSS class for confirm button (default: "")
-         * - onConfirm: Callback function when confirmed
-         * - onCancel: Callback function when cancelled (optional)
+         * Get cookie value by name
+         * @param {string} name - Cookie name
+         * @returns {string|null} Cookie value or null
+         */
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        /**
+         * Show confirmation dialog
+         * @param {Object} options - Dialog options
+         * @param {string} options.title - Dialog title
+         * @param {string} options.message - Dialog message
+         * @param {string} options.confirmText - Confirm button text
+         * @param {string} options.confirmClass - Additional CSS class for confirm button
+         * @param {Function} options.onConfirm - Callback when confirmed
+         * @param {Function} options.onCancel - Callback when cancelled
+         * @returns {bootstrap.Modal} Modal instance
          */
         function showConfirmDialog(options = {}) {
             const defaults = {
@@ -135,13 +139,13 @@
             
             const dialog = document.getElementById('confirmDialog');
             const titleText = document.getElementById('confirmDialogTitleText');
-            const message = document.getElementById('confirmDialogMessage');
+            const messageEl = document.getElementById('confirmDialogMessage');
             const confirmBtn = document.getElementById('confirmDialogConfirmBtn');
             const confirmText = document.getElementById('confirmDialogConfirmText');
             
             // Set dialog content
             titleText.textContent = settings.title;
-            message.textContent = settings.message;
+            messageEl.textContent = settings.message;
             confirmText.textContent = settings.confirmText;
             
             // Reset and set confirm button class
@@ -165,7 +169,7 @@
                 cleanup();
             };
             
-            // Handle cancel (via backdrop click or cancel button)
+            // Handle cancel
             const handleCancel = function() {
                 settings.onCancel();
                 cleanup();
@@ -185,6 +189,55 @@
             bsModal.show();
             
             return bsModal;
+        }
+        
+        /**
+         * Escape HTML to prevent XSS
+         * @param {string} text - Text to escape
+         * @returns {string} Escaped text
+         */
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        /**
+         * Format currency value
+         * @param {number} value - Value in cents
+         * @param {string} currency - Currency code (default: "MYR")
+         * @returns {string} Formatted currency string
+         */
+        function formatCurrency(value, currency = 'MYR') {
+            return `${currency} ${(value / 100).toFixed(2)}`;
+        }
+        
+        /**
+         * Format date
+         * @param {string|Date} date - Date to format
+         * @param {Object} options - Intl.DateTimeFormat options
+         * @returns {string} Formatted date string
+         */
+        function formatDate(date, options = { year: 'numeric', month: 'short', day: 'numeric' }) {
+            const d = typeof date === 'string' ? new Date(date) : date;
+            return d.toLocaleDateString('en-US', options);
+        }
+        
+        /**
+         * Format date time
+         * @param {string|Date} date - Date to format
+         * @returns {string} Formatted date time string
+         */
+        function formatDateTime(date) {
+            const d = typeof date === 'string' ? new Date(date) : date;
+            return d.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         }
     </script>
 </body>

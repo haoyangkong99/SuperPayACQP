@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}SuperPayACQP - Checkout{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/checkout.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <!-- Header -->
+    <div class="checkout-header">
+        <div class="logo-section">
+            <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="60" height="60" rx="12" fill="#003b6b"/>
+                <path d="M15 30L25 40L45 20" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h1>SuperPayACQP - Merchant Store</h1>
+        </div>
+    </div>
+    
+    <!-- Progress Steps -->
+    <div class="checkout-progress">
+        <div class="step completed">
+            <div class="step-number"><i class="bi bi-check"></i></div>
+            <span class="step-label">Cart</span>
+        </div>
+        <div class="step-line completed"></div>
+        <div class="step active">
+            <div class="step-number">2</div>
+            <span class="step-label">Shipping</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <span class="step-label">Payment</span>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="checkout-content" id="checkoutContent">
+        <!-- Will be populated by JavaScript -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let cart = [];
+    let merchants = [];
+    let selectedMerchantId = null;
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCartFromStorage();
+        loadMerchants();
+        renderCheckout();
+    });
+    
+    // Load cart from sessionStorage
+    function loadCartFromStorage() {
+        const savedCart = sessionStorage.getItem('orderCart');
+        if (savedCart) {
+            cart = JSON.parse(savedCart);
+        }
+    }
+    
+    // Load merchants from API
+    async function loadMerchants() {
+        try {
+            const response = await fetch('/api/query/merchants');
+            const data = await response.json();
+            
+            if (data.merchants && data.merchants.length > 0) {
+                merchants = data.merchants;
+                // Set default merchant (first one in the list)
+                selectedMerchantId = merchants[0].merchantId;
+                
+                // Update merchant dropdown if it exists
+                const merchantSelect = document.getElementById('merchantId');
+                if (merchantSelect) {
+                    merchantSelect.innerHTML = merchants.map(m => 
+                        `<option value="${m.merchantId}" ${m.merchantId === selectedMerchantId ? 'selected' : ''}>
+                            ${escapeHtml(m.merchantDisplayName || m.merchantName)} (${m.merchantId})
+                        </option>`
+                    ).join('');
+                }
+            }
+        } catch (error) {
+            console.error('Error loading merchants:', error);
+        }
+    }
+    
+    // Handle merchant selection change
+    function onMerchantChange(selectElement) {
+        selectedMerchantId = selectElement.value;
+    }
+    
+    // Render checkout page
+    function renderCheckout() {
+        const contentDiv = document.getElementById('checkoutContent');
+        
+        if (cart.length === 0) {
+            contentDiv.innerHTML = `
+                <div class="empty-cart-state" style="grid-column: 1 / -1;">
+                    <i class="bi bi-cart-x"></i>
+                    <h2>Your cart is empty</h2>
+                    <p>Add some items to your cart before checking out.</p>
+                    <a href="/create-order/" class="btn-proceed" style="display: inline-flex; text-decoration: none;">
+                        <i class="bi bi-arrow-left"></i> Back to Create Order
+                    </a>
+                </div>
+            `;
+            return;
+        }
+        
+        // Calculate totals
+        let subtotal = 0;
+        let totalTax = 0;
+        
+        cart.forEach(item => {
+            const lineTotal = item.unitPrice * item.quantity;
+            subtotal += lineTotal;
+            totalTax += Math.round(item.unitPrice * item.quantity * (item.taxRate / 100));
+        });
+        
+        const total = subtotal + totalTax;
+        const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+        
+        contentDiv.innerHTML = `
+            <!-- Shipping Panel -->
+            <div class="shipping-panel">
+                <h2><i class="bi bi-truck"></i> Shipping Information</h2>
+                <form id="shippingForm">
+                    <!-- Merchant Selection -->
+                    <div class="form-group">
+                        <label for="merchantId"><i class="bi bi-shop"></i> Select Merchant</label>
+                        <select id="merchantId" name="merchantId" required onchange="onMerchantChange(this)">
+                            <option value="">Loading merchants...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" name="fullName" required placeholder="Enter your full name">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="region">Country</label>
+                            <select id="region" name="region" required>
+                                <option value="">Loading countries...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="state">State / Province</label>
+                            <input type="text" id="state" name="state" required placeholder="Enter state/province">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">City</label>
+                            <input type="text" id="city" name="city" required placeholder="Enter city">
+                        </div>
+                        <div class="form-group">
+                            <label for="postalCode">Zip / Postal Code</label>
+                            <input type="text" id="postalCode" name="postalCode" required placeholder="Enter postal code">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="address1">Address Line 1</label>
+                        <input type="text" id="address1" name="address1" required placeholder="Street address">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="address2">Address Line 2 (Optional)</label>
+                        <input type="text" id="address2" name="address2" placeholder="Apartment, suite, etc.">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" required placeholder="+60 XX XXX XXXX">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-back" onclick="goBackToCart()">
+                            <i class="bi bi-arrow-left"></i> Back to Cart
+                        </button>
+                        <button type="submit" class="btn-proceed">
+                            Proceed to Payment <i class="bi bi-credit-card"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Order Summary Panel -->
+            <div class="summary-panel">
+                <h2>Order Summary</h2>
+                <p class="item-count"><strong>${itemCount}</strong> Item${itemCount !== 1 ? 's' : ''}</p>
+                
+                <table class="order-items-table">
+                    <thead>
+                        <tr>
+                            <th>Item & Brand</th>
+                            <th>Qty</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${cart.map(item => `
+                            <tr>
+                                <td>
+                                    <span class="item-name">${escapeHtml(item.goodsName)}</span>
+                                    <span class="item-brand">${escapeHtml(item.goodsBrand)}</span>
+                                </td>
+                                <td>${item.quantity}</td>
+                                <td class="item-total">MYR ${((item.unitPrice * item.quantity) / 100).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                
+                <div class="summary-calculations">
+                    <div class="calc-row">
+                        <span class="label">Subtotal</span>
+                        <span class="value">MYR ${(subtotal / 100).toFixed(2)}</span>
+                    </div>
+                    <div class="calc-row">
+                        <span class="label">Tax</span>
+                        <span class="value">MYR ${(totalTax / 100).toFixed(2)}</span>
+                    </div>
+                    <div class="calc-row grand-total">
+                        <span class="label">Grand Total</span>
+                        <span class="value">MYR ${(total / 100).toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add form submit handler
+        document.getElementById('shippingForm').addEventListener('submit', handleCheckout);
+        
+        // Load countries dynamically
+        loadCountries();
+    }
+    
+    // Load countries from open source ISO 3166 country data
+    async function loadCountries() {
+        const select = document.getElementById('region');
+        if (!select) return;
+        
+        showLoading('Loading countries...');
+        try {
+            // Using open source ISO 3166 country data from GitHub
+            // Source: https://github.com/umpirsky/country-list
+            const response = await fetch('https://cdn.jsdelivr.net/gh/umpirsky/country-list@master/data/en/country.json');
+            const countries = await response.json();
+            
+            // Convert to array and sort by name
+            const countryArray = Object.entries(countries).map(([code, name]) => ({
+                code,
+                name
+            }));
+            countryArray.sort((a, b) => a.name.localeCompare(b.name));
+            
+            // Build options HTML
+            let html = '<option value="">Select Country</option>';
+            
+            countryArray.forEach(country => {
+                html += `<option value="${country.code}">${country.name}</option>`;
+            });
+            
+            select.innerHTML = html;
+        } catch (error) {
+            console.error('Error loading countries:', error);
+            // Fallback to basic country list
+            select.innerHTML = `
+                <option value="">Select Country</option>
+                <option value="MY">Malaysia</option>
+                <option value="SG">Singapore</option>
+                <option value="US">United States</option>
+                <option value="GB">United Kingdom</option>
+                <option value="AU">Australia</option>
+            `;
+        } finally {
+            hideLoading();
+        }
+    }
+    
+    // Go back to cart
+    function goBackToCart() {
+        window.location.href = '/create-order';
+    }
+    
+    // Handle checkout submission
+    function handleCheckout(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        
+        // Validate form
+        if (!form.checkValidity()) {
+            alert('Please fill in all required fields.');
+            return;
+        }
+        
+        // Validate merchant selection
+        if (!selectedMerchantId) {
+            alert('Please select a merchant.');
+            return;
+        }
+        
+        // Collect shipping info
+        const shippingInfo = {
+            fullName: formData.get('fullName'),
+            region: formData.get('region'),
+            state: formData.get('state'),
+            city: formData.get('city'),
+            postalCode: formData.get('postalCode'),
+            address1: formData.get('address1'),
+            address2: formData.get('address2'),
+            phone: formData.get('phone')
+        };
+        
+        // Save shipping info to sessionStorage
+        sessionStorage.setItem('shippingInfo', JSON.stringify(shippingInfo));
+        
+        // Save selected merchant ID to sessionStorage
+        sessionStorage.setItem('selectedMerchantId', selectedMerchantId);
+        
+        // Redirect to payment page
+        window.location.href = '/payment';
+    }
+</script>
+{% endblock %}

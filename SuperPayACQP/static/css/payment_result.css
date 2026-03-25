@@ -1,0 +1,371 @@
+/* ============================================
+   Payment Result Page Styles
+   ============================================ */
+
+/* CSS Custom Properties */
+:root {
+    --result-bg: #f9fafb;
+    --card-bg: white;
+    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --card-radius: 12px;
+    --item-bg: #f8f9fa;
+    --item-radius: 8px;
+    --border-color: #e9ecef;
+    --text-muted: var(--text-secondary);
+    --success-bg: #d4edda;
+    --success-color: #198754;
+    --error-bg: #f8d7da;
+    --error-color: #dc3545;
+    --warning-color: #856404;
+}
+
+/* Base Styles */
+body {
+    background-color: var(--result-bg);
+}
+
+/* ============================================
+   Layout
+   ============================================ */
+
+.result-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ============================================
+   Header Component
+   ============================================ */
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: var(--card-bg);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 20px;
+}
+
+.result-header .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.result-header .logo-section svg {
+    width: 40px;
+    height: 40px;
+}
+
+.result-header .logo-section h1 {
+    font-size: 16px;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.result-header .nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+.result-header .nav-links a {
+    font-size: 13px;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+.result-header .nav-links a:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
+/* ============================================
+   Confirmation Section
+   ============================================ */
+
+.confirmation {
+    text-align: center;
+    padding: 40px 20px;
+    background-color: var(--card-bg);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 20px;
+}
+
+/* Status Icon */
+.confirmation .icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px auto;
+    transition: all 0.3s ease;
+}
+
+.confirmation .icon i {
+    font-size: 40px;
+}
+
+/* Success State */
+.confirmation .icon.success,
+.confirmation .icon:not(.failed) {
+    background-color: var(--success-bg);
+}
+
+.confirmation .icon.success i,
+.confirmation .icon:not(.failed) i {
+    color: var(--success-color);
+}
+
+/* Error State */
+.confirmation .icon.failed {
+    background-color: var(--error-bg);
+}
+
+.confirmation .icon.failed i {
+    color: var(--error-color);
+}
+
+/* Pending State */
+.confirmation .icon.pending {
+    background-color: #fff3cd;
+}
+
+.confirmation .icon.pending i {
+    color: var(--warning-color);
+}
+
+/* Typography */
+.confirmation h2 {
+    font-size: 20px;
+    margin: 0 0 5px 0;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.confirmation h3 {
+    font-size: 24px;
+    margin: 0 0 15px 0;
+    color: var(--text-primary);
+}
+
+.confirmation p {
+    font-size: 14px;
+    color: var(--text-muted);
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* ============================================
+   Transaction Details
+   ============================================ */
+
+.transaction-details {
+    background-color: var(--card-bg);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.transaction-details h3 {
+    font-size: 16px;
+    margin: 0 0 20px 0;
+    color: var(--text-primary);
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Details Grid */
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+/* Detail Item */
+.detail-item {
+    background-color: var(--item-bg);
+    padding: 15px;
+    border-radius: var(--item-radius);
+    transition: background-color 0.2s;
+}
+
+.detail-item:hover {
+    background-color: #f1f3f5;
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-item .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+
+.detail-item .value {
+    font-size: 16px;
+    color: var(--text-primary);
+    font-weight: 500;
+    word-break: break-word;
+}
+
+/* Status Values */
+.detail-item .value.success {
+    color: var(--success-color);
+}
+
+.detail-item .value.failed {
+    color: var(--error-color);
+}
+
+.detail-item .value.pending {
+    color: var(--warning-color);
+}
+
+.detail-item .value small {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-top: 3px;
+}
+
+/* ============================================
+   Action Buttons
+   ============================================ */
+
+.actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.actions .btn {
+    padding: 12px 24px;
+    border-radius: var(--item-radius);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.actions .btn i {
+    font-size: 16px;
+}
+
+/* Primary Button */
+.actions .btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.actions .btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 59, 107, 0.3);
+}
+
+/* Secondary Button */
+.actions .btn-secondary {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.actions .btn-secondary:hover {
+    background-color: var(--item-bg);
+    border-color: #dee2e6;
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+
+.result-footer {
+    text-align: center;
+    padding: 15px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.result-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.result-footer a:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+    .result-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .result-header .nav-links {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 600px) {
+    .result-container {
+        padding: 15px;
+    }
+    
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions {
+        flex-direction: column;
+    }
+    
+    .actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .confirmation {
+        padding: 30px 15px;
+    }
+    
+    .confirmation .icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .confirmation .icon i {
+        font-size: 30px;
+    }
+    
+    .confirmation h3 {
+        font-size: 20px;
+    }
+}

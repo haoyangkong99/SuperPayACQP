@@ -1,0 +1,906 @@
+/* ============================================
+   View Orders Page Styles
+   ============================================
+   
+   This file contains styles for the view orders page
+   including orders table, filters, and detail modal.
+   
+   ============================================ */
+
+/* ============================================
+   Page Header
+   ============================================ */
+
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    font-size: 24px;
+    margin: 0;
+    color: #0b1f3b;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: #6c757d;
+    margin: 4px 0 0 0;
+}
+
+/* ============================================
+   Search Bar
+   ============================================ */
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.search-bar i {
+    color: #6c757d;
+    font-size: 18px;
+    margin-right: 12px;
+}
+
+.search-bar input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: #0b1f3b;
+}
+
+.search-bar input::placeholder {
+    color: #adb5bd;
+}
+
+/* ============================================
+   Filter Bar
+   ============================================ */
+
+.filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    border: 1px solid #e9ecef;
+    border-radius: 20px;
+    background-color: white;
+    font-size: 13px;
+    font-weight: 500;
+    color: #0b1f3b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-btn:hover {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.filter-btn.active {
+    background-color: #003b6b;
+    color: white;
+    border-color: #003b6b;
+}
+
+.filter-btn i {
+    font-size: 14px;
+}
+
+.filter-spacer {
+    flex: 1;
+}
+
+.filter-bar select {
+    padding: 8px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #0b1f3b;
+    background-color: white;
+    cursor: pointer;
+    min-width: 140px;
+}
+
+.filter-bar select:focus {
+    outline: none;
+    border-color: #003b6b;
+}
+
+/* ============================================
+   Results Info
+   ============================================ */
+
+.results-info {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 12px;
+}
+
+/* ============================================
+   Orders Table
+   ============================================ */
+
+.orders-table-container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.orders-table th {
+    text-align: left;
+    padding: 14px 16px;
+    background-color: #f8f9fa;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.orders-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+    color: #0b1f3b;
+    vertical-align: middle;
+}
+
+.orders-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.orders-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Order ID Cell */
+.order-id-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.order-id {
+    font-weight: 600;
+    color: #003b6b;
+}
+
+.order-desc {
+    font-size: 12px;
+    color: #6c757d;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Payment Request ID */
+.payment-request-id {
+    font-family: monospace;
+    font-size: 13px;
+    background-color: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* Amount */
+.amount {
+    font-weight: 600;
+    color: #0b1f3b;
+}
+
+/* Wallet Badge */
+.wallet-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background-color: #e3f2fd;
+    color: #1565c0;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-success {
+    background-color: #d4edda;
+    color: #198754;
+}
+
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-failed {
+    background-color: #f8d7da;
+    color: #dc3545;
+}
+
+.status-unknown {
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+
+/* Merchant ID */
+.merchant-id {
+    font-family: monospace;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* ============================================
+   Action Buttons
+   ============================================ */
+
+.btn-action {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-view {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.btn-view:hover {
+    background-color: #1565c0;
+    color: white;
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.empty-state h3 {
+    font-size: 18px;
+    color: #0b1f3b;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    font-size: 14px;
+}
+
+/* ============================================
+   Loading State
+   ============================================ */
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.loading-state .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e9ecef;
+    border-top: 3px solid #003b6b;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Pagination
+   ============================================ */
+
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background-color: white;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 12px 12px;
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-btn {
+    padding: 8px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    background-color: white;
+    color: #0b1f3b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background-color: #f8f9fa;
+    border-color: #003b6b;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-pages {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pagination-page {
+    padding: 8px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    background-color: white;
+    color: #0b1f3b;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pagination-page:hover {
+    background-color: #f8f9fa;
+}
+
+.pagination-page.active {
+    background-color: #003b6b;
+    color: white;
+    border-color: #003b6b;
+}
+
+.pagination-ellipsis {
+    padding: 0 8px;
+    color: #6c757d;
+}
+
+/* ============================================
+   Order Detail Modal
+   ============================================ */
+
+#orderDetailModal .modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+#orderDetailModal .modal-header {
+    background-color: #003b6b;
+    color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 16px 24px;
+}
+
+#orderDetailModal .modal-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#orderDetailModal .modal-body {
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+#orderDetailModal .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+}
+
+/* Status Banner */
+.status-banner {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.status-banner.status-success {
+    background-color: #d4edda;
+}
+
+.status-banner.status-pending {
+    background-color: #fff3cd;
+}
+
+.status-banner.status-failed {
+    background-color: #f8d7da;
+}
+
+.status-banner .status-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.status-banner .status-icon i {
+    font-size: 24px;
+}
+
+.status-banner.status-success .status-icon i {
+    color: #198754;
+}
+
+.status-banner.status-pending .status-icon i {
+    color: #856404;
+}
+
+.status-banner.status-failed .status-icon i {
+    color: #dc3545;
+}
+
+.status-banner .status-info {
+    flex: 1;
+}
+
+.status-banner .status-info h4 {
+    margin: 0;
+    font-size: 18px;
+    color: #0b1f3b;
+}
+
+.status-banner .status-info p {
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.status-banner .status-amount {
+    text-align: right;
+}
+
+.status-banner .amount-label {
+    display: block;
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 4px;
+}
+
+.status-banner .amount-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: #0b1f3b;
+}
+
+/* Detail Section */
+.detail-section {
+    margin-bottom: 24px;
+}
+
+.detail-section:last-child {
+    margin-bottom: 0;
+}
+
+.detail-section h6 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0b1f3b;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Detail Grid */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.detail-value {
+    font-size: 14px;
+    color: #0b1f3b;
+    word-break: break-word;
+}
+
+/* Goods List */
+.goods-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.goods-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.goods-item .goods-info {
+    flex: 1;
+}
+
+.goods-item .goods-name {
+    display: block;
+    font-weight: 500;
+    color: #0b1f3b;
+}
+
+.goods-item .goods-brand {
+    display: block;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.goods-item .goods-qty {
+    padding: 0 16px;
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.goods-item .goods-price {
+    font-weight: 600;
+    color: #0b1f3b;
+}
+
+/* Shipping Info */
+.shipping-info {
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.shipping-info p {
+    margin: 0;
+    font-size: 14px;
+    color: #0b1f3b;
+    line-height: 1.6;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 992px) {
+    .orders-table-container {
+        overflow-x: auto;
+    }
+    
+    .orders-table {
+        min-width: 900px;
+    }
+    
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .status-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .status-banner .status-icon {
+        margin-right: 0;
+        margin-bottom: 12px;
+    }
+    
+    .status-banner .status-amount {
+        text-align: center;
+        margin-top: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-spacer {
+        display: none;
+    }
+    
+    .filter-bar select {
+        width: 100%;
+    }
+    
+    .pagination-container {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-header h1 {
+        font-size: 20px;
+    }
+    
+    .goods-item {
+        flex-wrap: wrap;
+    }
+    
+    .goods-item .goods-qty {
+        padding: 8px 0 0 0;
+        width: 100%;
+    }
+    
+    .goods-item .goods-price {
+        padding: 4px 0 0 0;
+        width: 100%;
+    }
+}
+
+/* ============================================
+   Refund History Styles
+   ============================================ */
+
+.refund-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.refund-item {
+    padding: 16px;
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+}
+
+.refund-item.refund-status-success {
+    background-color: #d4edda;
+    border-color: #198754;
+    border-left-color: #198754;
+}
+
+.refund-item.refund-status-failed {
+    background-color: #f8d7da;
+    border-color: #dc3545;
+    border-left-color: #dc3545;
+}
+
+.refund-item.refund-status-pending {
+    background-color: #fff3cd;
+    border-color: #ffc107;
+    border-left-color: #ffc107;
+}
+
+.refund-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.refund-id,
+.refund-amount,
+.refund-reason,
+.refund-status,
+.refund-code,
+.refund-message,
+.refund-time {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.refund-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.refund-value {
+    font-size: 14px;
+    color: #0b1f3b;
+    word-break: break-word;
+}
+
+.refund-amount .refund-value {
+    font-weight: 600;
+    color: #856404;
+}
+
+@media (max-width: 576px) {
+    .refund-info {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   Action Buttons Styles
+   ============================================ */
+
+.action-buttons-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.action-buttons-container {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-cancel,
+.btn-refund {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-cancel {
+    background-color: #f8d7da;
+    color: #dc3545;
+}
+
+.btn-cancel:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-refund {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.btn-refund:hover {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+/* ============================================
+   Refund Modal Styles
+   ============================================ */
+
+#refundModal .modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+#refundModal .modal-header {
+    background-color: #ffc107;
+    color: #212529;
+    border-radius: 12px 12px 0 0;
+    padding: 16px 24px;
+}
+
+#refundModal .modal-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#refundModal .btn-close {
+    filter: none;
+}
+
+#refundModal .modal-body {
+    padding: 24px;
+}
+
+#refundModal .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+}
+
+#refundModal .form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0b1f3b;
+    margin-bottom: 8px;
+    display: block;
+}
+
+#refundModal .form-control {
+    padding: 10px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+#refundModal .form-control:focus {
+    outline: none;
+    border-color: #ffc107;
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+}
+
+@media (max-width: 576px) {
+    .action-buttons-container {
+        flex-direction: column;
+    }
+    
+    .btn-cancel,
+    .btn-refund {
+        width: 100%;
+        justify-content: center;
+    }
+}
