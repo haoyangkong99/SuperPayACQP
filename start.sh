@@ -7,6 +7,9 @@ cd SuperPayACQP
 # Run migrations
 python manage.py migrate
 
+# Collect static files
+python manage.py collectstatic --noinput
+
 # Start background task processor in background
 python manage.py process_tasks --duration=0 &
 

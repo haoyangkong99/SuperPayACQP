@@ -4,6 +4,7 @@ djangorestframework>=3.14
 django-cors-headers>=4.0
 python-dotenv>=1.0
 drf-spectacular>=0.26
+whitenoise>=6.0
 
 # Alipay+ / Payment dependencies
 requests>=2.28
