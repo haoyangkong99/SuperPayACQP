@@ -16,7 +16,7 @@ class Merchant(models.Model):
     currency = models.TextField(blank=True, default='MYR')  # Default currency for the merchant
     merchantAddress = models.JSONField(null=True, blank=True)
     store = models.JSONField(null=True, blank=True)
-    registrationDetailLegalName = models.TextField(blank=True)
+    registrationDetailLegalName = models.TextField(blank=True,null=True)
     registrationDetailRegistrationType = models.TextField(blank=True)
     registrationDetailRegistrationNo = models.TextField(blank=True)
     registrationDetailRegistrationAddress = models.JSONField(null=True, blank=True)
@@ -41,6 +41,9 @@ class Registration(models.Model):
     registrationRequestId = models.TextField(primary_key=True)
     productCodes = models.JSONField(null=True, blank=True)
     referenceMerchantId = models.TextField()
+    resultStatus=models.TextField(blank=True,null=True)
+    resultCode=models.TextField(blank=True,null=True)
+    resultMessage=models.TextField(blank=True,null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
