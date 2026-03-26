@@ -117,6 +117,7 @@ class SignatureService:
         Returns:
             True if signature is valid, False otherwise
         """
+        content = ""  # Initialize before try block to avoid unbound variable
         try:
             # Build content to be validated
             content = f"{http_method.upper()} {request_uri}\n{self.client_id}.{request_time}.{request_body}"
@@ -141,7 +142,7 @@ class SignatureService:
             return True
         except Exception as e:
             logger.warning(f"Signature verification failed: {e}")
-            logger.debug(f"Signature verification failed - content preview: {content[:200]}...")
+            logger.debug(f"Signature verification failed - content preview: {content[:200] if content else 'N/A'}...")
             return False
     
     def build_signature_header(self, signature: str, key_version: int = 1) -> str:
