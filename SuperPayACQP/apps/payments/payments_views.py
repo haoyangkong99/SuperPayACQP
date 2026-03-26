@@ -402,6 +402,9 @@ class NotifyPaymentView(APIView):
         # Get service instances
         signature_service, _ ,db_service= get_service_instances()
         
+        # Read raw body first for signature verification (must be done before accessing request.data)
+        raw_body = request.body.decode('utf-8')
+        
         # Verify signature
         signature_header = request.headers.get('Signature', '')
         request_time = request.headers.get('Request-Time', '')
@@ -412,7 +415,7 @@ class NotifyPaymentView(APIView):
                 'POST',
                 '/alipay/notifyPayment',
                 request_time,
-                request.body.decode('utf-8'),
+                raw_body,
                 signature
             )
         
@@ -435,34 +438,34 @@ class NotifyPaymentView(APIView):
             return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
         
         # Process notification
-        notification_data = NotifyPaymentRequestDTO(**request.data)
-        payment_request_id = notification_data.paymentRequestId
+        notification_dto = NotifyPaymentRequestDTO(**request.data)
+        payment_request_id = notification_dto.paymentRequestId
         
         # Update payment request
         try:
             payment_request = PaymentRequest.objects.get(paymentRequestId=payment_request_id)
-            if notification_data.paymentId:
-                payment_request.paymentId = notification_data.paymentId
-            if notification_data.paymentTime:
-                payment_request.paymentTime = format_str_to_datetime(notification_data.paymentTime)
-            if notification_data.pspId:
-                payment_request.pspId = notification_data.pspId
-            if notification_data.walletBrandName:
-                payment_request.walletBrandName = notification_data.walletBrandName
-            if notification_data.mppPaymentId:
-                payment_request.mppPaymentId = notification_data.mppPaymentId
+            if notification_dto.paymentId:
+                payment_request.paymentId = notification_dto.paymentId
+            if notification_dto.paymentTime:
+                payment_request.paymentTime = format_str_to_datetime(notification_dto.paymentTime)
+            if notification_dto.pspId:
+                payment_request.pspId = notification_dto.pspId
+            if notification_dto.walletBrandName:
+                payment_request.walletBrandName = notification_dto.walletBrandName
+            if notification_dto.mppPaymentId:
+                payment_request.mppPaymentId = notification_dto.mppPaymentId
             
-            payment_request.resultStatus=notification_data.paymentResult.resultStatus
-            payment_request.resultCode=notification_data.paymentResult.resultCode
-            payment_request.resultMessage=notification_data.paymentResult.resultMessage
+            payment_request.resultStatus=notification_dto.paymentResult.resultStatus
+            payment_request.resultCode=notification_dto.paymentResult.resultCode
+            payment_request.resultMessage=notification_dto.paymentResult.resultMessage
             payment_request.save()
             
 
             # Save settlement if present
             settlementCheck=Settlement.objects.filter(paymentRequestId=payment_request_id).first()
             if not settlementCheck:
-                settlement_amount = notification_data.settlementAmount
-                settlement_quote = notification_data.settlementQuote
+                settlement_amount = notification_dto.settlementAmount
+                settlement_quote = notification_dto.settlementQuote
                 if settlement_amount:
                     Settlement.objects.create(
                         settlementId=str(uuid.uuid4()),
@@ -485,7 +488,7 @@ class NotifyPaymentView(APIView):
         response_dto = NotifyPaymentResponseDTO(
             result=result
         )
-        db_service.createApiRecordsWithReqRes('/alipay/notifyPayment',HTTPMethod.POST,notification_data,response_dto,MessageType.INBOUND)
+        db_service.createApiRecordsWithReqRes('/alipay/notifyPayment',HTTPMethod.POST,notification_dto,response_dto,MessageType.INBOUND)
         notifyPaymentResponse=Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
         
         logger.debug("response header for notifypayment: {notifyPaymentResponse.headers}")

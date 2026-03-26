@@ -94,22 +94,39 @@ class DbService:
 
     @staticmethod
     @transaction.atomic
-    def createApiRecordsWithReqRes(api_url,http_method ,request, response, message_type):
+    def createApiRecordsWithReqRes(api_url, http_method, request, response, message_type):
+        # Handle both dict and Pydantic model objects
+        if isinstance(request, dict):
+            request_body = json.dumps(request)
+        else:
+            request_body = request.model_dump_json(exclude_none=True)
+        
+        if isinstance(response, dict):
+            response_body = json.dumps(response)
+        else:
+            response_body = response.model_dump_json()
+        
         ApiRecord.objects.create(
             api_url=api_url,
             http_method=http_method,
-            request_body=request.model_dump_json(exclude_none=True),
-            response_body=response.model_dump_json(),
+            request_body=request_body,
+            response_body=response_body,
             message_type=message_type
         )
 
     @staticmethod
     @transaction.atomic
-    def createApiRecordsWithReq(api_url,http_method, request, message_type):
+    def createApiRecordsWithReq(api_url, http_method, request, message_type):
+        # Handle both dict and Pydantic model objects
+        if isinstance(request, dict):
+            request_body = json.dumps(request)
+        else:
+            request_body = request.model_dump_json(exclude_none=True)
+        
         ApiRecord.objects.create(
             api_url=api_url,
             http_method=http_method,
-            request_body=request.model_dump_json(exclude_none=True),
+            request_body=request_body,
             message_type=message_type
         )
 
