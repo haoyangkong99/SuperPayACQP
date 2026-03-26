@@ -191,6 +191,11 @@
     function renderErrorResult(apiResponse) {
         paymentResult = {
             success: false,
+            paymentRequestId: apiResponse.paymentRequestId || null,
+            paymentId: apiResponse.paymentId || null,
+            paymentAmount: apiResponse.paymentAmount || null,
+            paymentTime: apiResponse.paymentTime || null,
+            walletBrandName: apiResponse.walletBrandName || null,
             resultStatus: apiResponse.result ? apiResponse.result.resultStatus : 'F',
             resultCode: apiResponse.result ? apiResponse.result.resultCode : '',
             resultMessage: apiResponse.result ? apiResponse.result.resultMessage : 'Payment failed'
