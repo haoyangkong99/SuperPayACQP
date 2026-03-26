@@ -428,15 +428,16 @@ class DbService:
                 merchant_address = {**merchant_address, 'state': str(merchant_address['state'])[:8]}
             
             # Convert dict to AddressDTO
-            address_dto = AddressDTO(**merchant_address) if merchant_address else None
+            address_dto = AddressDTO(**merchant_address) 
   
             return MerchantInfoDTO(
                 referenceMerchantId=merchant.merchantId,
-                merchantName=merchant.merchantName or None,
-                merchantDisplayName=merchant.merchantDisplayName or None,
-                merchantMCC=merchant.merchantMCC or None,
+                merchantName=merchant.merchantName ,
+                merchantDisplayName=merchant.merchantDisplayName ,
+                merchantMCC=merchant.merchantMCC,
                 merchantAddress=address_dto,
-                store=store
+                store=store,
+                currency=merchant.currency
             )
         else:
              return None
@@ -446,12 +447,12 @@ class DbService:
     def createMerchants(request: MerchantInfoDTO):
         merchant=Merchant.objects.filter(merchantId=request.referenceMerchantId).first()
         if merchant:
-            merchant.merchantName = request.merchantName or merchant.merchantName
-            merchant.merchantDisplayName=request.merchantDisplayName or merchant.merchantDisplayName
-            merchant.merchantMCC=request.merchantMCC or merchant.merchantMCC
-            merchant.merchantAddress=request.merchantAddress.model_dump(exclude_none=True) if request.merchantAddress else merchant.merchantAddress  # type: ignore[assignment]
-            merchant.store=request.store.model_dump(exclude_none=True) if request.store else merchant.store  # type: ignore[assignment]
-            merchant.currency=request.currency or merchant.currency
+            merchant.merchantName = request.merchantName 
+            merchant.merchantDisplayName=request.merchantDisplayName 
+            merchant.merchantMCC=request.merchantMCC 
+            merchant.merchantAddress=request.merchantAddress.model_dump(exclude_none=True)   # type: ignore[assignment]
+            merchant.store=request.store.model_dump(exclude_none=True) if request.store else None  # type: ignore[assignment]
+            merchant.currency=request.currency
 
         else:
             Merchant.objects.create(
@@ -460,7 +461,7 @@ class DbService:
             merchantDisplayName=request.merchantDisplayName,
             merchantRegisterDate= request.merchantRegisterDate if request.merchantRegisterDate else str(datetime.now(timezone.utc)),
             merchantMCC=request.merchantMCC,
-            merchantAddress=request.merchantAddress.model_dump(exclude_none=True) if request.merchantAddress else None,
+            merchantAddress=request.merchantAddress.model_dump(exclude_none=True) ,
             store=request.store.model_dump(exclude_none=True) if request.store else None,
             currency=request.currency
         )

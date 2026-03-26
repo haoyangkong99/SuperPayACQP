@@ -139,13 +139,13 @@ class StoreDTO(BaseModel):
 class MerchantInfoDTO(BaseModel):
     """Merchant info DTO"""
     referenceMerchantId: Optional[str] = None
-    merchantName: Optional[str] = None
-    merchantDisplayName: Optional[str] = None
+    merchantName: str
+    merchantDisplayName: str
     merchantRegisterDate: Optional[str] = None
-    merchantMCC: Optional[str] = None
-    merchantAddress: Optional[AddressDTO] = None
+    merchantMCC: str
+    merchantAddress: AddressDTO
     store: Optional[StoreDTO] = None
-    currency: Optional[str] = None
+    currency: str
 
 
 class IndirectAcquirerDTO(BaseModel):
