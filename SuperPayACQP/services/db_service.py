@@ -435,7 +435,7 @@ class DbService:
             if existing_settlement:
                 # Update existing settlement
                 existing_settlement.settlementAmountValue = response_dto.settlementAmount.value
-                existing_settlement.settlementCurrency = response_dto.settlementAmount.currency or payment_request.paymentAmountCurrency
+                existing_settlement.settlementCurrency = response_dto.settlementAmount.currency or 'MYR'
                 existing_settlement.quotePrice = quote_price
                 existing_settlement.quoteCurrencyPair = quote_currency_pair
                 existing_settlement.quoteStartTime = quote_start_time
@@ -450,7 +450,7 @@ class DbService:
                     settlementId=str(uuid.uuid4()),
                     paymentRequestId=payment_request_id,
                     settlementAmountValue=response_dto.settlementAmount.value,
-                    settlementCurrency=response_dto.settlementAmount.currency or payment_request.paymentAmountCurrency,
+                    settlementCurrency=response_dto.settlementAmount.currency or 'MYR',
                     quoteId=quote_id,
                     quotePrice=quote_price,
                     quoteCurrencyPair=quote_currency_pair,
