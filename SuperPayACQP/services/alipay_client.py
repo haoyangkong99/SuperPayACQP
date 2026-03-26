@@ -126,7 +126,7 @@ class AlipayClient:
         Returns:
             Headers dictionary
         """
-        signature = self.signature_service.generate_signature(
+        signature = self.signature_service.generate_request_signature(
             "POST", request_uri, request_time, request_body
         )
         
@@ -206,7 +206,7 @@ class AlipayClient:
         url = f"{self.API_BASE_URL}{endpoint}"
         response_time = self._get_request_time()
         response_body = json.dumps(payload, separators=(',', ':'))
-        signature = self.signature_service.generate_signature(
+        signature = self.signature_service.generate_response_signature(
             httpMethod, endpoint, response_time, response_body
         )
         

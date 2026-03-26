@@ -402,31 +402,10 @@ class NotifyPaymentView(APIView):
         # Get service instances
         signature_service, alipay_service,db_service= get_service_instances()
         
-        # Debug: Log request headers to investigate body reformatting
-        content_type = request.headers.get('Content-Type', 'N/A')
-        content_length = request.headers.get('Content-Length', 'N/A')
-        transfer_encoding = request.headers.get('Transfer-Encoding', 'N/A')
-        logger.debug(f"NotifyPayment - Content-Type: {content_type}")
-        logger.debug(f"NotifyPayment - Content-Length: {content_length}")
-        logger.debug(f"NotifyPayment - Transfer-Encoding: {transfer_encoding}")
-        
+
         # Read raw body first for signature verification (must be done before accessing request.data)
         raw_body = request.body.decode('utf-8')
-        
-        # Debug: Check if body has whitespace/formatting issues
-        import json as json_module
-        try:
-            parsed_body = json_module.loads(raw_body)
-            compact_body = json_module.dumps(parsed_body, separators=(',', ':'))
-            has_whitespace = len(raw_body) != len(compact_body)
-            logger.debug(f"NotifyPayment - raw_body length: {len(raw_body)}")
-            logger.debug(f"NotifyPayment - compact_body length: {len(compact_body)}")
-            logger.debug(f"NotifyPayment - body has whitespace: {has_whitespace}")
-            if has_whitespace:
-                logger.warning(f"NotifyPayment - Body has unexpected whitespace! Using compact body for signature verification.")
-                logger.debug(f"NotifyPayment - First 200 chars of raw_body: {repr(raw_body[:200])}")
-        except Exception as e:
-            logger.warning(f"NotifyPayment - Failed to parse body as JSON: {e}")
+
         
         # Verify signature
         signature_header = request.headers.get('Signature', '')

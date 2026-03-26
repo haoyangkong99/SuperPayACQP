@@ -73,7 +73,7 @@ class SignatureService:
             logger.error(f"Failed to load public key: {e}")
             raise
     
-    def generate_signature(self, http_method: str, request_uri: str, 
+    def generate_request_signature(self, http_method: str, request_uri: str, 
                           request_time: str, request_body: str) -> str:
         """
         Generate signature for request
@@ -98,10 +98,23 @@ class SignatureService:
             padding.PKCS1v15(),
             hashes.SHA256()
         )
+        # Base64 URL-safe encode (keeps padding for proper decoding)
+        # Note: base64.urlsafe_b64encode uses '-' and '_' instead of '+' and '/'
         generated_signature = base64.urlsafe_b64encode(signature).decode("utf-8").rstrip("=")
-        # Base64 encode and URL encode
         return generated_signature
-    
+    def generate_response_signature(self, http_method: str, response_uri: str, 
+                          response_time: str, response_body: str) -> str:
+        # Build content to be signed
+        content = f"{http_method.upper()} {response_uri}\n{self.client_id}.{response_time}.{response_body}"
+        
+        # Sign the content
+        signature = self.private_key.sign(
+            content.encode('utf-8'),
+            padding.PKCS1v15(),
+            hashes.SHA256()
+        )
+        generated_signature = base64.urlsafe_b64encode(signature).decode("utf-8").rstrip("=")
+        return generated_signature
     def verify_signature(self, http_method: str, request_uri: str,
                         request_time: str, request_body: str, signature: str) -> bool:
         """
