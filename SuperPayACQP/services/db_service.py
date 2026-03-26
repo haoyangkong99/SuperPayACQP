@@ -451,7 +451,7 @@ class DbService:
                     settlementId=str(uuid.uuid4()),
                     paymentRequestId=payment_request_id,
                     settlementAmountValue=response_dto.settlementAmount.value,
-                    settlementCurrency=response_dto.settlementAmount.currency or '',  # type: ignore[arg-type]
+                    settlementCurrency=response_dto.settlementAmount.currency or None,  # type: ignore[arg-type]
                     quoteId=quote_id,
                     quotePrice=quote_price,
                     quoteCurrencyPair=quote_currency_pair,
