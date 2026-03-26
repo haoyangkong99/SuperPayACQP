@@ -188,13 +188,13 @@ class AlipayPayRequestDTO(BaseRequestDTO):
 class NotifyPaymentRequestDTO(BaseModel):
     """Notify payment request DTO from Alipay+ callback"""
     paymentResult: Result
-    acquirerId: str
+    acquirerId: Optional[str] = None
     pspId: Optional[str] = None
     paymentRequestId: str
     paymentId: Optional[str] = None
     customerId: Optional[str] = None
     walletBrandName: Optional[str] = None
-    paymentAmount: AmountDTO
+    paymentAmount: Optional[AmountDTO]=None
     paymentTime: Optional[str] = None
     settlementAmount: Optional[AmountDTO] = None
     settlementQuote: Optional[SettlementQuoteDTO] = None
