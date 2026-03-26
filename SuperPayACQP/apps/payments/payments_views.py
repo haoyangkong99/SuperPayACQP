@@ -497,7 +497,7 @@ class NotifyPaymentView(APIView):
                         settlementId=str(uuid.uuid4()),
                         paymentRequestId=payment_request_id,
                         settlementAmountValue=settlement_amount.value,
-                        settlementCurrency=settlement_amount.currency or None,
+                        settlementCurrency=settlement_amount.currency or payment_request.paymentAmountCurrency,  # Default to MYR if not provided
                         quoteId=settlement_quote.quoteId if settlement_quote else None,
                         quotePrice=settlement_quote.quotePrice if settlement_quote else None,
                         quoteCurrencyPair=settlement_quote.quoteCurrencyPair if settlement_quote else None,
