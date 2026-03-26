@@ -88,8 +88,7 @@ class SignatureService:
             URL-encoded Base64 signature
         """
         # Build content to be signed
-        encoded_uri=quote(request_uri, safe='')
-        content = f"{http_method.upper()} {encoded_uri}\n{self.client_id}.{request_time}.{request_body}"
+        content = f"{http_method.upper()} {request_uri}\n{self.client_id}.{request_time}.{request_body}"
         
 
         
@@ -106,8 +105,7 @@ class SignatureService:
     def generate_response_signature(self, http_method: str, response_uri: str, 
                           response_time: str, response_body: str) -> str:
         # Build content to be signed
-        encoded_uri=quote(response_uri, safe='')
-        content = f"{http_method.upper()} {encoded_uri}\n{self.client_id}.{response_time}.{response_body}"
+        content = f"{http_method.upper()} {response_uri}\n{self.client_id}.{response_time}.{response_body}"
         
         # Sign the content
         signature = self.private_key.sign(
