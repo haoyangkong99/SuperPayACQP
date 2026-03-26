@@ -408,7 +408,9 @@ class NotifyPaymentView(APIView):
         # Verify signature
         signature_header = request.headers.get('Signature', '')
         request_time = request.headers.get('Request-Time', '')
-        
+        logger.debug(f"NotifyPayment - raw_body: {raw_body}")
+        logger.debug(f"NotifyPayment - signature_header: {signature_header}")
+        logger.debug(f"NotifyPayment - request_time: {request_time}")
         signature = signature_service.extract_signature_from_header(signature_header)
         if signature:
             is_valid = signature_service.verify_signature(
