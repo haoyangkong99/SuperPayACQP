@@ -14,6 +14,9 @@
     <link rel="stylesheet" href="{% static 'css/shared.css' %}">
     
     {% block extra_css %}{% endblock %}
+    
+    <!-- Extra JS in head (for constants, etc.) -->
+    {% block extra_js_head %}{% endblock %}
 </head>
 
 <body class="{% block body_class %}{% endblock %}">

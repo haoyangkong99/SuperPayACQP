@@ -1,6 +1,8 @@
 import json
 import logging
 import uuid
+import random
+import string
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from utils.helpers import format_str_to_datetime
@@ -37,6 +39,55 @@ from dtos.response import (
 )
 from dtos.request import RefundRequestDTO
 logger = logging.getLogger(__name__)
+
+
+def generate_merchant_id(prefix: str = "MC", max_length: int = 32) -> str:
+    """
+    Generate a random merchant ID with a maximum length of 32 characters.
+    
+    Format: {prefix}{timestamp_suffix}{random_chars}
+    - prefix: Default "MC" (2 characters)
+    - timestamp_suffix: Last 6 digits of current timestamp (6 characters)
+    - random_chars: Random alphanumeric characters to fill remaining space
+    
+    Args:
+        prefix: Prefix for the merchant ID (default: "MC")
+        max_length: Maximum length of the merchant ID (default: 32)
+    
+    Returns:
+        A unique merchant ID string with maximum length of 32 characters
+    
+    Example:
+        generate_merchant_id() -> "MC250326ABC123XYZ" (varies)
+        generate_merchant_id(prefix="STORE") -> "STORE250326ABC123" (varies)
+    """
+    # Calculate remaining length after prefix
+    remaining_length = max_length - len(prefix)
+    
+    if remaining_length <= 0:
+        raise ValueError(f"Prefix '{prefix}' exceeds maximum length of {max_length}")
+    
+    # Use last 6 digits of timestamp for uniqueness
+    timestamp_suffix = str(int(datetime.now(timezone.utc).timestamp()))[-6:]
+    
+    # Calculate space for random characters
+    random_length = remaining_length - len(timestamp_suffix)
+    
+    if random_length < 0:
+        # If timestamp doesn't fit, truncate it
+        timestamp_suffix = timestamp_suffix[:remaining_length]
+        random_length = 0
+    
+    # Generate random alphanumeric characters (uppercase for readability)
+    random_chars = ''.join(
+        random.choices(string.ascii_uppercase + string.digits, k=random_length)
+    ) if random_length > 0 else ''
+    
+    # Combine parts
+    merchant_id = f"{prefix}{timestamp_suffix}{random_chars}"
+    
+    # Ensure we don't exceed max_length
+    return merchant_id[:max_length]
 
 
 class DbService:
@@ -457,7 +508,7 @@ class DbService:
 
         else:
             Merchant.objects.create(
-            merchantId=request.referenceMerchantId if request.referenceMerchantId else str(uuid.uuid4()),
+            merchantId=request.referenceMerchantId if request.referenceMerchantId else generate_merchant_id(),
             merchantName=request.merchantName,
             merchantDisplayName=request.merchantDisplayName,
             merchantRegisterDate= request.merchantRegisterDate if request.merchantRegisterDate else str(datetime.now(timezone.utc)),
