@@ -436,6 +436,26 @@
                                         hideLoading();
                                         window.location.href = '/payment-result?paymentRequestId=' + result.paymentRequestId;
                                     }
+                                    else{
+                                        const paymentResult = {
+                                            paymentRequestId: result.paymentRequestId,
+                                            paymentId: result.paymentId,
+                                            paymentTime: result.paymentTime,
+                                            paymentExpireTime: result.paymentExpireTime,
+                                            paymentAmount: result.paymentAmount,
+                                            customerId: result.customerId,
+                                            pspId: result.pspId,
+                                            walletBrandName: result.walletBrandName,
+                                            mppPaymentId: result.mppPaymentId,
+                                            totalAmount: calculateTotalAmount(),
+                                            orderId: requestBody.order.referenceOrderId,
+                                            inStorePaymentScenario: 'PaymentCode',
+                                            resultStatus: response_body.paymentResult.resultStatus,
+                                            resultCode: response_body.paymentResult.resultCode,
+                                            resultMessage: response_body.paymentResult.resultMessage
+                                        };
+                                        sessionStorage.setItem('paymentResult', JSON.stringify(paymentResult));
+                                    }
                                 }
                             } catch (inquiryError) {
                                 console.error('Error inquiring payment:', inquiryError);
