@@ -114,7 +114,7 @@ class AlipayClient:
         """Get current UTC timestamp in ISO format"""
         return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     
-    def _build_headers(self, request_uri: str, request_time: str, request_body: str) -> Dict[str, str]:
+    def _build_request_headers(self, request_uri: str, request_time: str, request_body: str) -> Dict[str, str]:
         """
         Build headers with signature
         
@@ -136,6 +136,7 @@ class AlipayClient:
             "Request-Time": request_time,
             "Signature": self.signature_service.build_signature_header(signature)
         }
+
     
     def _make_request(self, endpoint: str, payload: Dict[str, Any],timeout:int) -> Dict[str, Any]:
         """
@@ -152,7 +153,7 @@ class AlipayClient:
         request_time = self._get_request_time()
         request_body = json.dumps(payload, separators=(',', ':'))
         
-        headers = self._build_headers(endpoint, request_time, request_body)
+        headers = self._build_request_headers(endpoint, request_time, request_body)
         
         # logger.info(f"Making request to Alipay+: {endpoint}")
         logger.debug(f"Request body: {request_body}")
@@ -200,7 +201,24 @@ class AlipayClient:
                     'resultMessage': str(e)
                 }
             }
-    
+    def _make_response_header(self, httpMethod:str,endpoint: str, payload: Dict[str, Any]) :
+
+        url = f"{self.API_BASE_URL}{endpoint}"
+        response_time = self._get_request_time()
+        response_body = json.dumps(payload, separators=(',', ':'))
+        signature = self.signature_service.generate_signature(
+            httpMethod, endpoint, response_time, response_body
+        )
+        
+        headers= {
+            "Content-Type": "application/json; charset=UTF-8",
+            "Client-Id": self.client_id,
+            "Response-Time": response_time,
+            "Signature": self.signature_service.build_signature_header(signature)
+        }
+        return headers
+
+
     def pay(self, request_dto: AlipayPayRequestDTO) -> AlipayPayResponseDTO:
         """
         Call Alipay+ Pay API

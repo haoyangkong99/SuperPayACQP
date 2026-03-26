@@ -400,7 +400,7 @@ class NotifyPaymentView(APIView):
     
     def post(self, request):
         # Get service instances
-        signature_service, _ ,db_service= get_service_instances()
+        signature_service, alipay_service,db_service= get_service_instances()
         
         # Read raw body first for signature verification (must be done before accessing request.data)
         raw_body = request.body.decode('utf-8')
@@ -425,8 +425,9 @@ class NotifyPaymentView(APIView):
                 response_dto = NotifyPaymentResponseDTO(
                     result=result
                 )
+                response_header=alipay_service._make_response_header("POST",'/alipay/notifyPayment',response_dto.model_dump(exclude_none=True))
                 db_service.createApiRecordsWithReqRes('/alipay/notifyPayment',HTTPMethod.POST,request.data,response_dto,MessageType.INBOUND)
-                return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
+                return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK,headers=response_header)
         
         else:
             logger.warning("Invalid signature in notifyPayment")
@@ -434,8 +435,9 @@ class NotifyPaymentView(APIView):
             response_dto = NotifyPaymentResponseDTO(
                     result=result
                 )
+            response_header=alipay_service._make_response_header("POST",'/alipay/notifyPayment',response_dto.model_dump(exclude_none=True))
             db_service.createApiRecordsWithReqRes('/alipay/notifyPayment',HTTPMethod.POST,request.data,response_dto,MessageType.INBOUND)
-            return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
+            return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK,headers=response_header)
         
         # Process notification
         notification_dto = NotifyPaymentRequestDTO(**request.data)
@@ -488,8 +490,9 @@ class NotifyPaymentView(APIView):
         response_dto = NotifyPaymentResponseDTO(
             result=result
         )
-        db_service.createApiRecordsWithReqRes('/alipay/notifyPayment',HTTPMethod.POST,notification_dto,response_dto,MessageType.INBOUND)
-        notifyPaymentResponse=Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
+        response_header=alipay_service._make_response_header("POST",'/alipay/notifyPayment',response_dto.model_dump(exclude_none=True))
+        db_service.createApiRecordsWithReqRes('/alipay/notifyPayment',HTTPMethod.POST,notification_dto.model_dump(exclude_none=True),response_dto,MessageType.INBOUND)
+        notifyPaymentResponse=Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK,headers=response_header)
         
         logger.debug("response header for notifypayment: {notifyPaymentResponse.headers}")
         logger.debug("response body for notifypayment: {notifyPaymentResponse.data}")
