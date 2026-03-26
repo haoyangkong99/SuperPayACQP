@@ -55,9 +55,9 @@
     let selectedMerchantId = null;
     let merchantCurrency=null;
     // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
         loadCartFromStorage();
-        loadMerchants();
+        await loadMerchants();  // Wait for merchants to load before rendering
         renderCheckout();
     });
     
