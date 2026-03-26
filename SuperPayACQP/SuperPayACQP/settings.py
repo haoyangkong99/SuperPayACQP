@@ -24,6 +24,17 @@ ALLOWED_HOSTS.append('.railway.app')
 # Also allow the specific production domain
 ALLOWED_HOSTS.append('superpayacqp-production.up.railway.app')
 
+# CSRF Trusted Origins - required for cross-origin POST requests
+CSRF_TRUSTED_ORIGINS = [
+    'https://superpayacqp-production.up.railway.app',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+# Add any additional origins from environment variable
+csrf_origins_env = os.getenv('CSRF_TRUSTED_ORIGINS')
+if csrf_origins_env:
+    CSRF_TRUSTED_ORIGINS.extend([origin.strip() for origin in csrf_origins_env.split(',')])
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
