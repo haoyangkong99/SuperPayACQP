@@ -453,6 +453,7 @@ class DbService:
             merchant.merchantAddress=request.merchantAddress.model_dump(exclude_none=True)   # type: ignore[assignment]
             merchant.store=request.store.model_dump(exclude_none=True) if request.store else None  # type: ignore[assignment]
             merchant.currency=request.currency
+            merchant.save()
 
         else:
             Merchant.objects.create(
