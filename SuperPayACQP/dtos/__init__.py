@@ -8,7 +8,7 @@ from utils.constants import Result
 
 class AmountDTO(BaseModel):
     """Amount DTO for payment amounts"""
-    currency: str
+    currency: Optional[str] = None
     value: int
 
 

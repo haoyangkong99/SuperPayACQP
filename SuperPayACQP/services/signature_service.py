@@ -121,7 +121,11 @@ class SignatureService:
             # Build content to be validated
             content = f"{http_method.upper()} {request_uri}\n{self.client_id}.{request_time}.{request_body}"
             
-
+            logger.debug(f"Signature verification - content length: {len(content)}")
+            logger.debug(f"Signature verification - client_id: {self.client_id}")
+            logger.debug(f"Signature verification - request_time: {request_time}")
+            logger.debug(f"Signature verification - request_body length: {len(request_body)}")
+            logger.debug(f"Signature verification - signature: {signature[:50]}...")
             
             # Decode signature
             signature_bytes = base64.urlsafe_b64decode(unquote(signature))
@@ -133,9 +137,11 @@ class SignatureService:
                 padding.PKCS1v15(),
                 hashes.SHA256()
             )
+            logger.info("Signature verification successful")
             return True
         except Exception as e:
             logger.warning(f"Signature verification failed: {e}")
+            logger.debug(f"Signature verification failed - content preview: {content[:200]}...")
             return False
     
     def build_signature_header(self, signature: str, key_version: int = 1) -> str:
