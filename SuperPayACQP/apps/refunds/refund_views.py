@@ -58,11 +58,25 @@ class RefundView(APIView):
         try:
                 # Call Alipay+ Refund API
                 response_dto = alipay_client.refund(request_dto)
+                if (response_dto.result.resultStatus=='S'):
+                    db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/refund',HTTPMethod.POST,request_dto,response_dto,MessageType.OUTBOUND)
+                    db_service.createRefundRecord(request_dto, response_dto)
                 
-                # Log API record
-                db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/refund',HTTPMethod.POST,request_dto,response_dto,MessageType.OUTBOUND)
+                elif (response_dto.result.resultStatus=='U'):
+                    count=0
+                    max_retries=3
+                    while (count<=max_retries):
+                         response_dto = alipay_client.refund(request_dto)
+                         count+=1
+                         if (response_dto.result.resultStatus=='S' or response_dto.result.resultStatus=='F'):
+                            db_service.createRefundRecord(request_dto, response_dto)
+                            break
+                         db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/refund',HTTPMethod.POST,request_dto,response_dto,MessageType.OUTBOUND)
+                else:
+                    db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/refund',HTTPMethod.POST,request_dto,response_dto,MessageType.OUTBOUND)
+                    db_service.createRefundRecord(request_dto, response_dto)     
+
                 db_service.createApiRecordsWithReqRes('/api/refund',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)
-                record=db_service.createRefundRecord(request_dto, response_dto)
                 return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
         except Exception as e:
                 logger.error(f"Failed to save refund record: {e}")

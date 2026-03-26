@@ -536,7 +536,7 @@ class DbService:
     
     @staticmethod
     @transaction.atomic
-    def createRefundRecord (request_dto:RefundRequestDTO, response_dto: RefundResponseDTO)-> RefundRecord:
+    def createRefundRecord (request_dto:RefundRequestDTO, response_dto: RefundResponseDTO):
         paymentRequestId=request_dto.paymentRequestId
         paymentId=request_dto.paymentId
         if not request_dto.paymentRequestId and request_dto.paymentId:
@@ -544,24 +544,25 @@ class DbService:
         if not request_dto.paymentId and request_dto.paymentRequestId:
             paymentId=PaymentRequest.objects.get(paymentRequestId=request_dto.paymentRequestId).paymentId
 
-        # Extract result fields from response if available
-        resultStatus = None
-        resultCode = None
-        resultMessage = None
-        if response_dto :
-            resultStatus = response_dto.result.resultStatus
-            resultCode = response_dto.result.resultCode
-            resultMessage = response_dto.result.resultMessage
-
-        record=RefundRecord.objects.create(
+        refund_record=RefundRecord.objects.filter(refundRequestId=request_dto.refundRequestId).first()
+        if (refund_record):
+            refund_record.resultStatus=response_dto.result.resultStatus
+            refund_record.resultCode=response_dto.result.resultCode
+            refund_record.resultMessage=response_dto.result.resultMessage
+            refund_record.save()
+        else:
+             RefundRecord.objects.create(
                     refundRequestId=request_dto.refundRequestId,
                     paymentRequestId=paymentRequestId,
                     paymentId=paymentId,
                     refundAmountValue=request_dto.refundAmount.value,
                     refundAmountCurrency=request_dto.refundAmount.currency,
                     refundReason=request_dto.refundReason or None,
-                    resultStatus=resultStatus,
-                    resultCode=resultCode,
-                    resultMessage=resultMessage
+                    resultStatus=response_dto.result.resultStatus,
+                    resultCode=response_dto.result.resultCode,
+                    resultMessage=response_dto.result.resultMessage
                 )
-        return record
+
+
+        
+
