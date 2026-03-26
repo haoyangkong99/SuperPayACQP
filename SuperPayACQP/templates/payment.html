@@ -244,7 +244,7 @@
                 referenceOrderId: crypto.randomUUID(),
                 orderDescription: `order code for SuperPayACQP - Merchant: ${username}`,
                 orderAmount: {
-                    currency: 'MYR',
+                    currency: merchantCurrency,
                     value: totalInCents.toString()
                 },
                 merchantId: merchantIdToUse,
@@ -265,7 +265,7 @@
                 }
             },
             paymentAmount: {
-                currency: 'merchantCurrency',
+                currency: merchantCurrency,
                 value: totalInCents.toString()
             },
             paymentMethod: {
