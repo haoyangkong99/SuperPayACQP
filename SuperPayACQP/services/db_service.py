@@ -242,7 +242,7 @@ class DbService:
                 
                 if existing_settlement:
                     existing_settlement.settlementAmountValue = response_dto.settlementAmount.value
-                    existing_settlement.settlementCurrency = response_dto.settlementAmount.currency or ''  # type: ignore[assignment]
+                    existing_settlement.settlementCurrency = response_dto.settlementAmount.currency or 'MYR'
                     if response_dto.settlementQuote:
                         existing_settlement.quoteId = response_dto.settlementQuote.quoteId
                         existing_settlement.quotePrice = to_decimal(response_dto.settlementQuote.quotePrice)
@@ -435,8 +435,7 @@ class DbService:
             if existing_settlement:
                 # Update existing settlement
                 existing_settlement.settlementAmountValue = response_dto.settlementAmount.value
-                existing_settlement.settlementCurrency = response_dto.settlementAmount.currency or None  # type: ignore[assignment]
-                existing_settlement.quoteId = quote_id
+                existing_settlement.settlementCurrency = response_dto.settlementAmount.currency or payment_request.paymentAmountCurrency
                 existing_settlement.quotePrice = quote_price
                 existing_settlement.quoteCurrencyPair = quote_currency_pair
                 existing_settlement.quoteStartTime = quote_start_time
@@ -451,7 +450,7 @@ class DbService:
                     settlementId=str(uuid.uuid4()),
                     paymentRequestId=payment_request_id,
                     settlementAmountValue=response_dto.settlementAmount.value,
-                    settlementCurrency=response_dto.settlementAmount.currency or None,  # type: ignore[arg-type]
+                    settlementCurrency=response_dto.settlementAmount.currency or payment_request.paymentAmountCurrency,
                     quoteId=quote_id,
                     quotePrice=quote_price,
                     quoteCurrencyPair=quote_currency_pair,
