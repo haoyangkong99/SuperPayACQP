@@ -70,7 +70,15 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'middleware.merchant_auth.MerchantAuthMiddleware',
+    'middleware.header_cleanup.HeaderCleanupMiddleware',
 ]
+
+# Security headers configuration - disable unwanted headers
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+SECURE_REFERRER_POLICY = None
+SECURE_CONTENT_TYPE_NOSNIFF = False
+# Note: X_FRAME_OPTIONS must be a string, not None. Use empty string to effectively disable.
+X_FRAME_OPTIONS = ''
 
 ROOT_URLCONF = 'SuperPayACQP.urls'
 

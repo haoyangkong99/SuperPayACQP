@@ -423,7 +423,7 @@ class NotifyPaymentView(APIView):
             logger.debug(f"NotifyPayment - compact_body length: {len(compact_body)}")
             logger.debug(f"NotifyPayment - body has whitespace: {has_whitespace}")
             if has_whitespace:
-                logger.warning(f"NotifyPayment - Body has unexpected whitespace! This will cause signature verification to fail.")
+                logger.warning(f"NotifyPayment - Body has unexpected whitespace! Using compact body for signature verification.")
                 logger.debug(f"NotifyPayment - First 200 chars of raw_body: {repr(raw_body[:200])}")
         except Exception as e:
             logger.warning(f"NotifyPayment - Failed to parse body as JSON: {e}")
