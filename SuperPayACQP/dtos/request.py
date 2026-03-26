@@ -143,7 +143,7 @@ class MerchantInfoDTO(BaseModel):
     merchantDisplayName: Optional[str] = None
     merchantRegisterDate: Optional[str] = None
     merchantMCC: Optional[str] = None
-    merchantAddress: Optional[dict] = None
+    merchantAddress: Optional[AddressDTO] = None
     store: Optional[StoreDTO] = None
 
 

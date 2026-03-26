@@ -17,7 +17,8 @@ from dtos.request import (
     PlaceOrderRequestDTO, 
     CancelPaymentRequestDTO, 
     InquiryPaymentRequestDTO,
-    StoreDTO
+    StoreDTO,
+    AddressDTO
 )
 from dtos.request import (
     AlipayPayRequestDTO, 
@@ -425,13 +426,16 @@ class DbService:
             merchant_address = merchant.merchantAddress or {}
             if merchant_address and 'state' in merchant_address and len(str(merchant_address.get('state', ''))) > 8:
                 merchant_address = {**merchant_address, 'state': str(merchant_address['state'])[:8]}
+            
+            # Convert dict to AddressDTO
+            address_dto = AddressDTO(**merchant_address) if merchant_address else None
   
             return MerchantInfoDTO(
                 referenceMerchantId=merchant.merchantId,
                 merchantName=merchant.merchantName or None,
                 merchantDisplayName=merchant.merchantDisplayName or None,
                 merchantMCC=merchant.merchantMCC or None,
-                merchantAddress=merchant_address if merchant_address else None,
+                merchantAddress=address_dto,
                 store=store
             )
         else:
@@ -440,16 +444,23 @@ class DbService:
     @staticmethod
     @transaction.atomic
     def createMerchants(request: MerchantInfoDTO):
-        Merchant.objects.update_or_create(
-            merchantId=request.referenceMerchantId,
-            defaults={
-                'merchantName': request.merchantName,
-                'merchantDisplayName': request.merchantDisplayName,
-                'merchantRegisterDate': str(datetime.now(timezone.utc)),
-                'merchantMCC': request.merchantMCC,
-                'merchantAddress': request.merchantAddress,
-                'store': request.store.model_dump(exclude_none=True) if request.store else None,
-            }
+        merchant=Merchant.objects.filter(merchantId=request.referenceMerchantId).first()
+        if merchant:
+            merchant.merchantName = request.merchantName or merchant.merchantName
+            merchant.merchantDisplayName=request.merchantDisplayName or merchant.merchantDisplayName
+            merchant.merchantMCC=request.merchantMCC or merchant.merchantMCC
+            merchant.merchantAddress=request.merchantAddress.model_dump(exclude_none=True) if request.merchantAddress else merchant.merchantAddress  # type: ignore[assignment]
+            merchant.store=request.store.model_dump(exclude_none=True) if request.store else merchant.store  # type: ignore[assignment]
+
+        else:
+            Merchant.objects.create(
+            merchantId=request.referenceMerchantId if request.referenceMerchantId else str(uuid.uuid4()),
+            merchantName=request.merchantName,
+            merchantDisplayName=request.merchantDisplayName,
+            merchantRegisterDate= request.merchantRegisterDate if request.merchantRegisterDate else str(datetime.now(timezone.utc)),
+            merchantMCC=request.merchantMCC,
+            merchantAddress=request.merchantAddress.model_dump(exclude_none=True) if request.merchantAddress else None,
+            store=request.store.model_dump(exclude_none=True) if request.store else None
         )
     
     @staticmethod
