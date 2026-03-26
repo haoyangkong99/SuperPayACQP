@@ -340,7 +340,7 @@
             });
             
             const result = await response.json();
-            hideLoading();
+            
             
             if (result.result) {
                 if (result.result.resultStatus === 'S') {
@@ -363,7 +363,7 @@
                         resultMessage: result.result.resultMessage
                     };
                     sessionStorage.setItem('paymentResult', JSON.stringify(paymentResult));
-                    
+                    hideLoading();
                     // Redirect to result page
                     window.location.href = '/payment-result?paymentRequestId=' + result.paymentRequestId;
                 }
@@ -408,6 +408,7 @@
                                             resultMessage: response_body.paymentResult.resultMessage
                                         };
                                         sessionStorage.setItem('paymentResult', JSON.stringify(paymentResult));
+                                        hideLoading();
                                         window.location.href = '/payment-result?paymentRequestId=' + result.paymentRequestId;
                                     }
                                     else if (response_body.paymentResult && response_body.paymentResult.resultStatus === 'F') {
@@ -431,6 +432,7 @@
                                             resultMessage: response_body.paymentResult.resultMessage
                                         };
                                         sessionStorage.setItem('paymentResult', JSON.stringify(paymentResult));
+                                        hideLoading();
                                         window.location.href = '/payment-result?paymentRequestId=' + result.paymentRequestId;
                                     }
                                 }
@@ -452,10 +454,12 @@
                         paymentRequestId: result.paymentRequestId 
                     };
                     sessionStorage.setItem('paymentResult', JSON.stringify(paymentResult));
+                    hideLoading();
                     window.location.href = '/payment-result?paymentRequestId=' + result.paymentRequestId;
                 }
             } 
             else {
+                hideLoading();
                 // No result in response
                 showMessageDialog({
                     title: 'Error',
