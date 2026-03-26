@@ -145,6 +145,7 @@ class MerchantInfoDTO(BaseModel):
     merchantMCC: Optional[str] = None
     merchantAddress: Optional[AddressDTO] = None
     store: Optional[StoreDTO] = None
+    currency: Optional[str] = None
 
 
 class IndirectAcquirerDTO(BaseModel):

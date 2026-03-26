@@ -451,6 +451,7 @@ class DbService:
             merchant.merchantMCC=request.merchantMCC or merchant.merchantMCC
             merchant.merchantAddress=request.merchantAddress.model_dump(exclude_none=True) if request.merchantAddress else merchant.merchantAddress  # type: ignore[assignment]
             merchant.store=request.store.model_dump(exclude_none=True) if request.store else merchant.store  # type: ignore[assignment]
+            merchant.currency=request.currency or merchant.currency
 
         else:
             Merchant.objects.create(
@@ -460,7 +461,8 @@ class DbService:
             merchantRegisterDate= request.merchantRegisterDate if request.merchantRegisterDate else str(datetime.now(timezone.utc)),
             merchantMCC=request.merchantMCC,
             merchantAddress=request.merchantAddress.model_dump(exclude_none=True) if request.merchantAddress else None,
-            store=request.store.model_dump(exclude_none=True) if request.store else None
+            store=request.store.model_dump(exclude_none=True) if request.store else None,
+            currency=request.currency
         )
     
     @staticmethod

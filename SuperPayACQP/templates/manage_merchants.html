@@ -185,6 +185,10 @@
                             <label for="storeMCC">Store MCC</label>
                             <input type="text" class="form-control" id="storeMCC" name="storeMCC" placeholder="Store category code">
                         </div>
+                        <div class="form-group">
+                            <label for="storePhoneNo">Store Phone Number</label>
+                            <input type="text" class="form-control" id="storePhoneNo" name="storePhoneNo" placeholder="e.g., +60123456789">
+                        </div>
                     </div>
                     
                     <h6 class="form-section-title">Store Address</h6>
@@ -513,7 +517,7 @@
         document.getElementById('merchantName').value = merchant.merchantName || '';
         document.getElementById('merchantDisplayName').value = merchant.merchantDisplayName || '';
         document.getElementById('merchantMCC').value = merchant.merchantMCC || '';
-        document.getElementById('currency').value = merchant.currency || 'MYR';
+        document.getElementById('currency').value = merchant.currency || '';
         
         if (merchant.merchantRegisterDate) {
             document.getElementById('merchantRegisterDate').value = merchant.merchantRegisterDate.split('T')[0];
@@ -534,6 +538,7 @@
             document.getElementById('storeReferenceId').value = merchant.store.referenceStoreId || '';
             document.getElementById('storeName').value = merchant.store.storeName || '';
             document.getElementById('storeMCC').value = merchant.store.storeMCC || '';
+            document.getElementById('storePhoneNo').value = merchant.store.storePhoneNo || '';
             
             // Fill store address
             if (merchant.store.storeAddress) {
@@ -565,31 +570,32 @@
         
         // Build merchant data
         const merchantData = {
-            merchantId: document.getElementById('merchantId').value,
+            merchantId: document.getElementById('referenceMerchantId').value,
             merchantName: document.getElementById('merchantName').value,
             merchantDisplayName: document.getElementById('merchantDisplayName').value,
-            merchantMCC: document.getElementById('merchantMCC').value || '',
+            merchantMCC: document.getElementById('merchantMCC').value ,
             currency: document.getElementById('currency').value,
             merchantRegisterDate: document.getElementById('merchantRegisterDate').value || null,
             merchantAddress: {
-                address1: document.getElementById('address1').value || '',
-                address2: document.getElementById('address2').value || '',
-                city: document.getElementById('city').value || '',
-                state: document.getElementById('state').value || '',
-                zipCode: document.getElementById('zipCode').value || '',
-                region: document.getElementById('region').value || ''
+                address1: document.getElementById('address1').value ,
+                address2: document.getElementById('address2').value ,
+                city: document.getElementById('city').value ,
+                state: document.getElementById('state').value ,
+                zipCode: document.getElementById('zipCode').value ,
+                region: document.getElementById('region').value '
             },
             store: {
-                referenceStoreId: document.getElementById('storeReferenceId').value || '',
-                storeName: document.getElementById('storeName').value || '',
-                storeMCC: document.getElementById('storeMCC').value || '',
+                referenceStoreId: document.getElementById('storeReferenceId').value ,
+                storeName: document.getElementById('storeName').value ,
+                storeMCC: document.getElementById('storeMCC').value ,
+                storePhoneNo: document.getElementById('storePhoneNo').value ,
                 storeAddress: {
-                    address1: document.getElementById('storeAddress1').value || '',
-                    address2: document.getElementById('storeAddress2').value || '',
-                    city: document.getElementById('storeCity').value || '',
-                    state: document.getElementById('storeState').value || '',
-                    zipCode: document.getElementById('storeZipCode').value || '',
-                    region: document.getElementById('storeRegion').value || ''
+                    address1: document.getElementById('storeAddress1').value ,
+                    address2: document.getElementById('storeAddress2').value ,
+                    city: document.getElementById('storeCity').value ,
+                    state: document.getElementById('storeState').value ,
+                    zipCode: document.getElementById('storeZipCode').value ,
+                    region: document.getElementById('storeRegion').value '
                 }
             }
         };
