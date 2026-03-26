@@ -279,17 +279,17 @@ class EntryCodeConfirmView(APIView):
         logger.debug(f"User-Agent: {user_agent}")
         
         # Validate User-Agent - check if it contains AlipayClient or AlipayConnect
-        is_valid_ua = any(identifier in user_agent for identifier in ALLOWED_UA_IDENTIFIERS)
+        # is_valid_ua = any(identifier in user_agent for identifier in ALLOWED_UA_IDENTIFIERS)
         
-        if not is_valid_ua:
-            logger.warning(f"Invalid User-Agent: {user_agent}")
-            return Response({
-                'result': {
-                    'resultCode': 'INVALID_USER_AGENT',
-                    'resultStatus': 'F',
-                    'resultMessage': 'Invalid User-Agent. Payment can only be initiated from authorized app.'
-                }
-            }, status=status.HTTP_200_OK)
+        # if not is_valid_ua:
+        #     logger.warning(f"Invalid User-Agent: {user_agent}")
+        #     return Response({
+        #         'result': {
+        #             'resultCode': 'INVALID_USER_AGENT',
+        #             'resultStatus': 'F',
+        #             'resultMessage': 'Invalid User-Agent. Payment can only be initiated from authorized app.'
+        #         }
+        #     }, status=status.HTTP_200_OK)
         
         # Validate entry code
         entry_code = EntryCode.objects.filter(

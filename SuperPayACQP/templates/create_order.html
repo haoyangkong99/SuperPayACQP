@@ -221,6 +221,7 @@
                               product.stockQuantity <= 10 ? 'Low Stock' : 'In Stock';
             const isInCart = cart.some(item => item.goodsId === product.goodsId);
             const isDisabled = product.stockQuantity === 0;
+            const currency=product.currency;
             
             return `
                 <div class="product-card">
@@ -231,7 +232,7 @@
                         <span class="stock-status ${stockStatus}">${stockLabel}</span>
                         <div class="product-brand">${escapeHtml(product.goodsBrand || 'Unknown Brand')}</div>
                         <div class="product-name" title="${escapeHtml(product.goodsName)}">${escapeHtml(product.goodsName)}</div>
-                        <div class="product-price">MYR ${price}</div>
+                        <div class="product-price">${currency} ${price}</div>
                         <div class="product-stock">Stock: ${product.stockQuantity} units</div>
                         <button class="add-btn" onclick="addToCart('${product.goodsId}')" ${isDisabled ? 'disabled' : ''}>
                             ${isInCart ? '<i class="bi bi-check"></i> Added' : '<i class="bi bi-plus"></i> Add'}
@@ -270,7 +271,8 @@
                 unitPrice: product.goodsUnitAmountValue,
                 taxRate: product.taxRate || 0,
                 quantity: 1,
-                maxStock: product.stockQuantity
+                maxStock: product.stockQuantity,
+                currency: product.currency
             });
         }
         
@@ -344,14 +346,14 @@
                     </div>
                     <div class="item-details">
                         <div class="item-name">${escapeHtml(item.goodsName)}</div>
-                        <div class="item-price">Unit: MYR ${(item.unitPrice / 100).toFixed(2)}</div>
+                        <div class="item-price">Unit: ${item.currency} ${(item.unitPrice / 100).toFixed(2)}</div>
                     </div>
                     <div class="item-quantity">
                         <button class="qty-btn" onclick="updateQuantity('${item.goodsId}', -1)">-</button>
                         <span class="qty-value">${item.quantity}</span>
                         <button class="qty-btn" onclick="updateQuantity('${item.goodsId}', 1)">+</button>
                     </div>
-                    <div class="item-total">MYR ${(itemTotal / 100).toFixed(2)}</div>
+                    <div class="item-total"> ${(itemTotal / 100).toFixed(2)}</div>
                 </div>
             `;
         }).join('');
@@ -371,9 +373,9 @@
         
         const total = subtotal + totalTax;
         
-        document.getElementById('subtotal').textContent = `MYR ${(subtotal / 100).toFixed(2)}`;
-        document.getElementById('taxAmount').textContent = `MYR ${(totalTax / 100).toFixed(2)}`;
-        document.getElementById('totalAmount').textContent = `MYR ${(total / 100).toFixed(2)}`;
+        document.getElementById('subtotal').textContent = ` ${(subtotal / 100).toFixed(2)}`;
+        document.getElementById('taxAmount').textContent = ` ${(totalTax / 100).toFixed(2)}`;
+        document.getElementById('totalAmount').textContent = ` ${(total / 100).toFixed(2)}`;
     }
     
     // Save cart to sessionStorage
