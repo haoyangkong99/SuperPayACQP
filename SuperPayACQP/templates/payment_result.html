@@ -33,8 +33,8 @@
             <i class="bi bi-check-lg"></i>
         </div>
         <h2>SUPERPAYACQP - MERCHANT STORE</h2>
-        <h3 id="resultTitle">Payment Successful</h3>
-        <p id="resultMessage">Your transaction has been processed securely. A confirmation email has been sent to your registered address.</p>
+        <h3 id="resultTitle"></h3>
+        <p id="resultMessage"></p>
     </div>
     
     <!-- Actions -->
@@ -53,7 +53,7 @@
 {% block extra_js %}
 <script>
     let paymentResult = {};
-    const MAX_RETRIES = 5;
+    const MAX_RETRIES = 20;
     const RETRY_DELAY = 3000; // 3 seconds
     
     // Initialize
@@ -129,17 +129,23 @@
                 } else {
                     // Invalid response structure
                     hideLoading();
-                    renderErrorResult({ result: { resultMessage: 'Invalid response from server' } });
+                    renderErrorResult({ 
+                        result: { 
+                            resultStatus:'F',
+                            resultCode:'PROCESS_FAIL',
+                            resultMessage: 'A general business failure occurred. Do not retry.' 
+                        } });
                     return;
                 }
             } catch (error) {
-                console.error('Error inquiring payment:', error);
-                if (attempt >= MAX_RETRIES) {
                     hideLoading();
-                    renderErrorResult({ result: { resultMessage: 'Network error. Please try again.' } });
-                    return;
-                }
-                await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+                    renderErrorResult({ 
+                        result: { 
+                            resultStatus:'F',
+                            resultCode:'PROCESS_FAIL',
+                            resultMessage: 'A general business failure occurred. Do not retry.' 
+                        } });
+
             }
         }
         
@@ -162,7 +168,6 @@
         
         // Build paymentResult object from API response
         paymentResult = {
-            success: isSuccess,
             paymentRequestId: apiResponse.paymentRequestId,
             paymentId: apiResponse.paymentId,
             paymentTime: apiResponse.paymentTime,
@@ -174,9 +179,13 @@
             totalAmount: apiResponse.paymentAmount ? (apiResponse.paymentAmount.value / 100).toFixed(2) : '0.00',
             orderId: apiResponse.paymentRequestId,
             transactionId: apiResponse.paymentId,
-            resultStatus: apiResponse.paymentResult ? apiResponse.paymentResult.resultStatus : 'U',
-            resultCode: apiResponse.paymentResult ? apiResponse.paymentResult.resultCode : '',
-            resultMessage: apiResponse.paymentResult ? apiResponse.paymentResult.resultMessage : ''
+            resultStatus: apiResponse.result.resultStatus ,
+            resultCode: apiResponse.result.resultCode ,
+            resultMessage: apiResponse.result.resultMessage,
+            paymentResultStatus:  apiResponse.paymentResult.resultStatus,
+            paymentResultCode:  apiResponse.paymentResult.resultCode ,
+            paymentResultMessage:  apiResponse.paymentResult.resultMessage
+
         };
         
         renderResult();
@@ -190,15 +199,9 @@
     // Render error result
     function renderErrorResult(apiResponse) {
         paymentResult = {
-            success: false,
-            paymentRequestId: apiResponse.paymentRequestId || null,
-            paymentId: apiResponse.paymentId || null,
-            paymentAmount: apiResponse.paymentAmount || null,
-            paymentTime: apiResponse.paymentTime || null,
-            walletBrandName: apiResponse.walletBrandName || null,
-            resultStatus: apiResponse.result ? apiResponse.result.resultStatus : 'F',
-            resultCode: apiResponse.result ? apiResponse.result.resultCode : '',
-            resultMessage: apiResponse.result ? apiResponse.result.resultMessage : 'Payment failed'
+            resultStatus: apiResponse.result.resultStatus ,
+            resultCode: apiResponse.result.resultCode ,
+            resultMessage: apiResponse.result.resultMessage 
         };
         
         renderResult();
@@ -212,7 +215,6 @@
     // Render timeout error
     function renderTimeoutError() {
         paymentResult = {
-            success: false,
             resultStatus: 'U',
             resultCode: 'TIMEOUT',
             resultMessage: 'Payment verification timeout. Please check your order status later.'
@@ -236,15 +238,26 @@
     
     // Render result
     function renderResult() {
-        const isSuccess = paymentResult.success === true || paymentResult.resultStatus === 'S';
-        const isPending = paymentResult.resultStatus === 'U';
+
         
         // Update icon
         const iconDiv = document.getElementById('resultIcon');
-        if (isSuccess) {
+        if (paymentResult.resultStatus=='S') {
+            if (paymentResult.paymentResultStatus=='S'){
             iconDiv.innerHTML = '<i class="bi bi-check-lg"></i>';
             iconDiv.classList.remove('failed');
-        } else if (isPending) {
+            }
+            else if (paymentResult.paymentResultStatus=='U'){
+            iconDiv.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+            iconDiv.classList.add('failed');
+            }
+            else
+            {
+            iconDiv.innerHTML = '<i class="bi bi-x-lg"></i>';
+            iconDiv.classList.add('failed');
+            }
+
+        } else if (paymentResult.resultStatus=='U') {
             iconDiv.innerHTML = '<i class="bi bi-hourglass-split"></i>';
             iconDiv.classList.add('failed');
         } else {
@@ -253,37 +266,47 @@
         }
         
         // Update title
-        let title = 'Payment Successful';
-        if (isPending) {
-            title = 'Payment Pending';
-        } else if (!isSuccess) {
-            title = 'Payment Failed';
+        let title = '';
+        if (paymentResult.resultStatus=='S'){
+            if (paymentResult.paymentResultStatus=='S'){
+                title = 'Payment Successful';
+            }
+            else if (paymentResult.paymentResultStatus=='U'){
+                title = 'Payment Pending';
+            }
+            else{
+                title = 'Payment Failed';
+            }
+            
         }
+        else  {
+            title=paymentResult.resultCode;
+        } 
         document.getElementById('resultTitle').textContent = title;
         
         // Update message
-        let message = paymentResult.resultMessage || 
-            (isSuccess ? 'Your transaction has been processed securely.' : 
-             isPending ? 'Your payment is being processed. Please check back later.' :
-             'Your transaction could not be processed. Please try again.');
+        let message = paymentResult.resultMessage ;
         document.getElementById('resultMessage').textContent = message;
         
         // Update transaction details
-        updateTransactionDetails();
+        if (paymentResult.resultStatus =='S'){
+            updateTransactionDetails();
+        }
+        
         
         // Update view order button with paymentRequestId
         const viewOrderBtn = document.getElementById('viewOrderBtn');
-        if (paymentResult.paymentRequestId) {
+        if (paymentResult.resultStatus=='S') {
             viewOrderBtn.href = `/view-orders?paymentRequestId=${paymentResult.paymentRequestId}&page=1`;
         } else {
-            window.location.href='/dashboard';
+            viewOrderBtn.text='Back to Dashboard'
+            viewOrderBtn.href = `/dashboard`;
         }
     }
     
     // Update transaction details
     function updateTransactionDetails() {
-        const isSuccess = paymentResult.success === true || paymentResult.resultStatus === 'S';
-        const isPending = paymentResult.resultStatus === 'U';
+
         
         // Get or create transaction details section
         let detailsSection = document.querySelector('.transaction-details');
@@ -329,10 +352,10 @@
         document.getElementById('totalAmount').textContent = paymentResult.paymentAmount ? paymentResult.paymentAmount.currency + ' ' + (paymentResult.paymentAmount.value / 100).toFixed(2) : '--';
         
         const statusEl = document.getElementById('paymentStatus');
-        if (isSuccess) {
-            statusEl.textContent = 'COMPLETED';
+        if (paymentResult.resultStatus=='S') {
+            statusEl.textContent = 'Successful';
             statusEl.className = 'value success';
-        } else if (isPending) {
+        } else if (paymentResult.resultStatus=='U') {
             statusEl.textContent = 'PENDING';
             statusEl.className = 'value';
             statusEl.style.color = '#856404';

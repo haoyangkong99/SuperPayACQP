@@ -347,21 +347,10 @@
                 if (result.result.resultStatus === 'S') {
                     // Save payment result
                     const paymentResult = {
-                        paymentRequestId: result.paymentRequestId,
-                        paymentId: result.paymentId,
-                        paymentTime: result.paymentTime,
-                        paymentExpireTime: result.paymentExpireTime,
-                        paymentAmount: result.paymentAmount,
-                        customerId: result.customerId,
-                        pspId: result.pspId,
-                        walletBrandName: result.walletBrandName,
-                        mppPaymentId: result.mppPaymentId,
-                        totalAmount: calculateTotalAmount(),
-                        orderId: requestBody.order.referenceOrderId,
-                        inStorePaymentScenario: 'PaymentCode',
-                        resultStatus: result.result.resultStatus,
-                        resultCode: result.result.resultCode,
-                        resultMessage: result.result.resultMessage
+                                        paymentRequestId: result.paymentRequestId,
+                                        resultStatus: result.result.resultStatus,
+                                        resultCode: result.result.resultCode,
+                                        resultMessage: result.result.resultMessage
                     };
                     sessionStorage.setItem('paymentResult', JSON.stringify(paymentResult));
                     hideLoading();
@@ -369,106 +358,19 @@
                     window.location.href = '/payment-result?paymentRequestId=' + result.paymentRequestId;
                 }
                 else if (result.result.resultStatus === 'U' && result.result.resultCode === 'PAYMENT_IN_PROCESS') {
-                    let count = 0;
-                    const maxRetries = 12;
-                    let callAPI = true;
-                    const intervalId = setInterval(async () => {
-                        count++;
-                        if (count > maxRetries) {
-                            clearInterval(intervalId);
-                            hideLoading();
-                            showMessageDialog({
-                                title: 'Timeout',
-                                message: 'Payment verification timeout. Please try again.',
-                                type: 'warning'
-                            });
-                            return;
-                        }
-                        if (callAPI) {
-                            try {
-                                const response_body = await inquiryPayment(result.paymentRequestId);
-                                if (response_body.result && response_body.result.resultStatus === 'S') {
-                                    if (response_body.paymentResult && response_body.paymentResult.resultStatus === 'S') {
-                                        callAPI = false;
-                                        clearInterval(intervalId);
-                                        const paymentResult = {
-                                            paymentRequestId: result.paymentRequestId,
-                                            paymentId: result.paymentId,
-                                            paymentTime: result.paymentTime,
-                                            paymentExpireTime: result.paymentExpireTime,
-                                            paymentAmount: result.paymentAmount,
-                                            customerId: result.customerId,
-                                            pspId: result.pspId,
-                                            walletBrandName: result.walletBrandName,
-                                            mppPaymentId: result.mppPaymentId,
-                                            totalAmount: calculateTotalAmount(),
-                                            orderId: requestBody.order.referenceOrderId,
-                                            inStorePaymentScenario: 'PaymentCode',
-                                            resultStatus: response_body.paymentResult.resultStatus,
-                                            resultCode: response_body.paymentResult.resultCode,
-                                            resultMessage: response_body.paymentResult.resultMessage
-                                        };
-                                        sessionStorage.setItem('paymentResult', JSON.stringify(paymentResult));
-                                        hideLoading();
-                                        window.location.href = '/payment-result?paymentRequestId=' + result.paymentRequestId;
-                                    }
-                                    else if (response_body.paymentResult && response_body.paymentResult.resultStatus === 'F') {
-                                        callAPI = false;
-                                        clearInterval(intervalId);
-                                        const paymentResult = {
-                                            paymentRequestId: result.paymentRequestId,
-                                            paymentId: result.paymentId,
-                                            paymentTime: result.paymentTime,
-                                            paymentExpireTime: result.paymentExpireTime,
-                                            paymentAmount: result.paymentAmount,
-                                            customerId: result.customerId,
-                                            pspId: result.pspId,
-                                            walletBrandName: result.walletBrandName,
-                                            mppPaymentId: result.mppPaymentId,
-                                            totalAmount: calculateTotalAmount(),
-                                            orderId: requestBody.order.referenceOrderId,
-                                            inStorePaymentScenario: 'PaymentCode',
-                                            resultStatus: response_body.paymentResult.resultStatus,
-                                            resultCode: response_body.paymentResult.resultCode,
-                                            resultMessage: response_body.paymentResult.resultMessage
-                                        };
-                                        sessionStorage.setItem('paymentResult', JSON.stringify(paymentResult));
-                                        hideLoading();
-                                        window.location.href = '/payment-result?paymentRequestId=' + result.paymentRequestId;
-                                    }
-                                    else{
-                                        const paymentResult = {
-                                            paymentRequestId: result.paymentRequestId,
-                                            paymentId: result.paymentId,
-                                            paymentTime: result.paymentTime,
-                                            paymentExpireTime: result.paymentExpireTime,
-                                            paymentAmount: result.paymentAmount,
-                                            customerId: result.customerId,
-                                            pspId: result.pspId,
-                                            walletBrandName: result.walletBrandName,
-                                            mppPaymentId: result.mppPaymentId,
-                                            totalAmount: calculateTotalAmount(),
-                                            orderId: requestBody.order.referenceOrderId,
-                                            inStorePaymentScenario: 'PaymentCode',
-                                            resultStatus: response_body.paymentResult.resultStatus,
-                                            resultCode: response_body.paymentResult.resultCode,
-                                            resultMessage: response_body.paymentResult.resultMessage
-                                        };
-                                        sessionStorage.setItem('paymentResult', JSON.stringify(paymentResult));
-                                    }
-                                }
-                            } catch (inquiryError) {
-                                console.error('Error inquiring payment:', inquiryError);
-                            }
-                        }
-                    }, 5000);
+                        const paymentResult = {
+                        resultStatus: result.result.resultStatus,
+                        resultCode: result.result.resultCode,
+                        resultMessage: result.result.resultMessage,
+                        paymentRequestId: result.paymentRequestId 
+                    };
+                    sessionStorage.setItem('paymentResult', JSON.stringify(paymentResult));
+                    hideLoading();
+                    window.location.href = '/payment-result?paymentRequestId=' + result.paymentRequestId;
                 }
                 else {
                     // Payment failed or other status
                     const paymentResult = {
-                        success: false,
-                        totalAmount: calculateTotalAmount(),
-                        orderId: requestBody.order.referenceOrderId,
                         resultStatus: result.result.resultStatus,
                         resultCode: result.result.resultCode,
                         resultMessage: result.result.resultMessage,
@@ -702,21 +604,13 @@
                                     callAPI = false;
                                     clearInterval(intervalId);
                                     const paymentResult = {
-                                        paymentRequestId: paymentData.paymentRequestId,
-                                        paymentId: paymentData.paymentId,
-                                        paymentTime: response_body.paymentTime,
-                                        paymentExpireTime: response_body.paymentExpireTime,
-                                        paymentAmount: paymentData.paymentAmount,
-                                        customerId: response_body.customerId,
-                                        pspId: response_body.pspId,
-                                        walletBrandName: response_body.walletBrandName,
-                                        mppPaymentId: response_body.mppPaymentId,
-                                        totalAmount: calculateTotalAmount(),
-                                        orderId: paymentData.orderId,
-                                        inStorePaymentScenario: 'OrderCode',
-                                        resultStatus: response_body.paymentResult.resultStatus,
-                                        resultCode: response_body.paymentResult.resultCode,
-                                        resultMessage: response_body.paymentResult.resultMessage
+                                        paymentRequestId: response_body.paymentRequestId,
+                                        paymentResultStatus:response_body.paymentResult.resultStatus,
+                                        paymentResultCode: response_body.paymentResult.resultCode,
+                                        paymentResultMessage: response_body.paymentResult.resultMessage,
+                                        resultStatus: response_body.result.resultStatus,
+                                        resultCode: response_body.result.resultCode,
+                                        resultMessage: response_body.result.resultMessage
                                     };
                                     sessionStorage.setItem('paymentResult', JSON.stringify(paymentResult));
                                     window.location.href = '/payment-result?paymentRequestId=' + paymentData.paymentRequestId;
@@ -726,20 +620,9 @@
                                     clearInterval(intervalId);
                                     const paymentResult = {
                                         paymentRequestId: paymentData.paymentRequestId,
-                                        paymentId: paymentData.paymentId,
-                                        paymentTime: response_body.paymentTime,
-                                        paymentExpireTime: response_body.paymentExpireTime,
-                                        paymentAmount: paymentData.paymentAmount,
-                                        customerId: response_body.customerId,
-                                        pspId: response_body.pspId,
-                                        walletBrandName: response_body.walletBrandName,
-                                        mppPaymentId: response_body.mppPaymentId,
-                                        totalAmount: calculateTotalAmount(),
-                                        orderId: paymentData.orderId,
-                                        inStorePaymentScenario: 'OrderCode',
-                                        resultStatus: response_body.paymentResult.resultStatus,
-                                        resultCode: response_body.paymentResult.resultCode,
-                                        resultMessage: response_body.paymentResult.resultMessage
+                                        resultStatus: response_body.result.resultStatus,
+                                        resultCode: response_body.result.resultCode,
+                                        resultMessage: response_body.result.resultMessage
                                     };
                                     sessionStorage.setItem('paymentResult', JSON.stringify(paymentResult));
                                     window.location.href = '/payment-result?paymentRequestId=' + paymentData.paymentRequestId;

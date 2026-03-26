@@ -272,9 +272,9 @@
     }
     
     // Format amount
-    function formatAmount(order) {
-        const value = order.paymentAmountValue || 0;
-        const currency = order.paymentAmountCurrency || 'MYR';
+    function formatAmount(amountValue,amountCurrency) {
+        const value = amountValue;
+        const currency = amountCurrency;
         return `${currency} ${(value / 100).toFixed(2)}`;
     }
     
@@ -330,7 +330,7 @@
         tbody.innerHTML = allOrders.map(order => {
             const status = getStatus(order);
             const statusClass = getStatusClass(order);
-            const amount = formatAmount(order);
+            const amount = formatAmount(order.paymentAmountValue,order.paymentAmountCurrency);
             const paymentTime = formatDateTime(order.paymentTime || order.created_at);
             const scenario = getScenarioDisplay(order.inStorePaymentScenario);
             const orderId = order.referenceOrderId || '--';
@@ -467,22 +467,29 @@
     }
     
     // Render order detail modal
-    function renderOrderDetail(order, refunds = []) {
+    function renderOrderDetail(payment, refunds = []) {
         const body = document.getElementById('orderDetailBody');
-        const status = getStatus(order);
-        const statusClass = getStatusClass(order);
-        const amount = formatAmount(order);
-        const paymentTime = formatDateTime(order.paymentTime || order.created_at);
-        const scenario = getScenarioDisplay(order.inStorePaymentScenario);
-        
+        const status = getStatus(payment);
+        const statusClass = getStatusClass(payment);
+        const paymentAmount = formatAmount(payment.paymentAmountValue,payment.paymentAmountCurrency);
+        const paymentTime = formatDateTime(payment.paymentTime || payment.created_at);
+        const scenario = getScenarioDisplay(payment.inStorePaymentScenario);
+        const orderAmount = formatAmount(payment.order.orderAmountValue,payment.order.orderAmountCurrency);
+         settlementAmount = null;
+        if (payment.settlement!=null){
+            settlementAmount=formatAmount(payment.settlement.settlementAmountValue,payment.settlement.settlementCurrency);
+        }
+        else{
+            settlementAmount='N/A';
+        }
         // Build goods list
         let goodsHtml = '';
-        if (order.order?.goods && order.order.goods.length > 0) {
+        if (payment.order?.goods && payment.order.goods.length > 0) {
             goodsHtml = `
                 <div class="detail-section">
                     <h6><i class="bi bi-box me-2"></i>Order Items</h6>
                     <div class="goods-list">
-                        ${order.order.goods.map(g => `
+                        ${payment.order.goods.map(g => `
                             <div class="goods-item">
                                 <div class="goods-info">
                                     <span class="goods-name">${escapeHtml(g.goodsName)}</span>
@@ -499,13 +506,13 @@
         
         // Build shipping info
         let shippingHtml = '';
-        if (order.order?.shippingAddress) {
-            const addr = order.order.shippingAddress;
+        if (payment.order?.shippingAddress) {
+            const addr = payment.order.shippingAddress;
             shippingHtml = `
                 <div class="detail-section">
                     <h6><i class="bi bi-geo-alt me-2"></i>Shipping Address</h6>
                     <div class="shipping-info">
-                        <p><strong>${escapeHtml(order.order.shippingName?.fullName || 'N/A')}</strong></p>
+                        <p><strong>${escapeHtml(payment.order.shippingName?.fullName || 'N/A')}</strong></p>
                         <p>${escapeHtml(addr.address1 || '')} ${escapeHtml(addr.address2 || '')}</p>
                         <p>${escapeHtml(addr.city || '')}, ${escapeHtml(addr.state || '')} ${escapeHtml(addr.zipCode || '')}</p>
                         <p>${escapeHtml(addr.region || '')}</p>
@@ -543,7 +550,7 @@
                                     </div>
                                     <div class="refund-amount">
                                         <span class="refund-label">Amount:</span>
-                                        <span class="refund-value">${escapeHtml(r.refundAmountCurrency || 'MYR')} ${((r.refundAmountValue || 0) / 100).toFixed(2)}</span>
+                                        <span class="refund-value">${escapeHtml(r.refundAmountCurrency || 'Unknown currency')} ${((r.refundAmountValue || 0) / 100).toFixed(2)}</span>
                                     </div>
                                     ${r.refundReason ? `
                                         <div class="refund-reason">
@@ -585,15 +592,15 @@
                 <!-- Status Banner -->
                 <div class="status-banner ${statusClass}">
                     <div class="status-icon">
-                        <i class="bi ${order.resultStatus === 'S' ? 'bi-check-circle' : order.resultStatus === 'F' ? 'bi-x-circle' : 'bi-clock'}"></i>
+                        <i class="bi ${payment.resultStatus === 'S' ? 'bi-check-circle' : payment.resultStatus === 'F' ? 'bi-x-circle' : 'bi-clock'}"></i>
                     </div>
                     <div class="status-info">
                         <h4>${escapeHtml(status)}</h4>
-                        <p>${escapeHtml(order.resultMessage || 'No message')}</p>
+                        <p>${escapeHtml(payment.resultMessage || 'No message')}</p>
                     </div>
                     <div class="status-amount">
-                        <span class="amount-label">Total Amount</span>
-                        <span class="amount-value">${escapeHtml(amount)}</span>
+                        <span class="amount-label">Payment Amount</span>
+                        <span class="amount-value">${escapeHtml(paymentAmount)}</span>
                     </div>
                 </div>
                 
@@ -603,11 +610,11 @@
                     <div class="detail-grid">
                         <div class="detail-item">
                             <span class="detail-label">Payment Request ID</span>
-                            <span class="detail-value">${escapeHtml(order.paymentRequestId)}</span>
+                            <span class="detail-value">${escapeHtml(payment.paymentRequestId)}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Payment ID</span>
-                            <span class="detail-value">${escapeHtml(order.paymentId || '--')}</span>
+                            <span class="detail-value">${escapeHtml(payment.paymentId || '--')}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Payment Time</span>
@@ -619,11 +626,15 @@
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Wallet Brand</span>
-                            <span class="detail-value">${escapeHtml(order.walletBrandName || '--')}</span>
+                            <span class="detail-value">${escapeHtml(payment.walletBrandName || '--')}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Result Code</span>
-                            <span class="detail-value">${escapeHtml(order.resultCode || '--')}</span>
+                            <span class="detail-value">${escapeHtml(payment.resultCode || '--')}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Settlement Amount</span>
+                            <span class="detail-value">${escapeHtml(settlementAmount)}</span>
                         </div>
                     </div>
                 </div>
@@ -634,19 +645,19 @@
                     <div class="detail-grid">
                         <div class="detail-item">
                             <span class="detail-label">Reference Order ID</span>
-                            <span class="detail-value">${escapeHtml(order.order?.referenceOrderId || '--')}</span>
+                            <span class="detail-value">${escapeHtml(payment.order?.referenceOrderId || '--')}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Order Description</span>
-                            <span class="detail-value">${escapeHtml(order.order?.orderDescription || '--')}</span>
+                            <span class="detail-value">${escapeHtml(payment.order?.orderDescription || '--')}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Merchant ID</span>
-                            <span class="detail-value">${escapeHtml(order.order?.merchantId || '--')}</span>
+                            <span class="detail-value">${escapeHtml(payment.order?.merchantId || '--')}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Order Amount</span>
-                            <span class="detail-value">${order.order?.orderAmountCurrency || 'MYR'} ${((order.order?.orderAmountValue || 0) / 100).toFixed(2)}</span>
+                            <span class="detail-value">${escapeHtml(orderAmount)}</span>
                         </div>
                     </div>
                 </div>
@@ -656,7 +667,7 @@
                 ${refundHtml}
                 
                 <!-- Action Buttons -->
-                ${buildActionButtons(order,accumulatedRefundAmount)}
+                ${buildActionButtons(payment,accumulatedRefundAmount)}
             </div>
         `;
     }

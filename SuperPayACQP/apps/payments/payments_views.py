@@ -279,8 +279,8 @@ class CancelPaymentView(APIView):
             if result.resultStatus == 'U' and result.resultCode == 'UNKNOWN_EXCEPTION':
                 response_dto = self._retry_cancel(request_dto, alipay_client)
             if response_dto.result.resultStatus=='S' and request_dto.paymentRequestId:
-
                 db_service.updatePaymentRequestResultByCancelled(request_dto.paymentRequestId,response_dto.result)
+            
             db_service.createApiRecordsWithReqRes('/api/cancel-payment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
             return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
         except Exception as e:
