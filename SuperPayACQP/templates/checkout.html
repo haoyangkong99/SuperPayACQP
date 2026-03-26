@@ -57,7 +57,7 @@
     // Initialize
     document.addEventListener('DOMContentLoaded', async function() {
         loadCartFromStorage();
-        await loadMerchants();  // Wait for merchants to load before rendering
+        loadMerchants();
         renderCheckout();
     });
     
@@ -80,7 +80,9 @@
                 // Set default merchant (first one in the list)
                 selectedMerchantId = merchants[0].merchantId;
                 merchantCurrency=merchants[0].currency;
-
+                sessionStorage.setItem('selectedMerchantId', selectedMerchantId);
+                sessionStorage.setItem('merchantCurrency', merchantCurrency);
+                updateCurrencyDisplay();
                 
                 // Update merchant dropdown if it exists
                 const merchantSelect = document.getElementById('merchantId');
@@ -102,6 +104,42 @@
         selectedMerchantId = selectElement.value;
         const filtered = merchants.filter(m => m.merchantId == selectedMerchantId);
         merchantCurrency = filtered[0].currency;
+        sessionStorage.setItem('selectedMerchantId', selectedMerchantId);
+        sessionStorage.setItem('merchantCurrency', merchantCurrency);
+        
+        // Update currency display dynamically
+        updateCurrencyDisplay();
+    }
+    
+    // Update currency display in order summary
+    function updateCurrencyDisplay() {
+        // Calculate totals
+        let subtotal = 0;
+        let totalTax = 0;
+        
+        cart.forEach(item => {
+            const lineTotal = item.unitPrice * item.quantity;
+            subtotal += lineTotal;
+            totalTax += Math.round(item.unitPrice * item.quantity * (item.taxRate / 100));
+        });
+        
+        const total = subtotal + totalTax;
+        
+        // Update item totals
+        const itemTotalCells = document.querySelectorAll('.item-total');
+        cart.forEach((item, index) => {
+            if (itemTotalCells[index]) {
+                itemTotalCells[index].textContent = `${merchantCurrency} ${((item.unitPrice * item.quantity) / 100).toFixed(2)}`;
+            }
+        });
+        
+        // Update summary calculations
+        const calcValues = document.querySelectorAll('.calc-row .value');
+        if (calcValues.length >= 3) {
+            calcValues[0].textContent = `${merchantCurrency} ${(subtotal / 100).toFixed(2)}`;
+            calcValues[1].textContent = `${merchantCurrency} ${(totalTax / 100).toFixed(2)}`;
+            calcValues[2].textContent = `${merchantCurrency} ${(total / 100).toFixed(2)}`;
+        }
     }
     
     // Render checkout page
@@ -345,9 +383,7 @@
         // Save shipping info to sessionStorage
         sessionStorage.setItem('shippingInfo', JSON.stringify(shippingInfo));
         
-        // Save selected merchant ID to sessionStorage
-        sessionStorage.setItem('selectedMerchantId', selectedMerchantId);
-        sessionStorage.setItem('merchantCurrency', merchantCurrency);
+
         
         // Redirect to payment page
         window.location.href = '/payment';
