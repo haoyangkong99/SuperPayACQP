@@ -232,7 +232,7 @@
                         <span class="stock-status ${stockStatus}">${stockLabel}</span>
                         <div class="product-brand">${escapeHtml(product.goodsBrand || 'Unknown Brand')}</div>
                         <div class="product-name" title="${escapeHtml(product.goodsName)}">${escapeHtml(product.goodsName)}</div>
-                        <div class="product-price">${currency} ${price}</div>
+                        <div class="product-price">$ ${price}</div>
                         <div class="product-stock">Stock: ${product.stockQuantity} units</div>
                         <button class="add-btn" onclick="addToCart('${product.goodsId}')" ${isDisabled ? 'disabled' : ''}>
                             ${isInCart ? '<i class="bi bi-check"></i> Added' : '<i class="bi bi-plus"></i> Add'}

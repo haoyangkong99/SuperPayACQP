@@ -79,6 +79,8 @@
                 merchants = data.merchants;
                 // Set default merchant (first one in the list)
                 selectedMerchantId = merchants[0].merchantId;
+                merchantCurrency=merchants[0].currency;
+
                 
                 // Update merchant dropdown if it exists
                 const merchantSelect = document.getElementById('merchantId');
