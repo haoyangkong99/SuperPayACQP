@@ -5,7 +5,6 @@ Validates Merchant-ID header for all API requests
 import logging
 from django.http import JsonResponse
 from apps.merchants.merchants_models import Merchant
-from apps.merchants.merchants_models import Merchant
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +22,8 @@ class MerchantAuthMiddleware:
         '/api/schema/',
         '/api/docs/',
         '/api/merchants',
+        '/api/merchants/delete',
+        '/api/query/',  # Query endpoints for dashboard
         '/entry-code',
         '/entry-code/confirm',
         '/favicon.ico',
