@@ -103,6 +103,7 @@
     let merchantId = 'MC00001-00';
     let username = 'Merchant';
     let selectedMerchantId = null;
+    let merchantCurrency=null;
     let qrExpireTime=null;
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
@@ -231,7 +232,7 @@
             },
             goodsQuantity: item.quantity
         }));
-        
+        merchantCurrency=sessionStorage.getItem('merchantCurrency');
         // Build request body
         const requestBody = {
             paymentFactor: {
@@ -264,7 +265,7 @@
                 }
             },
             paymentAmount: {
-                currency: 'MYR',
+                currency: 'merchantCurrency',
                 value: totalInCents.toString()
             },
             paymentMethod: {

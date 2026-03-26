@@ -53,7 +53,7 @@
     let cart = [];
     let merchants = [];
     let selectedMerchantId = null;
-    
+    let merchantCurrency=null;
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
         loadCartFromStorage();
@@ -98,6 +98,8 @@
     // Handle merchant selection change
     function onMerchantChange(selectElement) {
         selectedMerchantId = selectElement.value;
+        const filtered = merchants.filter(m => m.merchantId == selectedMerchantId);
+        merchantCurrency = filtered[0].currency;
     }
     
     // Render checkout page
@@ -221,7 +223,7 @@
                                     <span class="item-brand">${escapeHtml(item.goodsBrand)}</span>
                                 </td>
                                 <td>${item.quantity}</td>
-                                <td class="item-total">MYR ${((item.unitPrice * item.quantity) / 100).toFixed(2)}</td>
+                                <td class="item-total">${merchantCurrency} ${((item.unitPrice * item.quantity) / 100).toFixed(2)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -230,15 +232,15 @@
                 <div class="summary-calculations">
                     <div class="calc-row">
                         <span class="label">Subtotal</span>
-                        <span class="value">MYR ${(subtotal / 100).toFixed(2)}</span>
+                        <span class="value">${merchantCurrency} ${(subtotal / 100).toFixed(2)}</span>
                     </div>
                     <div class="calc-row">
                         <span class="label">Tax</span>
-                        <span class="value">MYR ${(totalTax / 100).toFixed(2)}</span>
+                        <span class="value">${merchantCurrency} ${(totalTax / 100).toFixed(2)}</span>
                     </div>
                     <div class="calc-row grand-total">
                         <span class="label">Grand Total</span>
-                        <span class="value">MYR ${(total / 100).toFixed(2)}</span>
+                        <span class="value">${merchantCurrency} ${(total / 100).toFixed(2)}</span>
                     </div>
                 </div>
             </div>
@@ -343,6 +345,7 @@
         
         // Save selected merchant ID to sessionStorage
         sessionStorage.setItem('selectedMerchantId', selectedMerchantId);
+        sessionStorage.setItem('merchantCurrency', merchantCurrency);
         
         // Redirect to payment page
         window.location.href = '/payment';

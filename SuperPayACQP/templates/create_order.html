@@ -353,7 +353,7 @@
                         <span class="qty-value">${item.quantity}</span>
                         <button class="qty-btn" onclick="updateQuantity('${item.goodsId}', 1)">+</button>
                     </div>
-                    <div class="item-total"> ${(itemTotal / 100).toFixed(2)}</div>
+                    <div class="item-total"> $ ${(itemTotal / 100).toFixed(2)}</div>
                 </div>
             `;
         }).join('');
@@ -373,9 +373,9 @@
         
         const total = subtotal + totalTax;
         
-        document.getElementById('subtotal').textContent = ` ${(subtotal / 100).toFixed(2)}`;
-        document.getElementById('taxAmount').textContent = ` ${(totalTax / 100).toFixed(2)}`;
-        document.getElementById('totalAmount').textContent = ` ${(total / 100).toFixed(2)}`;
+        document.getElementById('subtotal').textContent = `$ ${(subtotal / 100).toFixed(2)}`;
+        document.getElementById('taxAmount').textContent = `$ ${(totalTax / 100).toFixed(2)}`;
+        document.getElementById('totalAmount').textContent = `$ ${(total / 100).toFixed(2)}`;
     }
     
     // Save cart to sessionStorage
