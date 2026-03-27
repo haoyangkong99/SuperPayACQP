@@ -688,7 +688,7 @@
             // Cancel button - show for pending and success status
             if (payment.resultStatus==='S'||payment.resultStatus==='U'||(payment.resultStatus==='F'&&payment.resultCode==='ORDER_NOT_EXIST'&&payment.paymentStatus!='CANCELLED')) {
                 buttonsHtml += `
-                    <button class="btn btn-cancel" onclick="cancelPayment('${order.paymentRequestId}')">
+                    <button class="btn btn-cancel" onclick="cancelPayment('${payment.paymentRequestId}')">
                         <i class="bi bi-x-circle"></i> Cancel Payment
                     </button>
                 `;
@@ -697,7 +697,7 @@
             // Refund button - only show for success status
             if (payment.resultStatus==='S') {
                 buttonsHtml += `
-                    <button class="btn btn-refund" onclick="showRefundModal('${order.paymentRequestId}', ${order.paymentAmountValue}, '${order.paymentAmountCurrency}', ${accumulatedRefundAmount})">
+                    <button class="btn btn-refund" onclick="showRefundModal('${payment.paymentRequestId}', ${payment.paymentAmountValue}, '${payment.paymentAmountCurrency}', ${accumulatedRefundAmount})">
                         <i class="bi bi-arrow-counterclockwise"></i> Request Refund
                     </button>
                 `;
