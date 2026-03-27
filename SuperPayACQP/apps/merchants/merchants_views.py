@@ -337,7 +337,7 @@ class EntryCodeConfirmView(APIView):
             
             # Build place order request
             base_url = os.getenv('API_BASE_URL')
-            place_order_url = f"{base_url}/api/place-order"
+            place_order_url = f"{base_url}api/place-order"
             
             # Generate reference order ID
             reference_order_id = str(uuid.uuid4())
