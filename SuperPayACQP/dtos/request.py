@@ -265,3 +265,4 @@ class EntryCodeConfirmRequestDTO(BaseRequestDTO):
     codeId:str
     currency: str
     amount: int
+    userAgent: str

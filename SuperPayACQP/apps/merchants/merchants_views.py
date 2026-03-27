@@ -275,7 +275,7 @@ class EntryCodeConfirmView(APIView):
     POST /entry-code/confirm
     Process the payment confirmation from entry code page
     """
-    def buildPlaceOrderRequestDTO (self,request_dto:EntryCodeConfirmRequestDTO,user_agent)-> PlaceOrderRequestDTO:
+    def buildPlaceOrderRequestDTO (self,request_dto:EntryCodeConfirmRequestDTO)-> PlaceOrderRequestDTO:
         reference_order_id = str(uuid.uuid4())
         
         dto=PlaceOrderRequestDTO(
@@ -288,7 +288,7 @@ class EntryCodeConfirmView(APIView):
                 ),
                 merchantId=request_dto.merchantId,
                 env=EnvDTO(
-                    userAgent=user_agent
+                    userAgent=request_dto.userAgent
                 )
             ),
             paymentFactor=PaymentFactorDTO(
@@ -444,7 +444,7 @@ class EntryCodeConfirmView(APIView):
             if validated_response != None:
                 return validated_response
             
-            request_body=self.buildPlaceOrderRequestDTO(request_dto,user_agent)
+            request_body=self.buildPlaceOrderRequestDTO(request_dto)
             response_dto = self.process_place_order(request_body)
             return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK) 
         except Exception as e:

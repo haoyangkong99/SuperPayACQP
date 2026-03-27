@@ -274,24 +274,37 @@
                     merchantId: merchantId,
                     codeId: codeId,
                     currency: currency,
-                    amount: amount * 100
+                    amount: amount * 100,
+                    userAgent:navigator.userAgent
                 })
             });
             
             const data = await response.json();
             
-            if (data.result && data.result.resultStatus === 'S') {
-                alertContainer.innerHTML = '<div class="alert alert-success" role="alert"><i class="bi bi-check-circle me-2"></i>Payment initiated successfully! Redirecting...</div>';
+            if (data.result) {
+                if (data.result.resultStatus=='U' && data.result.resultCode=='PAYMENT_IN_PROCESS'){
+                    alertContainer.innerHTML = '<div class="alert alert-success" role="alert"><i class="bi bi-check-circle me-2"></i>Payment initiated successfully! Redirecting...</div>';
                 
                 // Handle redirect to payment URL
                 if (data.paymentUrl) {
                     console.log('Redirecting to:', data.paymentUrl);
                     setTimeout(function() {
                         window.location.href = data.paymentUrl;
-                    }, 1500);
+                    }, 2000);
                 }
+                }
+                else if (data.result.resultStatus=='U' && data.result.resultCode!='PAYMENT_IN_PROCESS'){
+                const unknownMsg =  'Please try again.';
+                alertContainer.innerHTML = '<div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>' + escapeHtml(unknownMsg) + '</div>';
+                }
+                else{
+                const errorMsg =  'Payment Failed. Please try again.';
+                alertContainer.innerHTML = '<div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>' + escapeHtml(errorMsg) + '</div>';
+                }
+
+                
             } else {
-                const errorMsg = data.result?.resultMessage || 'Payment failed. Please try again.';
+                const errorMsg =  'Payment Failed. Please try again.';
                 alertContainer.innerHTML = '<div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>' + escapeHtml(errorMsg) + '</div>';
             }
         } catch (error) {
