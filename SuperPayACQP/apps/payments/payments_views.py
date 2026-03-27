@@ -255,15 +255,7 @@ class CancelPaymentView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         signature_service, alipay_client, db_service = get_service_instances()
-        try:
-            # If paymentId is not provided, fetch it from database
-            if not request_dto.paymentId and request_dto.paymentRequestId:
-                payment_request = PaymentRequest.objects.filter(paymentRequestId=request_dto.paymentRequestId).first()
-                if payment_request and payment_request.paymentId:
-                    request_dto.paymentId = payment_request.paymentId
-                else:
-                    return Response( BaseResponseDTO(result=Result.returnOrderNotExist()).model_dump(exclude_none=True), status=status.HTTP_200_OK)
-            
+        try:            
             # If paymentRequestId is not provided, fetch it from database
             if  request_dto.paymentId and not request_dto.paymentRequestId:
                 payment_request = PaymentRequest.objects.filter(paymentId=request_dto.paymentId).first()
