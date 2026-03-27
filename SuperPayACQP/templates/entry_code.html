@@ -264,7 +264,7 @@
         
         try {
             const csrftoken = getCookie('csrftoken');
-            const response = await fetch('/entry-code/confirm', {
+            const response = await fetch('entry-code/confirm', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
