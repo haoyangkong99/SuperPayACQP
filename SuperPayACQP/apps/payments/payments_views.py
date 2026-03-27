@@ -168,8 +168,8 @@ class PlaceOrderView(APIView):
             ),
             paymentMethod=request_dto.paymentMethod,
             paymentFactor=AlipayPaymentFactorDTO(
-                isInStorePayment="true " if request_dto.paymentFactor.isInStorePayment else "false",
-                isCashierPayment="true " if request_dto.paymentFactor.isCashierPayment else "false",
+                isInStorePayment="true" if request_dto.paymentFactor.isInStorePayment else "false",
+                isCashierPayment="true" if request_dto.paymentFactor.isCashierPayment else "false",
                 inStorePaymentScenario=request_dto.paymentFactor.inStorePaymentScenario
             ),
             paymentExpiryTime=expiry_time.strftime("%Y-%m-%dT%H:%M:%S+08:00"),
