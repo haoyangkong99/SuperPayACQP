@@ -341,7 +341,7 @@ class InquiryPaymentView(APIView):
         # Handle UNKNOWN_EXCEPTION with retry
             result = response_dto.result
             if result.resultStatus =='S':
-                db_service.updatePaymentRequestResultByInquiryPayment(response_dto)
+                db_service.updatePaymentRequestResultByInquiryPayment(response_dto,request_dto)
             if result.resultStatus == 'U' and result.resultCode == 'UNKNOWN_EXCEPTION':
                 response_dto = self._handle_inquiry_retry(request_dto, alipay_client,db_service)
             db_service.createApiRecordsWithReqRes('/api/inquiryPayment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)   

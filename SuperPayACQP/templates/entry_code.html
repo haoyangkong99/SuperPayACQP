@@ -275,7 +275,7 @@
                     codeId: codeId,
                     currency: currency,
                     amount: amount * 100,
-                    userAgent:navigator.userAgent
+                    userAgent:window.navigator.userAgent
                 })
             });
             
@@ -294,7 +294,7 @@
                 }
                 }
                 else if (data.result.resultStatus=='U' && data.result.resultCode!='PAYMENT_IN_PROCESS'){
-                const unknownMsg =  'Please try again.';
+                const unknownMsg =  "Result message: "+data.result.resultMessage+', Please try again.';
                 alertContainer.innerHTML = '<div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>' + escapeHtml(unknownMsg) + '</div>';
                 }
                 else{

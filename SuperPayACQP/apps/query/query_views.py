@@ -8,15 +8,37 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-
+from django.conf import settings
 from apps.payments.payments_models import PaymentRequest, Settlement
 from apps.orders.orders_models import Order, OrderGoods
 from apps.merchants.merchants_models import Merchant
 from apps.refunds.refund_models import RefundRecord
+from services.alipay_client import AlipayClient
+from services.signature_service import SignatureService
+from services.db_service import DbService
+from typing import Optional
+from utils.constants import Result,MessageType,HTTPMethod
+from dtos.request import (
 
+    InquiryPaymentRequestDTO
+)
 logger = logging.getLogger(__name__)
 
+_service_instances: Optional[tuple] = None
 
+def get_service_instances() -> tuple[SignatureService, AlipayClient, DbService]:
+    global _service_instances
+    if _service_instances is None:
+        signature_service = SignatureService(
+        private_key=settings.ALIPAY_PRIVATE_KEY,
+        public_key=settings.ALIPAY_PUBLIC_KEY,
+        client_id=settings.ALIPAY_CLIENT_ID
+        )
+        alipay_client = AlipayClient(signature_service, settings.ALIPAY_CLIENT_ID)
+        db_service = DbService()
+        _service_instances = (signature_service, alipay_client, db_service)
+
+    return _service_instances
 @method_decorator(csrf_exempt, name='dispatch')
 class PaymentListView(APIView):
     """
@@ -158,13 +180,23 @@ class PaymentDetailView(APIView):
     def get(self, request):
         payment_request_id = request.query_params.get('paymentRequestId')
         payment_id = request.query_params.get('paymentId')
-        
+        query_string = request.META.get('QUERY_STRING', '')
+        signature_service, alipay_client, db_service = get_service_instances()
         if not payment_request_id and not payment_id:
             return Response({
                 'error': 'Either paymentRequestId or paymentId is required'
             }, status=status.HTTP_400_BAD_REQUEST)
         
         try:
+            
+            alipay_request_Dto=InquiryPaymentRequestDTO(paymentRequestId=payment_request_id,paymentId=payment_id)
+            alipay_response_dto = alipay_client.inquiry_payment(alipay_request_Dto)
+            if alipay_response_dto.result.resultStatus=='S':
+                db_service.updatePaymentRequestResultByInquiryPayment(alipay_response_dto,alipay_request_Dto)
+            if alipay_response_dto.result.resultStatus=='F' and alipay_response_dto.result.resultCode=='ORDER_NOT_EXIST':
+                db_service.updatePaymentRequestResultByInquiryPayment(alipay_response_dto,alipay_request_Dto)
+            db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/inquiryPayment',HTTPMethod.POST,alipay_request_Dto,alipay_response_dto,MessageType.OUTBOUND)
+
             # Find payment request
             if payment_request_id:
                 pr = PaymentRequest.objects.filter(paymentRequestId=payment_request_id).first()
@@ -175,7 +207,8 @@ class PaymentDetailView(APIView):
                 return Response({
                     'error': 'Payment request not found'
                 }, status=status.HTTP_404_NOT_FOUND)
-            
+
+
             # Get related settlement
             settlement = Settlement.objects.filter(paymentRequestId=pr.paymentRequestId).first()
             
@@ -277,15 +310,21 @@ class PaymentDetailView(APIView):
                     'goods': order_goods
                 }
             
+            db_service.createApiRecordsWithReqRes('payments/detail',HTTPMethod.GET,query_string,{
+                'payment': payment_dict
+            },MessageType.INBOUND)
+
             return Response({
                 'payment': payment_dict
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
             logger.error(f"Error fetching payment detail: {e}")
-            return Response({
+            response_dto={
                 'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            }
+            db_service.createApiRecordsWithReqRes('payments/detail',HTTPMethod.GET,query_string,response_dto,MessageType.INBOUND)
+            return Response(response_dto, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @method_decorator(csrf_exempt, name='dispatch')

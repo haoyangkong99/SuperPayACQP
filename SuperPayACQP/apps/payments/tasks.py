@@ -56,7 +56,7 @@ def handle_payment_in_process_task(payment_request_id, max_retries=10):
                 logger.debug(f"Inquiry attempt {i+1} for {payment_request_id}: payment_status={payment_result.resultStatus if payment_result else 'N/A'}, payment_code={payment_result.resultCode if payment_result else 'N/A'}, api_status={api_result.resultStatus}")
                 db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/inquiryPayment',"POST",inquiry_dto,response_dto,MessageType.OUTBOUND)
                 # Update database with latest info
-                db_service.updatePaymentRequestResultByInquiryPayment(response_dto)
+                db_service.updatePaymentRequestResultByInquiryPayment(response_dto,inquiry_dto)
                 
                 # Check if payment is complete using paymentResult (actual payment status)
                 if payment_result:

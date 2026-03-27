@@ -98,11 +98,15 @@ class DbService:
         # Handle both dict and Pydantic model objects
         if isinstance(request, dict):
             request_body = json.dumps(request)
+        elif isinstance(request,str):
+            request_body=request
         else:
             request_body = request.model_dump_json(exclude_none=True)
         
         if isinstance(response, dict):
             response_body = json.dumps(response)
+        elif isinstance(response,str):
+            response_body=response
         else:
             response_body = response.model_dump_json()
         
@@ -300,7 +304,7 @@ class DbService:
 
     @staticmethod
     @transaction.atomic
-    def updatePaymentRequestResultByInquiryPayment(response_dto: InquiryPaymentResponseDTO) -> bool:
+    def updatePaymentRequestResultByInquiryPayment(response_dto: InquiryPaymentResponseDTO,request_dto:InquiryPaymentRequestDTO) -> bool:
         """
         Update PaymentRequest fields based on InquiryPaymentResponseDTO.
         Only updates fields that have different values.
@@ -311,7 +315,7 @@ class DbService:
         Returns:
             bool: True if any fields were updated, False otherwise
         """
-        payment_request_id = response_dto.paymentRequestId
+        payment_request_id = response_dto.paymentRequestId or request_dto.paymentRequestId
         if not payment_request_id:
             logger.warning("Cannot update PaymentRequest: paymentRequestId is missing from response")
             return False
@@ -376,7 +380,7 @@ class DbService:
                 logger.warning(f"Failed to parse paymentTime: {response_dto.paymentTime}, error: {e}")
         
         # Update result fields from paymentResult (primary) or result (fallback)
-        result = response_dto.paymentResult or response_dto.result
+        result = response_dto.paymentResult if response_dto.paymentResult else response_dto.result
         if result:
             result_status = result.resultStatus.value if hasattr(result.resultStatus, 'value') else result.resultStatus
             update_if_different('resultStatus', result_status, payment_request.resultStatus)
