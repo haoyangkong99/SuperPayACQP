@@ -673,13 +673,12 @@
     }
     
     // Build action buttons based on order status
-    function buildActionButtons(order,accumulatedRefundAmount) {
-        const isSuccess = order.resultStatus === 'S';
-        const isPending = order.resultStatus === 'U';
+    function buildActionButtons(payment,accumulatedRefundAmount) {
+
         
         let buttonsHtml = '';
         
-        if (isPending || isSuccess) {
+        if (payment.resultStatus==='S'||payment.resultStatus==='U'||(payment.resultStatus==='F'&&payment.resultCode==='ORDER_NOT_EXIST'&&payment.paymentStatus!='CANCELLED')) {
             buttonsHtml = `
                 <div class="detail-section action-buttons-section">
                     <h6><i class="bi bi-gear me-2"></i>Actions</h6>
@@ -687,7 +686,7 @@
             `;
             
             // Cancel button - show for pending and success status
-            if (isPending || isSuccess) {
+            if (payment.resultStatus==='S'||payment.resultStatus==='U'||(payment.resultStatus==='F'&&payment.resultCode==='ORDER_NOT_EXIST'&&payment.paymentStatus!='CANCELLED')) {
                 buttonsHtml += `
                     <button class="btn btn-cancel" onclick="cancelPayment('${order.paymentRequestId}')">
                         <i class="bi bi-x-circle"></i> Cancel Payment
@@ -696,7 +695,7 @@
             }
             
             // Refund button - only show for success status
-            if (isSuccess) {
+            if (payment.resultStatus==='S') {
                 buttonsHtml += `
                     <button class="btn btn-refund" onclick="showRefundModal('${order.paymentRequestId}', ${order.paymentAmountValue}, '${order.paymentAmountCurrency}', ${accumulatedRefundAmount})">
                         <i class="bi bi-arrow-counterclockwise"></i> Request Refund
