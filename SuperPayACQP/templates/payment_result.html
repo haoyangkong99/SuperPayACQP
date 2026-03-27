@@ -119,7 +119,7 @@
                         renderErrorResult(result);
                         return;
                     }
-                    else if (result.result.resultStatus === 'U') {
+                    else if (result.result.resultStatus === 'U' || (result.result.resultStatus==='S' && result.paymentResult.resultStatus==='U')) {
                         // Wait and retry
                         if (attempt < MAX_RETRIES) {
                             await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
