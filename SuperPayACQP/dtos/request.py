@@ -13,6 +13,10 @@ class PaymentFactorDTO(BaseModel):
     isCashierPayment: Optional[bool] = False
     inStorePaymentScenario: Optional[str] = None
 
+class AlipayPaymentFactorDTO(BaseModel):
+    isInStorePayment: Optional[str] = None
+    isCashierPayment: Optional[str] = None
+    inStorePaymentScenario: Optional[str] = None
 
 class NameDTO(BaseModel):
     """Name DTO"""
@@ -145,7 +149,7 @@ class MerchantInfoDTO(BaseModel):
     merchantMCC: str
     merchantAddress: AddressDTO
     store: Optional[StoreDTO] = None
-    currency: str
+    currency: Optional[str] = None
 
 
 class IndirectAcquirerDTO(BaseModel):
@@ -167,13 +171,16 @@ class AlipayOrderDTO(BaseModel):
     env: Optional[EnvDTO] = None
     indirectAcquirer: Optional[IndirectAcquirerDTO] = None
 
-
+class AlipayAmountDTO(BaseModel):
+    currency: Optional[str] = None
+    value: str
+    
 class AlipayPayRequestDTO(BaseRequestDTO):
     """Alipay+ pay request DTO"""
     paymentRequestId: str
-    paymentAmount: AmountDTO
+    paymentAmount: AlipayAmountDTO
     paymentMethod: PaymentMethodDTO
-    paymentFactor: PaymentFactorDTO
+    paymentFactor: AlipayPaymentFactorDTO
     paymentExpiryTime: str
     paymentNotifyUrl: Optional[str] = None
     paymentRedirectUrl: Optional[str] = None
@@ -252,3 +259,9 @@ class GoodsCatalogItemRequestDTO(BaseRequestDTO):
     goodsUnitAmountCurrency: Optional[str] = 'MYR'
     stockQuantity: Optional[int] = 0
     taxRate: Optional[float] = 0.00
+
+class EntryCodeConfirmRequestDTO(BaseRequestDTO):
+    merchantId: str
+    codeId:str
+    currency: str
+    amount: int

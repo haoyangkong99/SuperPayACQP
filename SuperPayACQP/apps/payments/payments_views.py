@@ -31,7 +31,9 @@ from dtos.request import (
     MerchantInfoDTO,
     NotifyPaymentRequestDTO,
     GoodsDTO,
-    SettlementStrategyDTO
+    SettlementStrategyDTO,
+    AlipayAmountDTO,
+    AlipayPaymentFactorDTO
 )
 from dtos.response import (
     PaymentResponseDTO, 
@@ -160,9 +162,16 @@ class PlaceOrderView(APIView):
         logger.debug(f"merchant info: {merchant_info}")
         return AlipayPayRequestDTO(
             paymentRequestId=payment_request_id,
-            paymentAmount=request_dto.paymentAmount,
+            paymentAmount=AlipayAmountDTO(
+                currency=request_dto.paymentAmount.currency,
+                value=str(request_dto.paymentAmount.value)
+            ),
             paymentMethod=request_dto.paymentMethod,
-            paymentFactor=request_dto.paymentFactor,
+            paymentFactor=AlipayPaymentFactorDTO(
+                isInStorePayment="true " if request_dto.paymentFactor.isInStorePayment else "false",
+                isCashierPayment="true " if request_dto.paymentFactor.isCashierPayment else "false",
+                inStorePaymentScenario=request_dto.paymentFactor.inStorePaymentScenario
+            ),
             paymentExpiryTime=expiry_time.strftime("%Y-%m-%dT%H:%M:%S+08:00"),
             paymentRedirectUrl="https://superpayacqp-production.up.railway.app/payment-result?paymentRequestId="+payment_request_id,
             paymentNotifyUrl="https://superpayacqp-production.up.railway.app/alipay/notifyPayment",

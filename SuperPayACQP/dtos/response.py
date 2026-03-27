@@ -45,6 +45,7 @@ class AlipayPayResponseDTO(BaseResponseDTO):
     customsDeclarationAmount: Optional[AmountDTO] = None
     mppPaymentId: Optional[str] = None
     orderCodeForm: Optional[dict] = None
+    paymentUrl:Optional[str]=None
 
 class CancelPaymentResponseDTO(BaseResponseDTO):
     """Cancel payment response DTO"""
@@ -145,3 +146,8 @@ class GoodsCatalogDetailResponseDTO(BaseResponseDTO):
     taxRate: float
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+class EntryCodeConfirmResponseDTO(BaseResponseDTO):
+    """Goods catalog detail response DTO"""
+    paymentRequestId: str
+    paymentUrl:Optional[str] = None
+

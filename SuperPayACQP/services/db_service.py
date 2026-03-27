@@ -143,12 +143,17 @@ class DbService:
                       status=PaymentStatus.FAILED.value
                 case ResultStatus.UNKNOWN:
                       status=PaymentStatus.PENDING.value
+            value=None
+            if isinstance (request_dto.paymentAmount.value,str):
+                value=int (request_dto.paymentAmount.value)
+            else:
+                value=request_dto.paymentAmount.value
 
             PaymentRequest.objects.update_or_create(
                 paymentRequestId=payment_request_id,
                 defaults={
                     'acquirerId': response_dto.acquirerId or '',
-                    'paymentAmountValue': request_dto.paymentAmount.value,
+                    'paymentAmountValue': value,
                     'paymentAmountCurrency': request_dto.paymentAmount.currency,
                     'paymentMethodType': request_dto.paymentMethod.paymentMethodType,
                     'paymentMethodId': request_dto.paymentMethod.paymentMethodId,
@@ -519,7 +524,7 @@ class DbService:
             merchant.merchantMCC=request.merchantMCC 
             merchant.merchantAddress=request.merchantAddress.model_dump(exclude_none=True)   # type: ignore[assignment]
             merchant.store=request.store.model_dump(exclude_none=True) if request.store else None  # type: ignore[assignment]
-            merchant.currency=request.currency
+            merchant.currency=request.currency or 'MYR'
             merchant.save()
 
         else:

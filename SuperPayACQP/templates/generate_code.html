@@ -146,9 +146,9 @@
                     };
                     
                     if (diffHours > 0) {
-                        validityText.innerHTML = '<i class="bi bi-clock"></i> Valid until ' + formatTime(expireTime) + ' (' + diffHours + 'h ' + remainingMins + 'm remaining)';
+                        validityText.innerHTML = '<i class="bi bi-clock"></i> Valid for '  + diffHours + 'hours ' + remainingMins + 'minutes ';
                     } else if (diffMins > 0) {
-                        validityText.innerHTML = '<i class="bi bi-clock"></i> Valid until ' + formatTime(expireTime) + ' (' + diffMins + ' minutes remaining)';
+                        validityText.innerHTML = '<i class="bi bi-clock"></i> Valid for '  + diffMins + ' minutes)';
                     } else {
                         validityText.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Code expired';
                     }
