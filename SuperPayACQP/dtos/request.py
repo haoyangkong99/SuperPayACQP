@@ -180,7 +180,7 @@ class AlipayPayRequestDTO(BaseRequestDTO):
     paymentRequestId: str
     paymentAmount: AlipayAmountDTO
     paymentMethod: PaymentMethodDTO
-    paymentFactor: AlipayPaymentFactorDTO
+    paymentFactor: PaymentFactorDTO
     paymentExpiryTime: str
     paymentNotifyUrl: Optional[str] = None
     paymentRedirectUrl: Optional[str] = None
