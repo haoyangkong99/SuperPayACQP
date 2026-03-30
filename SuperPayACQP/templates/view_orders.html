@@ -722,11 +722,13 @@
             onConfirm: async function() {
                 try {
                     const csrftoken = getCookie('csrftoken');
+                    const token=getCookie('token');
                     const response = await fetch('/api/cancel-payment', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': csrftoken
+                            'X-CSRFToken': csrftoken,
+                            'Authorization': 'Bearer '+token
                         },
                         body: JSON.stringify({
                             paymentRequestId: paymentRequestId
@@ -849,11 +851,13 @@
         
         try {
             const csrftoken = getCookie('csrftoken');
+            const token=getCookie('token');
             const response = await fetch('/api/refund', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
+                    'X-CSRFToken': csrftoken,
+                    'Authorization': 'Bearer '+token
                 },
                 body: JSON.stringify({
                     paymentRequestId: paymentRequestId,

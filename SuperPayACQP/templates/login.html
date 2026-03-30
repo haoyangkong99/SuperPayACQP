@@ -79,7 +79,7 @@
             });
             
             const data = await response.json();
-            
+            document.cookie="token="+data.token;
             if (response.ok) {
                 // Show success message
                 alertContainer.innerHTML = `

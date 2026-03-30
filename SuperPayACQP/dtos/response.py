@@ -46,6 +46,10 @@ class AlipayPayResponseDTO(BaseResponseDTO):
     mppPaymentId: Optional[str] = None
     orderCodeForm: Optional[dict] = None
     paymentUrl:Optional[str]=None
+    schemeUrl:Optional[str] = None
+    applinkUrl:Optional[str] = None
+    normalUrl:Optional[str] = None
+    appIdentifier:Optional[str] = None
 
 class CancelPaymentResponseDTO(BaseResponseDTO):
     """Cancel payment response DTO"""
@@ -151,3 +155,32 @@ class EntryCodeConfirmResponseDTO(BaseResponseDTO):
     paymentRequestId: str
     paymentUrl:Optional[str] = None
 
+class Logo (BaseModel):
+    logoName: str
+    logoUrl: Optional[str]=None
+
+class PaymentOption(BaseModel):
+    paymentMethodType: str
+    paymentMethodCategory: str
+    enabled: bool
+    disableReason: Optional[str]=None
+    logo: Optional[Logo]=None
+    brandName: Optional[str]=None
+    paymentOptionDetail: Optional[PaymentOptionDetail]=None
+class WalletFeature (BaseModel):
+    supportCodeScan: bool
+    supportCashierRedirection:bool
+class Wallet(BaseModel):
+    walletName: str
+    walletBrandName: Optional[str]=None
+    walletLogo: Optional[Logo]=None
+    walletRegion: Optional[str]=None
+    walletFeature: Optional[WalletFeature]=None
+class WalletPaymentOptionDetail (BaseModel):
+    supportWallets: List[Wallet]
+class PaymentOptionDetail(BaseModel):
+    paymentOptionDetailType: str
+    connectWallet: Optional[WalletPaymentOptionDetail]=None
+
+class AlipayConsultPaymentResponseDTO (BaseResponseDTO):
+    paymentOptions:List[PaymentOption]

@@ -7,7 +7,8 @@ from apps.user_auth.auth_views import (
     LoginView,
     LogoutView,
     UserProfileView,
-    CSRFTokenView
+    CSRFTokenView,
+    TokenRefreshView
 )
 
 urlpatterns = [
@@ -25,4 +26,7 @@ urlpatterns = [
     
     # GET /api/auth/profile - Get user profile
     path('profile', UserProfileView.as_view(), name='user-profile'),
+    
+    # POST /api/auth/token/refresh - Refresh JWT token
+    path('token/refresh', TokenRefreshView.as_view(), name='token-refresh'),
 ]

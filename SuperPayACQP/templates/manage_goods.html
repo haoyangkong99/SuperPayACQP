@@ -140,7 +140,13 @@
     async function loadGoods() {
         showLoading('Loading goods catalog...');
         try {
-            const response = await fetch('/api/goods/');
+            const token=getCookie('token');
+            const response = await fetch('/api/goods/',{
+                 method: 'GET',
+                 headers: {
+                    'Authorization': 'Bearer '+token
+                }
+            });
             const data = await response.json();
             
             if (data.result && data.result.resultStatus === 'S') {
@@ -335,11 +341,13 @@
         try {
             showLoading('Saving goods...');
             const csrftoken = getCookie('csrftoken');
+            const token=getCookie('token');
             const response = await fetch('/api/goods/upsert', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
+                    'X-CSRFToken': csrftoken,
+                    'Authorization': 'Bearer '+token
                 },
                 body: JSON.stringify(data)
             });
@@ -379,11 +387,13 @@
                 try {
                     showLoading('Deleting goods...');
                     const csrftoken = getCookie('csrftoken');
+                     const token=getCookie('token');
                     const response = await fetch(`/api/goods/${goodsId}/delete`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': csrftoken
+                            'X-CSRFToken': csrftoken,
+                             'Authorization': 'Bearer '+token
                         }
                     });
                     

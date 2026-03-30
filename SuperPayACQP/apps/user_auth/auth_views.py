@@ -4,6 +4,7 @@ Login, Logout, Register API endpoints using Django's built-in auth system
 """
 import logging
 import re
+import uuid
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
@@ -14,6 +15,7 @@ from rest_framework import status
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.csrf import csrf_exempt
+from utils.jwt_utils import generate_jwt_token, refresh_jwt_token, decode_jwt_token
 
 logger = logging.getLogger(__name__)
 
@@ -90,13 +92,21 @@ class RegisterView(APIView):
                 password=password  # Django will hash the password automatically
             )
             
+            # Generate a temporary session ID for the token (not stored in DB)
+            # This is used only for the JWT token generation
+            temp_session_id = str(uuid.uuid4())
+            
+            # Generate JWT token
+            jwt_token = generate_jwt_token(user.id, temp_session_id)
+            
             return Response({
                 'message': 'User registered successfully',
                 'user': {
                     'id': user.id,
                     'username': user.username,
                     'email': user.email
-                }
+                },
+                'token': jwt_token
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
@@ -149,13 +159,21 @@ class LoginView(APIView):
                 # Login using Django's built-in login (creates session)
                 login(request, user)
                 
+                # Get the session key (sessionid)
+                session_id = request.session.session_key
+                
+                # Generate JWT token with user_id and session_id
+                jwt_token = generate_jwt_token(user.id, session_id)
+                
                 return Response({
                     'message': 'Login successful',
                     'user': {
                         'id': user.id,
                         'username': user.username,
                         'email': user.email
-                    }
+                    },
+                    'token': jwt_token,
+                    'session_id': session_id
                 }, status=status.HTTP_200_OK)
             else:
                 return Response({
@@ -232,4 +250,41 @@ class CSRFTokenView(APIView):
     def get(self, request):
         return Response({
             'message': 'CSRF cookie set'
+        }, status=status.HTTP_200_OK)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TokenRefreshView(APIView):
+    """
+    POST /api/auth/token/refresh
+    Refresh JWT token to extend validity
+    """
+    authentication_classes = []
+    permission_classes = []
+    
+    def post(self, request):
+        # Get token from Authorization header or request body
+        auth_header = request.headers.get('Authorization', '')
+        
+        if auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+        else:
+            token = request.data.get('token')
+        
+        if not token:
+            return Response({
+                'error': 'Token is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Refresh the token
+        new_token = refresh_jwt_token(token)
+        
+        if new_token is None:
+            return Response({
+                'error': 'Invalid or expired token'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        return Response({
+            'message': 'Token refreshed successfully',
+            'token': new_token
         }, status=status.HTTP_200_OK)

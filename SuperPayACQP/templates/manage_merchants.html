@@ -299,7 +299,14 @@
     async function loadMerchants(page = 1) {
         showTableLoading(true);
         try {
-            const response = await fetch('/api/query/merchants');
+            const token=getCookie('token');
+            const response = await fetch('/api/query/merchants',{
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer '+token
+                }
+            });
             const data = await response.json();
             
             if (data.merchants) {
@@ -613,11 +620,13 @@
         
         try {
             const csrftoken = getCookie('csrftoken');
+            const token=getCookie('token');
             const response = await fetch('/api/merchants', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
+                    'X-CSRFToken': csrftoken,
+                    'Authorization': 'Bearer '+token
                 },
                 body: JSON.stringify(merchantData)
             });
@@ -663,10 +672,12 @@
         
         try {
             const csrftoken = getCookie('csrftoken');
+            const token=getCookie('token');
             const response = await fetch(`/api/merchants/delete?merchantId=${encodeURIComponent(merchantToDelete)}`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRFToken': csrftoken
+                    'X-CSRFToken': csrftoken,
+                    'Authorization': 'Bearer '+token
                 }
             });
             
@@ -833,11 +844,13 @@
         
         try {
             const csrftoken = getCookie('csrftoken');
+            const token=getCookie('token');
             const response = await fetch('/api/merchants', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
+                    'X-CSRFToken': csrftoken,
+                    'Authorization': 'Bearer '+token
                 },
                 body: JSON.stringify(merchantData)
             });
@@ -883,10 +896,12 @@
         
         try {
             const csrftoken = getCookie('csrftoken');
+             const token=getCookie('token');
             const response = await fetch(`/api/merchants/delete?merchantId=${encodeURIComponent(merchantToDelete)}`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRFToken': csrftoken
+                    'X-CSRFToken': csrftoken,
+                    'Authorization': 'Bearer '+token
                 }
             });
             

@@ -20,14 +20,17 @@ from dtos.request import (
     CancelPaymentRequestDTO, 
     InquiryPaymentRequestDTO,
     StoreDTO,
-    AddressDTO
+    AddressDTO,
+    NotifyPaymentRequestDTO
 )
 from dtos.request import (
     AlipayPayRequestDTO, 
     PaymentMethodDTO, 
     AlipayOrderDTO,
     MerchantInfoDTO,
-    RefundRequestDTO
+    RefundRequestDTO,
+    AmountDTO,
+    SettlementQuoteDTO
 )
 from dtos.response import (
     PaymentResponseDTO, 
@@ -289,7 +292,56 @@ class DbService:
                 paymentRequest.save()
             
  
-            
+    @staticmethod
+    @transaction.atomic
+    def updatePaymentRequestResultByNotifyPayment (notification_dto: NotifyPaymentRequestDTO,payment_request_id:str):
+                payment_request = PaymentRequest.objects.get(paymentRequestId=notification_dto.paymentRequestId)
+                if (payment_request.resultStatus=='U' and payment_request.paymentStatus==PaymentStatus.PENDING):
+                    if notification_dto.paymentId:
+                        payment_request.paymentId = notification_dto.paymentId
+                    if notification_dto.paymentTime:
+                        payment_request.paymentTime = format_str_to_datetime(notification_dto.paymentTime)
+                    if notification_dto.pspId:
+                        payment_request.pspId = notification_dto.pspId
+                    if notification_dto.walletBrandName:
+                        payment_request.walletBrandName = notification_dto.walletBrandName
+                    if notification_dto.mppPaymentId:
+                        payment_request.mppPaymentId = notification_dto.mppPaymentId
+                    if notification_dto.acquirerId:
+                        payment_request.acquirerId=notification_dto.acquirerId
+                    if notification_dto.customerId:
+                        payment_request.customerId=notification_dto.customerId
+                    if notification_dto.mppPaymentId:
+                        payment_request.mppPaymentId=notification_dto.mppPaymentId
+                    
+                    payment_request.resultStatus=notification_dto.paymentResult.resultStatus
+                    payment_request.resultCode=notification_dto.paymentResult.resultCode
+                    payment_request.resultMessage=notification_dto.paymentResult.resultMessage
+                    if notification_dto.paymentResult.resultStatus=='S':
+                        payment_request.paymentStatus=PaymentStatus.SUCCESS
+                    else:
+                        payment_request.paymentStatus=PaymentStatus.FAILED                    
+                    payment_request.save()
+                    # Save settlement if present
+                    settlementCheck=Settlement.objects.filter(paymentRequestId=payment_request_id).first()
+                    if not settlementCheck:
+                        settlement_amount = notification_dto.settlementAmount
+                        settlement_quote = notification_dto.settlementQuote
+                        if settlement_amount:
+                            Settlement.objects.create(
+                                settlementId=str(uuid.uuid4()),
+                                paymentRequestId=payment_request_id,
+                                settlementAmountValue=settlement_amount.value,
+                                settlementCurrency=settlement_amount.currency, 
+                                quoteId=settlement_quote.quoteId if settlement_quote else None,
+                                quotePrice=settlement_quote.quotePrice if settlement_quote else None,
+                                quoteCurrencyPair=settlement_quote.quoteCurrencyPair if settlement_quote else None,
+                                quoteStartTime=settlement_quote.quoteStartTime if settlement_quote else None,
+                                quoteExpiryTime=settlement_quote.quoteExpiryTime if settlement_quote else None,
+                                quoteUnit=settlement_quote.quoteUnit if settlement_quote else None,
+                                baseCurrency=settlement_quote.baseCurrency if settlement_quote else None
+                            )
+
     @staticmethod
     @transaction.atomic
     def updatePaymentRequestResultByCancelled (payment_request_id:str,result:Result):
@@ -304,17 +356,8 @@ class DbService:
 
     @staticmethod
     @transaction.atomic
-    def updatePaymentRequestResultByInquiryPayment(response_dto: InquiryPaymentResponseDTO,request_dto:InquiryPaymentRequestDTO) -> bool:
-        """
-        Update PaymentRequest fields based on InquiryPaymentResponseDTO.
-        Only updates fields that have different values.
-        
-        Args:
-            response_dto: InquiryPaymentResponseDTO from Alipay+ inquiryPayment API
-            
-        Returns:
-            bool: True if any fields were updated, False otherwise
-        """
+    def updatePaymentRequestResultByInquiryPayment(request_dto:InquiryPaymentRequestDTO,response_dto: InquiryPaymentResponseDTO) -> bool:
+
         payment_request_id = response_dto.paymentRequestId or request_dto.paymentRequestId
         if not payment_request_id:
             logger.warning("Cannot update PaymentRequest: paymentRequestId is missing from response")
@@ -378,28 +421,14 @@ class DbService:
                     updated = True
             except Exception as e:
                 logger.warning(f"Failed to parse paymentTime: {response_dto.paymentTime}, error: {e}")
-        
-        # Update result fields from paymentResult (primary) or result (fallback)
-        result = response_dto.paymentResult if response_dto.paymentResult else response_dto.result
-        if result:
-            result_status = result.resultStatus.value if hasattr(result.resultStatus, 'value') else result.resultStatus
-            update_if_different('resultStatus', result_status, payment_request.resultStatus)
-            update_if_different('resultCode', result.resultCode, payment_request.resultCode)
-            update_if_different('resultMessage', result.resultMessage, payment_request.resultMessage)
-            
-            # Update paymentStatus based on resultStatus
-            new_payment_status = None
-            match result.resultStatus:
-                case ResultStatus.SUCCESS:
-                    new_payment_status = PaymentStatus.SUCCESS.value
-                case ResultStatus.FAILURE:
-                    new_payment_status = PaymentStatus.FAILED.value
-                case ResultStatus.UNKNOWN:
-                    new_payment_status = PaymentStatus.PENDING.value
-            
-            if new_payment_status:
-                update_if_different('paymentStatus', new_payment_status, payment_request.paymentStatus)
-    
+        if response_dto.paymentResult:
+            payment_request.resultStatus=response_dto.paymentResult.resultStatus
+            payment_request.resultCode=response_dto.paymentResult.resultCode
+            payment_request.resultMessage=response_dto.paymentResult.resultMessage
+            if (payment_request.resultStatus=='S'):
+                payment_request.paymentStatus=PaymentStatus.SUCCESS
+            if (payment_request.resultStatus=='F'):
+                payment_request.paymentStatus=PaymentStatus.FAILED
         # Update settlement if present
         if response_dto.settlementAmount:
             # settlementQuote is SettlementQuoteDTO (Pydantic model)
@@ -571,7 +600,78 @@ class DbService:
                     resultCode=response_dto.result.resultCode,
                     resultMessage=response_dto.result.resultMessage
                 )
+    @staticmethod
+    def buildInquiryPaymentResponseFromDB(payment_request: PaymentRequest) -> InquiryPaymentResponseDTO:
 
+        if payment_request.resultStatus=='F':
+            return InquiryPaymentResponseDTO(
+                result=Result.returnSuccess(),
+                paymentResult=Result(resultStatus=ResultStatus.FAILURE,resultCode=payment_request.resultCode or '',resultMessage=payment_request.resultMessage or '')
+            )
+        else:
+            # Build payment amount
+            payment_amount = None
+            if payment_request.paymentAmountValue and payment_request.paymentAmountCurrency:
+                payment_amount = AmountDTO(
+                    currency=payment_request.paymentAmountCurrency,
+                    value=payment_request.paymentAmountValue
+                )
+            
+            # Build customs declaration amount
+            customs_declaration_amount = None
+            if payment_request.customsDeclarationAmountValue and payment_request.customsDeclarationAmountCurrency:
+                customs_declaration_amount = AmountDTO(
+                    currency=payment_request.customsDeclarationAmountCurrency,
+                    value=payment_request.customsDeclarationAmountValue
+                )
+            
+            # Build settlement amount and quote from Settlement model
+            settlement_amount = None
+            settlement_quote = None
+            settlement = Settlement.objects.filter(paymentRequestId=payment_request.paymentRequestId).first()
+            if settlement:
+                settlement_amount = AmountDTO(
+                    currency=settlement.settlementCurrency,
+                    value=settlement.settlementAmountValue
+                )
+                if settlement.quoteId:
+                    settlement_quote = SettlementQuoteDTO(
+                        quoteId=settlement.quoteId,
+                        quoteCurrencyPair=settlement.quoteCurrencyPair,
+                        quotePrice=float(settlement.quotePrice) if settlement.quotePrice else None,
+                        quoteStartTime=settlement.quoteStartTime.isoformat() if settlement.quoteStartTime else None,
+                        quoteExpiryTime=settlement.quoteExpiryTime.isoformat() if settlement.quoteExpiryTime else None,
+                        quoteUnit=settlement.quoteUnit,
+                        baseCurrency=settlement.baseCurrency
+                    )
 
-        
-
+            # Build payment result
+            payment_result = Result(
+                        resultStatus=ResultStatus.SUCCESS ,
+                        resultCode=payment_request.resultCode or '',
+                        resultMessage=payment_request.resultMessage or ''
+                    )
+                
+            
+            # Format payment time
+            payment_time = None
+            if payment_request.paymentTime:
+                payment_time = payment_request.paymentTime.strftime("%Y-%m-%dT%H:%M:%S+08:00")
+            
+            return InquiryPaymentResponseDTO(
+                result=Result.returnSuccess(),
+                paymentResult=payment_result,
+                acquirerId=payment_request.acquirerId,
+                pspId=payment_request.pspId,
+                paymentRequestId=payment_request.paymentRequestId,
+                paymentId=payment_request.paymentId,
+                paymentAmount=payment_amount,
+                paymentTime=payment_time ,
+                customerId=payment_request.customerId,
+                walletBrandName=payment_request.walletBrandName,
+                settlementAmount=settlement_amount,
+                settlementQuote=settlement_quote,
+                customsDeclarationAmount=customs_declaration_amount,
+                mppPaymentId=payment_request.mppPaymentId,
+                transactions=None
+            )

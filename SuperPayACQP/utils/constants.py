@@ -12,6 +12,43 @@ class ResultStatus(str, Enum):
     SUCCESS = 'S'
     FAILURE = 'F'
     UNKNOWN = 'U'
+    
+    @classmethod
+    def from_string(cls, value: str) -> 'ResultStatus':
+        """
+        Convert a string to ResultStatus enum.
+        
+        Args:
+            value: String representation of ResultStatus ('S', 'F', 'U' or 
+                   'SUCCESS', 'FAILURE', 'UNKNOWN' - case insensitive)
+            
+        Returns:
+            ResultStatus enum value
+            
+        Raises:
+            ValueError: If the string cannot be converted to a valid ResultStatus
+        """
+        if not value:
+            return cls.UNKNOWN
+        
+        # Normalize the input - uppercase and strip whitespace
+        normalized = value.strip().upper()
+        
+        # Map of string values to enum
+        mapping = {
+            'S': cls.SUCCESS,
+            'F': cls.FAILURE,
+            'U': cls.UNKNOWN,
+            'SUCCESS': cls.SUCCESS,
+            'FAILURE': cls.FAILURE,
+            'UNKNOWN': cls.UNKNOWN,
+        }
+        
+        if normalized in mapping:
+            return mapping[normalized]
+        
+        # If not found, return UNKNOWN as default
+        return cls.UNKNOWN
 
 
 class PaymentStatus(str, Enum):
@@ -90,6 +127,8 @@ class Result(BaseModel):
     def serialize_result_status(self, value: ResultStatus) -> str:
         """Serialize ResultStatus enum to string value"""
         return value.value if isinstance(value, ResultStatus) else value
+
+
 
     @classmethod
     def returnSuccess(cls) -> 'Result':

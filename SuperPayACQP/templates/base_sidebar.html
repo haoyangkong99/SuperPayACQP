@@ -67,7 +67,15 @@
      */
     async function loadUserProfile() {
         try {
-            const response = await fetch('/api/auth/profile');
+            const token=getCookie('token');
+            const response = await fetch('/api/auth/profile',{
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer '+token
+                }
+            });
+            const loc = window.location;
             
             if (response.ok) {
                 const data = await response.json();
@@ -79,7 +87,10 @@
                 
                 return user;
             } else {
-                window.location.href = '/login';
+                if (loc.pathname!="payment-result"){
+                    window.location.href = '/login';
+                }
+                
             }
         } catch (error) {
             console.error('Error loading user profile:', error);

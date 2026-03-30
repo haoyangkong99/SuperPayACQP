@@ -192,9 +192,9 @@ class PaymentDetailView(APIView):
             alipay_request_Dto=InquiryPaymentRequestDTO(paymentRequestId=payment_request_id,paymentId=payment_id)
             alipay_response_dto = alipay_client.inquiry_payment(alipay_request_Dto)
             if alipay_response_dto.result.resultStatus=='S':
-                db_service.updatePaymentRequestResultByInquiryPayment(alipay_response_dto,alipay_request_Dto)
+                db_service.updatePaymentRequestResultByInquiryPayment(alipay_request_Dto, alipay_response_dto)
             if alipay_response_dto.result.resultStatus=='F' and alipay_response_dto.result.resultCode=='ORDER_NOT_EXIST':
-                db_service.updatePaymentRequestResultByInquiryPayment(alipay_response_dto,alipay_request_Dto)
+                db_service.updatePaymentRequestResultByInquiryPayment(alipay_request_Dto, alipay_response_dto)
             db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/inquiryPayment',HTTPMethod.POST,alipay_request_Dto,alipay_response_dto,MessageType.OUTBOUND)
 
             # Find payment request

@@ -10,17 +10,18 @@ from typing import Dict, Any, Optional, List, Callable
 import os
 import requests
 import uuid
-from dtos.request import CancelPaymentRequestDTO, RefundRequestDTO, InquiryPaymentRequestDTO, AlipayPayRequestDTO
+from dtos.request import CancelPaymentRequestDTO, RefundRequestDTO, InquiryPaymentRequestDTO, AlipayPayRequestDTO,AlipayConsultPaymentRequestDTO
 from dtos.response import (
     PaymentResponseDTO, 
     CancelPaymentResponseDTO, 
     RefundResponseDTO, 
     InquiryPaymentResponseDTO,
-    AlipayPayResponseDTO
+    AlipayPayResponseDTO,
+    AlipayConsultPaymentResponseDTO
 )
-
+from utils.constants import Result,MessageType,HTTPMethod,PaymentStatus,ResultStatus
 logger = logging.getLogger(__name__)
-
+from services.db_service import DbService
 
 class RetryHandler:
     """
@@ -98,6 +99,7 @@ class AlipayClient:
     CANCEL_ENDPOINT = "/aps/api/v1/payments/cancelPayment"
     REFUND_ENDPOINT = "/aps/api/v1/payments/refund"
     INQUIRY_ENDPOINT = "/aps/api/v1/payments/inquiryPayment"
+    CONSULPAYMENT_ENDPOINT='/aps/api/v1/payments/consultPayment'
     
     def __init__(self, signature_service, client_id: str):
         """
@@ -274,6 +276,12 @@ class AlipayClient:
         payload = request_dto.model_dump(exclude_none=True)
         response_data = self._make_request(self.INQUIRY_ENDPOINT, payload,5)
         return InquiryPaymentResponseDTO(**response_data)
-
+    def consultPayment(self, request_dto: AlipayConsultPaymentRequestDTO) -> AlipayConsultPaymentResponseDTO:
+        payload = request_dto.model_dump(exclude_none=True)
+        response_data = self._make_request(self.CONSULPAYMENT_ENDPOINT, payload,5)
+        response_dto=AlipayConsultPaymentResponseDTO(**response_data)
+        db_service=DbService()
+        db_service.createApiRecordsWithReqRes(self.CONSULPAYMENT_ENDPOINT,HTTPMethod.POST,request_dto,response_dto,MessageType.OUTBOUND)
+        return response_dto
 
 

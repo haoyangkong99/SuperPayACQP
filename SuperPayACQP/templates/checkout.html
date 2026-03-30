@@ -72,7 +72,14 @@
     // Load merchants from API
     async function loadMerchants() {
         try {
-            const response = await fetch('/api/query/merchants');
+            const token=getCookie('token');
+            const response = await fetch('/api/query/merchants',{
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer '+token
+                }
+            });
             const data = await response.json();
             
             if (data.merchants && data.merchants.length > 0) {

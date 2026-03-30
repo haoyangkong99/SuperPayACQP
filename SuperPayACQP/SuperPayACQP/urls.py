@@ -9,7 +9,7 @@ from apps.payments.payments_views import (
     CancelPaymentView, 
     InquiryPaymentView,
     NotifyPaymentView,
-
+    ConsultPaymentView
     
 )
 from apps.merchants.merchants_views import MerchantView, GenerateEntryCodeView, EntryCodeView, EntryCodeConfirmView,MerchantDeleteView
@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/refund', RefundView.as_view(), name='refund'),
     path('api/inquiry-payment', InquiryPaymentView.as_view(), name='inquiry-payment'),
     path('api/generate-entry-code', GenerateEntryCodeView.as_view(), name='generate-entry-code'),
+    path('api/consult-payment', ConsultPaymentView.as_view(), name='consult-payment'),
     path('entry-code', EntryCodeView.as_view(), name='entry-code'),
     path('entry-code/confirm', EntryCodeConfirmView.as_view(), name='entry-code-confirm'),
     

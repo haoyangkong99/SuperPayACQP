@@ -96,7 +96,13 @@
     async function loadProducts() {
         showLoading('Loading products...');
         try {
-            const response = await fetch('/api/goods/');
+            const token=getCookie('token');
+            const response = await fetch('/api/goods/',{
+                 method: 'GET',
+                 headers: {
+                    'Authorization': 'Bearer '+token
+                }
+            });
             const data = await response.json();
             
             if (data.result && data.result.resultStatus === 'S') {

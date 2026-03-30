@@ -69,7 +69,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'middleware.merchant_auth.MerchantAuthMiddleware',
+    'middleware.middleware_auth.MerchantAuthMiddleware',
     'middleware.header_cleanup.HeaderCleanupMiddleware',
 ]
 
@@ -173,6 +173,16 @@ ALIPAY_PUBLIC_KEY = os.getenv('ALIPAY_PUBLIC_KEY', '')
 ALIPAY_PRIVATE_KEY = os.getenv('ALIPAY_PRIVATE_KEY', '')
 ALIPAY_CLIENT_ID = os.getenv('ALIPAY_CLIENT_ID', '')
 
+# JWT Configuration
+# Use a dedicated JWT secret key with sufficient length (32+ bytes for SHA256)
+# If not set in environment, generate a secure key from SECRET_KEY
+import hashlib
+_jwt_secret_base = os.getenv('JWT_SECRET_KEY', SECRET_KEY)
+JWT_SECRET_KEY = hashlib.sha256(_jwt_secret_base.encode()).hexdigest()  # 64 chars = 32 bytes
+
+# Session Configuration (JWT expiration will match this)
+SESSION_COOKIE_AGE = int(os.getenv('SESSION_COOKIE_AGE', 1209600))  # Default: 2 weeks in seconds
+
 # Logging Configuration
 LOGGING = {
     'version': 1,
@@ -199,6 +209,14 @@ LOGGING = {
             'level': 'DEBUG',
         },
         'services': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'middleware': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'utils': {
             'handlers': ['console'],
             'level': 'DEBUG',
         },

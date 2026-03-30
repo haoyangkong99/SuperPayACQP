@@ -66,7 +66,14 @@
      */
     async function loadMerchants() {
         try {
-            const response = await fetch('/api/query/merchants');
+            const token=getCookie('token');
+            const response = await fetch('/api/query/merchants',{
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer '+token
+                }
+            });
             const data = await response.json();
             
             const select = document.getElementById('merchantId');
@@ -106,12 +113,13 @@
         
         try {
             const csrftoken = getCookie('csrftoken');
-            
+            const token=getCookie('token');
             const response = await fetch('/api/generate-entry-code', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrftoken,
+                    'Authorization': 'Bearer '+token
                 },
                 body: JSON.stringify({ merchantId })
             });

@@ -33,7 +33,8 @@ from dtos.request import (
     GoodsDTO,
     SettlementStrategyDTO,
     AlipayAmountDTO,
-    AlipayPaymentFactorDTO
+    AlipayPaymentFactorDTO,
+    AlipayConsultPaymentRequestDTO
 )
 from dtos.response import (
     PaymentResponseDTO, 
@@ -41,11 +42,13 @@ from dtos.response import (
     InquiryPaymentResponseDTO,
     NotifyPaymentResponseDTO,
     BaseResponseDTO,
-    AlipayPayResponseDTO
+    AlipayPayResponseDTO,
+    AlipayConsultPaymentResponseDTO
 )
-
-from utils.constants import Result,MessageType,HTTPMethod
+from rest_framework.test import APIRequestFactory
+from utils.constants import Result,MessageType,HTTPMethod,PaymentStatus,ResultStatus
 from utils.helpers import format_str_to_datetime
+from utils.exceptions import SuperPayACQPException
 from services.alipay_client import AlipayClient, RetryHandler
 from services.signature_service import SignatureService
 from services.db_service import DbService
@@ -74,6 +77,8 @@ class PlaceOrderView(APIView):
     POST /api/place-order
     Place an order and initiate payment
     """
+    authentication_classes = []  # Use JWT middleware for auth
+    permission_classes = []  # Permission handled by middleware
 
     def post(self, request):
         # Parse and validate request using DTO
@@ -229,6 +234,8 @@ class CancelPaymentView(APIView):
     POST /api/cancel-payment
     Cancel a payment
     """
+    authentication_classes = []  # Use JWT middleware for auth
+    permission_classes = []  # Permission handled by middleware
     
     def post(self, request):
         # Parse and validate request using DTO
@@ -305,11 +312,57 @@ class InquiryPaymentView(APIView):
     POST /api/inquiryPayment
     Query payment result
     """
+    authentication_classes = []  # Use JWT middleware for auth
+    permission_classes = []  # Permission handled by middleware
     
     def post(self, request):
         # Parse and validate request using DTO
+        request_dto = self._validate_request(request)
+        if isinstance(request_dto, Response):
+            return request_dto
+        
+        # Get service instances
+        _, alipay_client, db_service = get_service_instances()
+        
         try:
-            request_dto = InquiryPaymentRequestDTO(**request.data)
+            # Get payment request from database
+            payment_request = self._get_payment_request(request_dto)
+            if not payment_request:
+                return self._error_response(request_dto, db_service, 
+                    f"Payment request not found for paymentRequestId: {request_dto.paymentRequestId} or paymentId: {request_dto.paymentId}")
+            
+            # Check if payment is still pending
+            if self._is_payment_pending(payment_request):
+                # Query Alipay+ for latest status
+                response_dto = self._query_alipay_status(request_dto, alipay_client, db_service)
+            else:
+                # Return cached status from database
+                response_dto = db_service.buildInquiryPaymentResponseFromDB(payment_request)
+            
+            db_service.createApiRecordsWithReqRes('/api/inquiryPayment', HTTPMethod.POST, request_dto, response_dto, MessageType.INBOUND)
+            return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.warning(f"Error: {e}")
+            return self._error_response(request_dto, db_service, str(e))
+    
+    def _call_cancel_internal(self, request_dto: CancelPaymentRequestDTO) -> dict:
+        """Call cancel payment internally using fabricated request"""
+        factory = APIRequestFactory()
+        request = factory.post('/api/cancel-payment', request_dto.model_dump(exclude_none=True), format='json')
+        
+        view = CancelPaymentView.as_view()
+        response = view(request)
+        
+        # Type cast to access .data attribute (DRF Response has this attribute)
+        if isinstance(response, Response):
+            return response.data or {}
+        return {}
+    
+    def _validate_request(self, request) -> InquiryPaymentRequestDTO | Response:
+        """Validate and parse request DTO"""
+        try:
+            return InquiryPaymentRequestDTO(**request.data)
         except Exception as e:
             logger.warning(f"Invalid request: {e}")
             return Response({
@@ -319,44 +372,67 @@ class InquiryPaymentView(APIView):
                     'resultMessage': str(e)
                 }
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Get service instances
-        signature_service, alipay_client, db_service = get_service_instances()
-       
-        try:
-            # Call Alipay+ inquiryPayment API
+    
+    def _get_payment_request(self, request_dto: InquiryPaymentRequestDTO) -> PaymentRequest | None:
+        """Get payment request from database by paymentRequestId or paymentId"""
+        if request_dto.paymentRequestId:
+            return PaymentRequest.objects.filter(paymentRequestId=request_dto.paymentRequestId).first()
+        else:
+            return PaymentRequest.objects.filter(paymentId=request_dto.paymentId).first()
+    
+    def _is_payment_pending(self, payment_request: PaymentRequest) -> bool:
+        """Check if payment is still in pending state"""
+        return payment_request.resultStatus == 'U' and payment_request.paymentStatus == PaymentStatus.PENDING.value
+    
+    def _query_alipay_status(self, request_dto: InquiryPaymentRequestDTO, 
+                              alipay_client: AlipayClient, 
+                              db_service: DbService) -> InquiryPaymentResponseDTO:
+        """Query Alipay+ for payment status with retry logic"""
+        while True:
             response_dto = alipay_client.inquiry_payment(request_dto)
-        
-            # Log API record
-            db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/inquiryPayment',HTTPMethod.POST,request_dto,response_dto,MessageType.OUTBOUND)
-
-        # Handle UNKNOWN_EXCEPTION with retry
+            db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/inquiryPayment', 
+                                                   HTTPMethod.POST, request_dto, response_dto, MessageType.OUTBOUND)
+            
             result = response_dto.result
-            if result.resultStatus =='S':
-                db_service.updatePaymentRequestResultByInquiryPayment(response_dto,request_dto)
-            if result.resultStatus == 'U' and result.resultCode == 'UNKNOWN_EXCEPTION':
-                response_dto = self._handle_inquiry_retry(request_dto, alipay_client,db_service)
-            db_service.createApiRecordsWithReqRes('/api/inquiryPayment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)   
-            return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
-
-        except Exception as e:
-            logger.warning(f"Error: {e}")
-            result = Result.returnProcessFail()
-            response_dto=InquiryPaymentResponseDTO(result=result)
-            db_service.createApiRecordsWithReqRes('/api/inquiryPayment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)    
-            return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
+            
+            # Check if we got a final result
+            if result.resultStatus == ResultStatus.SUCCESS and response_dto.paymentResult:
+                payment_result = response_dto.paymentResult
+                if payment_result.resultStatus in (ResultStatus.SUCCESS, ResultStatus.FAILURE):
+                    db_service.updatePaymentRequestResultByInquiryPayment(request_dto, response_dto)
+                    return response_dto
+                if payment_result.resultStatus ==ResultStatus.UNKNOWN:
+                    return self._handle_inquiry_retry(request_dto, alipay_client, db_service)
+            # Handle UNKNOWN_EXCEPTION with retry handler
+            elif result.resultStatus == ResultStatus.UNKNOWN and result.resultCode == 'UNKNOWN_EXCEPTION':
+                return self._handle_inquiry_retry(request_dto, alipay_client, db_service)
+            
+            elif result.resultStatus==ResultStatus.FAILURE and result.resultCode=='ORDER_NOT_EXIST':
+                self._call_cancel_internal(
+                    CancelPaymentRequestDTO(paymentId=request_dto.paymentId, paymentRequestId=request_dto.paymentRequestId)
+                )
+                payment_request=self._get_payment_request(request_dto)
+                if payment_request:
+                    return db_service.buildInquiryPaymentResponseFromDB(payment_request)
+                else:
+                    return response_dto
+            else:
+                return response_dto
 
     
-    def _handle_inquiry_retry(self, request_dto: InquiryPaymentRequestDTO, alipay_client: AlipayClient,db_service:DbService) -> InquiryPaymentResponseDTO:
+    def _error_response(self, request_dto: InquiryPaymentRequestDTO, 
+                        db_service: DbService, 
+                        error_message: str) -> Response:
+        """Create error response"""
+        result = Result.returnProcessFail()
+        response_dto = InquiryPaymentResponseDTO(result=result)
+        db_service.createApiRecordsWithReqRes('/api/inquiryPayment', HTTPMethod.POST, request_dto, response_dto, MessageType.INBOUND)
+        return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
+    
+    def _handle_inquiry_retry(self, request_dto: InquiryPaymentRequestDTO, 
+                               alipay_client: AlipayClient, 
+                               db_service: DbService) -> InquiryPaymentResponseDTO:
         """Handle inquiry retry with automatic cancel on expiry"""
-        # Get payment request to check expiry time
-        try:
-            payment_request = PaymentRequest.objects.get(paymentRequestId=request_dto.paymentRequestId)
-            # Use stored expiry time or default to 1 minute from now
-            expiry_time = payment_request.paymentExpiryTime or (datetime.now(timezone.utc) + timedelta(minutes=1))
-        except PaymentRequest.DoesNotExist:
-            expiry_time = datetime.now(timezone.utc) + timedelta(minutes=1)
-        
         def inquiry():
             return alipay_client.inquiry_payment(request_dto)
         
@@ -368,6 +444,13 @@ class InquiryPaymentView(APIView):
             if datetime.now(timezone.utc) > expiry_time:
                 return True
             return False
+        
+        try:
+            payment_request = PaymentRequest.objects.get(paymentRequestId=request_dto.paymentRequestId)
+            # Use stored expiry time or default to 1 minute from now
+            expiry_time = payment_request.paymentExpiryTime or (datetime.now(timezone.utc) + timedelta(minutes=1))
+        except PaymentRequest.DoesNotExist:
+            expiry_time = datetime.now(timezone.utc) + timedelta(minutes=1)
         
         response_dto = RetryHandler.retry_until_timeout(inquiry, 5, 60, should_stop)
         
@@ -381,8 +464,10 @@ class InquiryPaymentView(APIView):
                 paymentRequestId=request_dto.paymentRequestId
             )
             cancel_response = alipay_client.cancel_payment(cancel_dto)
-            db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/cancelPayment',HTTPMethod.POST,cancel_dto,cancel_response,MessageType.OUTBOUND)
-        
+            db_service.createApiRecordsWithReqRes('/aps/api/v1/payments/cancelPayment', HTTPMethod.POST, cancel_dto, cancel_response, MessageType.OUTBOUND)
+        if result.resultStatus == 'S':
+            if response_dto.paymentResult.resultStatus=='S' or response_dto.paymentResult.resultStatus=='F':
+                db_service.updatePaymentRequestResultByInquiryPayment(request_dto, response_dto)
         return response_dto
 
 
@@ -445,43 +530,8 @@ class NotifyPaymentView(APIView):
         
         # Update payment request
         try:
-            payment_request = PaymentRequest.objects.get(paymentRequestId=payment_request_id)
-            if notification_dto.paymentId:
-                payment_request.paymentId = notification_dto.paymentId
-            if notification_dto.paymentTime:
-                payment_request.paymentTime = format_str_to_datetime(notification_dto.paymentTime)
-            if notification_dto.pspId:
-                payment_request.pspId = notification_dto.pspId
-            if notification_dto.walletBrandName:
-                payment_request.walletBrandName = notification_dto.walletBrandName
-            if notification_dto.mppPaymentId:
-                payment_request.mppPaymentId = notification_dto.mppPaymentId
-            
-            payment_request.resultStatus=notification_dto.paymentResult.resultStatus
-            payment_request.resultCode=notification_dto.paymentResult.resultCode
-            payment_request.resultMessage=notification_dto.paymentResult.resultMessage
-            payment_request.save()
-            
+            db_service.updatePaymentRequestResultByNotifyPayment(notification_dto=notification_dto,payment_request_id=payment_request_id)
 
-            # Save settlement if present
-            settlementCheck=Settlement.objects.filter(paymentRequestId=payment_request_id).first()
-            if not settlementCheck:
-                settlement_amount = notification_dto.settlementAmount
-                settlement_quote = notification_dto.settlementQuote
-                if settlement_amount:
-                    Settlement.objects.create(
-                        settlementId=str(uuid.uuid4()),
-                        paymentRequestId=payment_request_id,
-                        settlementAmountValue=settlement_amount.value,
-                        settlementCurrency=settlement_amount.currency or 'MYR',  # Default to MYR if not provided
-                        quoteId=settlement_quote.quoteId if settlement_quote else None,
-                        quotePrice=settlement_quote.quotePrice if settlement_quote else None,
-                        quoteCurrencyPair=settlement_quote.quoteCurrencyPair if settlement_quote else None,
-                        quoteStartTime=settlement_quote.quoteStartTime if settlement_quote else None,
-                        quoteExpiryTime=settlement_quote.quoteExpiryTime if settlement_quote else None,
-                        quoteUnit=settlement_quote.quoteUnit if settlement_quote else None,
-                        baseCurrency=settlement_quote.baseCurrency if settlement_quote else None
-                    )
 
         except PaymentRequest.DoesNotExist:
             logger.warning(f"Payment request not found: {payment_request_id}")
@@ -497,3 +547,34 @@ class NotifyPaymentView(APIView):
         logger.debug("response header for notifypayment: {notifyPaymentResponse.headers}")
         logger.debug("response body for notifypayment: {notifyPaymentResponse.data}")
         return notifyPaymentResponse
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ConsultPaymentView(APIView):
+    authentication_classes = []  # Use JWT middleware for auth
+    permission_classes = []  # Permission handled by middleware
+    
+    def post(self, request):
+        try:
+            request_dto = AlipayConsultPaymentRequestDTO(**request.data)
+        except Exception as e:
+            logger.warning(f"Invalid request: {e}")
+            return Response({
+                'result': {
+                    'resultCode': 'INVALID_REQUEST',
+                    'resultStatus': 'F',
+                    'resultMessage': str(e)
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        _, alipay_client, db_service = get_service_instances()
+
+        try:
+            response_dto = alipay_client.consultPayment(request_dto)
+            db_service.createApiRecordsWithReqRes('/api/consult-payment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)
+            return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
+
+        except Exception as e:
+            result = Result.returnProcessFail()
+            response_dto=PaymentResponseDTO(result=result)
+            db_service.createApiRecordsWithReqRes('/api/consult-payment',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)
+            return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)

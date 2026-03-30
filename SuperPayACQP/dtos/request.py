@@ -12,11 +12,13 @@ class PaymentFactorDTO(BaseModel):
     isInStorePayment: Optional[bool] = False
     isCashierPayment: Optional[bool] = False
     inStorePaymentScenario: Optional[str] = None
+    isAgreementPayment: Optional[bool] = False
 
 class AlipayPaymentFactorDTO(BaseModel):
     isInStorePayment: Optional[str] = None
     isCashierPayment: Optional[str] = None
     inStorePaymentScenario: Optional[str] = None
+    presentmentMode: Optional[str] = None  # TILE, etc.
 
 class NameDTO(BaseModel):
     """Name DTO"""
@@ -151,6 +153,15 @@ class MerchantInfoDTO(BaseModel):
     store: Optional[StoreDTO] = None
     currency: Optional[str] = None
 
+class Merchant (BaseModel):
+    referenceMerchantId: str
+    merchantName: Optional[str] = None
+    merchantDisplayName: Optional[str] = None
+    merchantRegisterDate: Optional[str] = None
+    merchantMCC: Optional[str] = None
+    merchantAddress: Optional[AddressDTO]=None
+    store: Optional[StoreDTO] = None
+
 
 class IndirectAcquirerDTO(BaseModel):
     """Indirect acquirer DTO"""
@@ -187,6 +198,7 @@ class AlipayPayRequestDTO(BaseRequestDTO):
     splitSettlementId: Optional[str] = None
     settlementStrategy: Optional[SettlementStrategyDTO] = None
     order: AlipayOrderDTO
+
 
     def to_alipay_dict(self) -> dict:
         """Convert to dictionary for Alipay+ API"""
@@ -266,3 +278,12 @@ class EntryCodeConfirmRequestDTO(BaseRequestDTO):
     currency: str
     amount: int
     userAgent: str
+
+class AlipayConsultPaymentRequestDTO (BaseRequestDTO):
+    paymentAmount: AmountDTO
+    userRegion: Optional[str]=None
+    paymentFactor: PaymentFactorDTO
+    settlementStrategy: SettlementStrategyDTO
+    merchant: Merchant
+    referenceUserId: Optional[str]=None
+    env: EnvDTO

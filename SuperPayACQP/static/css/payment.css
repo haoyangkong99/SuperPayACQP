@@ -165,6 +165,7 @@
     padding: 30px;
     text-align: center;
     margin-bottom: var(--spacing-lg);
+    min-height: 500px;
 }
 
 .payment-main h2 {
@@ -182,24 +183,37 @@
 }
 
 /* ============================================
-   Payment Options
+   Payment Options Carousel
    ============================================ */
+
+.payment-carousel-container {
+    position: relative;
+    padding: 0 50px;
+    max-width: 550px;
+    margin: 0 auto;
+}
+
+.payment-carousel-wrapper {
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+}
 
 .payment-options {
     display: flex;
-    gap: var(--spacing-lg);
-    justify-content: center;
+    transition: transform 0.4s ease-in-out;
 }
 
 .payment-option {
-    flex: 1;
-    max-width: 400px;
+    flex: 0 0 100%;
+    min-width: 100%;
+    max-width: 100%;
+    width: 100%;
     background-color: var(--bg-item);
     border: 2px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: 25px;
     text-align: left;
-    transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+    transition: border-color var(--transition-normal), box-shadow var(--transition-normal), opacity 0.3s ease;
 }
 
 .payment-option:hover {
@@ -242,6 +256,87 @@
     color: var(--text-secondary);
     line-height: 1.5;
     margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================
+   Carousel Navigation Arrows
+   ============================================ */
+
+.carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background-color: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: var(--transition-normal);
+    color: var(--text-primary);
+    font-size: 18px;
+}
+
+.carousel-arrow:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.carousel-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background-color: var(--bg-card);
+    color: var(--text-secondary);
+}
+
+.carousel-arrow:disabled:hover {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.carousel-arrow.prev {
+    left: 0;
+}
+
+.carousel-arrow.next {
+    right: 0;
+}
+
+/* ============================================
+   Carousel Indicators
+   ============================================ */
+
+.carousel-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.carousel-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-full);
+    background-color: var(--border-color);
+    cursor: pointer;
+    transition: var(--transition-normal);
+    border: none;
+    padding: 0;
+}
+
+.carousel-indicator:hover {
+    background-color: var(--text-secondary);
+}
+
+.carousel-indicator.active {
+    background-color: var(--primary-color);
+    width: 24px;
 }
 
 /* ============================================
@@ -391,14 +486,27 @@
    ============================================ */
 
 @media (max-width: 768px) {
-    .payment-options {
-        flex-direction: column;
-        align-items: center;
+    .payment-carousel-container {
+        padding: 0 40px;
+        max-width: 100%;
+    }
+    
+    .carousel-arrow {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    
+    .carousel-arrow.prev {
+        left: 5px;
+    }
+    
+    .carousel-arrow.next {
+        right: 5px;
     }
     
     .payment-option {
-        max-width: 100%;
-        width: 100%;
+        padding: 20px;
     }
     
     .payment-header {
