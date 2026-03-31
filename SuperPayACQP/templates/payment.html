@@ -100,22 +100,22 @@
                    
                     <!-- Cashier Payment Mode -->
                     <div class="payment-option" id="cashierPaymentOption">
-                        <h3><i class="bi bi-qr-code"></i> Cashier payment mode</h3>
+                        <h3><i class="bi bi-wallet"></i> Cashier payment mode</h3>
                         <div class="subtitle">Select a payment method to proceed payment</div>
-                        <div class="description">
-                            Generate a QR code for cashier payment. The customer will scan and select their preferred payment method.
-                        </div>
-                        <div id="cashierQrCodeSection" style="display: none;">
-                            <div class="qr-code-container">
-                                <div class="qr-code" id="cashierQrCodeDisplay">
-                                    <i class="bi bi-qr-code"></i>
-                                </div>
-                                <p>Scan this QR code with your wallet app</p>
-                                <div class="timer" id="cashierQrTimer">Expires in: <span id="cashierTimerValue">05:00</span></div>
+                        
+                        <!-- Collapsible Wallet List -->
+                        <div class="wallet-list-container" id="walletListContainer">
+                            <div class="wallet-list-header" id="walletListHeader" onclick="toggleWalletList()">
+                                <span id="walletListTitle">Select a payment method</span>
+                                <i class="bi bi-chevron-down wallet-list-arrow" id="walletListArrow"></i>
+                            </div>
+                            <div class="wallet-list-options" id="walletListOptions">
+                                <div class="wallet-loading">Loading wallets...</div>
                             </div>
                         </div>
+                        
                         <button class="btn-confirm" id="cashierPaymentBtn" onclick="confirmCashierPayment()">
-                            <i class="bi bi-qr-code"></i> Confirm Payment to Generate QR Code
+                            <i class="bi bi-check-circle"></i> Confirm Payment
                         </button>
                     </div>
                 </div>
@@ -143,17 +143,17 @@
     let cart = [];
     let shippingInfo = {};
     let qrTimerInterval = null;
-    let selectedPaymentMode = null; // 'user' or 'merchant'
+    let selectedPaymentMode = null; 
     let merchantId = 'MC00001-00';
     let username = 'Merchant';
     let selectedMerchantId = null;
     let merchantCurrency=null;
     let qrExpireTime=null;
-    
+    let paymentOptions=[];
     // Carousel state
     let currentSlide = 0;
     let totalSlides = 3;
-    
+    let isExpanded=false;
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
         loadCartFromStorage();
@@ -161,15 +161,280 @@
         loadUserInfo();
         updateOrderInfo();
         initCarousel();
+        loadPaymentOptions();
+        
+        // Close wallet list when clicking outside
+        document.addEventListener('click', function(event) {
+            const container = document.getElementById('walletListContainer');
+            if (container && !container.contains(event.target)) {
+                const header = document.getElementById('walletListHeader');
+                const options = document.getElementById('walletListOptions');
+                if (header) header.classList.remove('open');
+                if (options) options.classList.remove('open');
+                // Update indicators position after collapse
+                setTimeout(updateCarouselIndicatorsPosition, 350);
+            }
+        });
+        
+        // Update indicators position on window resize
+        window.addEventListener('resize', updateCarouselIndicatorsPosition);
     });
     
     // ============================================
     // Carousel Functions
     // ============================================
+    function onPaymentOptionsChange (selectElement){
+        
+    }
+    async function loadPaymentOptions(){
+        try {
+            const token=getCookie('token');
+            const paymentAmountValue=sessionStorage.getItem('totalAmount');
+            const paymentAmountCurrency=sessionStorage.getItem('merchantCurrency');
+            const selectedMerchantId=sessionStorage.getItem('selectedMerchantId');
+            const response = await fetch('/api/consult-payment',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer '+token
+                },
+                body: JSON.stringify({
+                    "paymentAmount": {
+                        "currency": paymentAmountCurrency,
+                        "value": paymentAmountValue
+                    },
+                    "paymentFactor": {
+                        "presentmentMode": "TILE",
+                        "isCashierPayment": "true",
+                        "isInStorePayment": "false"
+                    },
+                    "merchant": {
+                        "referenceMerchantId": selectedMerchantId
+                    },
+                    "env": {
+                        "terminalType": "WEB"
+                    }
+                })
+            });
+            if (response.ok ) {
+                const data = await response.json();
+                if (data.result.resultStatus=='S'){
+                    paymentOptions=data.paymentOptions;
+                    
+                    // Populate wallet dropdown
+                    populateWalletDropdown(paymentOptions);
+                }
+                else{
+                    showMessageDialog({
+                        title: data.result.resultCode,
+                        message: data.result.resultMessage,
+                        type: 'warning'
+                    });
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading payment options:', error);
+        }
+    }
     
+    // Populate wallet list from payment options
+    function populateWalletDropdown(paymentOptions) {
+        const listOptions = document.getElementById('walletListOptions');
+        listOptions.innerHTML = ''; // Clear existing options
+        
+        // Extract supportWallets from the first payment option (CONNECT_WALLET)
+        if (paymentOptions && paymentOptions.length > 0) {
+            const connectWalletOption = paymentOptions.find(opt => opt.paymentMethodType === 'CONNECT_WALLET');
+            
+            if (connectWalletOption && connectWalletOption.paymentOptionDetail && 
+                connectWalletOption.paymentOptionDetail.connectWallet && 
+                connectWalletOption.paymentOptionDetail.connectWallet.supportWallets) {
+                
+                const supportWallets = connectWalletOption.paymentOptionDetail.connectWallet.supportWallets;
+                
+                supportWallets.forEach((wallet, index) => {
+                    const item = document.createElement('label');
+                    item.className = 'wallet-radio-item';
+                    
+                    // Create radio input
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = 'walletOption';
+                    radio.value = wallet.walletName;
+                    radio.setAttribute('data-wallet-name', wallet.walletName);
+                    radio.setAttribute('data-wallet-brand', wallet.walletBrandName || wallet.walletName);
+                    radio.setAttribute('data-wallet-region', wallet.walletRegion || '');
+                    radio.setAttribute('data-logo-url', wallet.walletLogo?.logoUrl || '');
+                    radio.setAttribute('data-support-cashier', wallet.walletFeature?.supportCashierRedirection || false);
+                    radio.onchange = () => selectWalletRadio(radio);
+                    
+                    // Create custom radio circle
+                    const radioCircle = document.createElement('span');
+                    radioCircle.className = 'wallet-radio-circle';
+                    
+                    // Create logo container
+                    const logoContainer = document.createElement('div');
+                    logoContainer.className = 'wallet-radio-logo-container';
+                    
+                    // Create logo
+                    let logoElement;
+                    if (wallet.walletLogo && wallet.walletLogo.logoUrl) {
+                        logoElement = document.createElement('img');
+                        logoElement.className = 'wallet-radio-logo';
+                        logoElement.src = wallet.walletLogo.logoUrl;
+                        logoElement.alt = wallet.walletBrandName || wallet.walletName;
+                        logoElement.onerror = function() {
+                            this.style.display = 'none';
+                            const fallback = document.createElement('span');
+                            fallback.className = 'wallet-logo-fallback';
+                            fallback.textContent = (wallet.walletBrandName || wallet.walletName).substring(0, 2).toUpperCase();
+                            this.parentNode.appendChild(fallback);
+                        };
+                    } else {
+                        logoElement = document.createElement('span');
+                        logoElement.className = 'wallet-logo-fallback';
+                        logoElement.textContent = (wallet.walletBrandName || wallet.walletName).substring(0, 2).toUpperCase();
+                    }
+                    
+                    logoContainer.appendChild(logoElement);
+                    
+                    // Create info container
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'wallet-radio-info';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'wallet-radio-name';
+                    nameSpan.textContent = wallet.walletBrandName || wallet.walletName;
+                    
+                    infoDiv.appendChild(nameSpan);
+                    if (wallet.walletRegion) {
+                        const regionSpan = document.createElement('span');
+                        regionSpan.className = 'wallet-radio-region';
+                        regionSpan.textContent = wallet.walletRegion;
+                        infoDiv.appendChild(regionSpan);
+                    }
+                    
+                    item.appendChild(radio);
+                    item.appendChild(radioCircle);
+                    item.appendChild(logoContainer);
+                    item.appendChild(infoDiv);
+                    listOptions.appendChild(item);
+                });
+                
+                // Store wallets data for later use
+                sessionStorage.setItem('supportWallets', JSON.stringify(supportWallets));
+            } else {
+                // No wallets available
+                const noOptions = document.createElement('div');
+                noOptions.className = 'wallet-no-options';
+                noOptions.textContent = 'No payment methods available';
+                listOptions.appendChild(noOptions);
+            }
+        }
+    }
+    
+    // Toggle wallet list expand/collapse
+    function toggleWalletList() {
+        const header = document.getElementById('walletListHeader');
+        const options = document.getElementById('walletListOptions');
+        
+        const isOpen = options.classList.contains('open');
+        
+        if (isOpen) {
+            // Collapse
+            options.classList.remove('open');
+            header.classList.remove('open');
+        } else {
+            // Expand
+            header.classList.add('open');
+            options.classList.add('open');
+        }
+        
+        // Update carousel indicators position after toggle
+        setTimeout(updateCarouselIndicatorsPosition, 350);
+    }
+    
+    // Update carousel indicators position based on cashierPaymentBtn
+    function updateCarouselIndicatorsPosition() {
+        const cashierPaymentBtn = document.getElementById('cashierPaymentBtn');
+        const indicators = document.getElementById('carouselIndicators');
+        const carouselContainer = document.querySelector('.payment-carousel-container');
+        if (!cashierPaymentBtn || !indicators || !carouselContainer) {
+            return;
+        }
+        const walletListOptions = document.getElementById('walletListOptions');
+        const isWalletListOpen = walletListOptions && walletListOptions.classList.contains('open');
+        let extraMargin = 0;
+        if (isWalletListOpen && walletListOptions) {
+            extraMargin = walletListOptions.scrollHeight*0.01;
+        }
+         const baseMargin = 20;
+          const totalMargin = baseMargin + extraMargin;
+          indicators.style.marginTop = totalMargin + 'px';
+
+    }
+    
+    // Select a wallet radio option
+    function selectWalletRadio(radio) {
+        const walletName = radio.getAttribute('data-wallet-name');
+        const walletBrand = radio.getAttribute('data-wallet-brand');
+        const walletRegion = radio.getAttribute('data-wallet-region');
+        const logoUrl = radio.getAttribute('data-logo-url');
+        const supportCashier = radio.getAttribute('data-support-cashier') === 'true';
+        
+        // Update header title with selected wallet
+        const titleSpan = document.getElementById('walletListTitle');
+        titleSpan.innerHTML = '';
+        
+        if (logoUrl) {
+            const logoContainer = document.createElement('div');
+            logoContainer.className = 'wallet-radio-logo-container';
+            logoContainer.style.width = '40px';
+            logoContainer.style.height = '28px';
+            
+            const logoImg = document.createElement('img');
+            logoImg.className = 'wallet-radio-logo';
+            logoImg.src = logoUrl;
+            logoImg.alt = walletBrand;
+            logoImg.onerror = function() {
+                this.style.display = 'none';
+                const fallback = document.createElement('span');
+                fallback.className = 'wallet-logo-fallback';
+                fallback.style.width = '40px';
+                fallback.style.height = '28px';
+                fallback.textContent = walletBrand.substring(0, 2).toUpperCase();
+                this.parentNode.appendChild(fallback);
+            };
+            logoContainer.appendChild(logoImg);
+            titleSpan.appendChild(logoContainer);
+        }
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = walletBrand;
+        titleSpan.appendChild(nameSpan);
+        
+        // Collapse the list after selection
+        document.getElementById('walletListHeader').classList.remove('open');
+        document.getElementById('walletListOptions').classList.remove('open');
+        
+        // Store selected wallet info
+        const walletInfo = {
+            walletName: walletName,
+            walletBrandName: walletBrand,
+            walletRegion: walletRegion,
+            logoUrl: logoUrl,
+            supportCashierRedirection: supportCashier
+        };
+        
+        sessionStorage.setItem('selectedWallet', JSON.stringify(walletInfo));
+        console.log('Selected wallet:', walletInfo);
+    }
+
     function initCarousel() {
         updateCarousel();
         updateCarouselArrows();
+        updateCarouselIndicatorsPosition();
     }
     
     function carouselPrev() {
@@ -316,7 +581,7 @@
             merchantOption.style.opacity = '0.5';
             merchantOption.style.pointerEvents = 'none';
             merchantBtn.disabled = true;
-        } else {
+        } else if (currentMode==='merchant') {
             // Disable user-presented mode
             const userOption = document.getElementById('userPresentedOption');
             const userInput = document.getElementById('authCode');
@@ -325,12 +590,14 @@
             userOption.style.pointerEvents = 'none';
             userInput.disabled = true;
             userBtn.disabled = true;
+        }else{
+
         }
         selectedPaymentMode = currentMode;
     }
     
     // Build place order request body
-    function buildPlaceOrderRequest(paymentMethodId = null, inStorePaymentScenario = 'OrderCode') {
+    function buildPlaceOrderRequest(paymentMethodId = null, paymentScenario) {
         const total = calculateTotalAmount();
         const totalInCents = Math.round(parseFloat(total) * 100);
         
@@ -352,14 +619,10 @@
         merchantCurrency=sessionStorage.getItem('merchantCurrency');
         // Build request body
         const requestBody = {
-            paymentFactor: {
-                isInStorePayment: true,
-                isCashierPayment: inStorePaymentScenario === 'OrderCode',
-                inStorePaymentScenario: inStorePaymentScenario
-            },
+            
             order: {
                 referenceOrderId: crypto.randomUUID(),
-                orderDescription: `order code for SuperPayACQP - Merchant: ${username}`,
+                
                 orderAmount: {
                     currency: merchantCurrency,
                     value: totalInCents.toString()
@@ -389,11 +652,46 @@
                 paymentMethodType: 'CONNECT_WALLET'
             }
         };
-        
-        // Add paymentMethodId for user-presented mode
-        if (paymentMethodId) {
-            requestBody.paymentMethod.paymentMethodId = paymentMethodId;
+        const selectedWalletStr=sessionStorage.getItem('selectedWallet');
+        const selectedWallet = selectedWalletStr ? JSON.parse(selectedWalletStr) : null;
+        switch (paymentScenario){
+            case 'OrderCode': 
+            
+            requestBody.paymentFactor= {
+                isInStorePayment: true,
+                isCashierPayment: true,
+                inStorePaymentScenario: 'OrderCode'
+            }
+            requestBody.order.orderDescription= `order code for SuperPayACQP - Merchant: ${username}`;
+            break;
+            case 'PaymentCode':
+            requestBody.paymentFactor= {
+                isInStorePayment: true,
+                inStorePaymentScenario: 'PaymentCode'
+            }
+            requestBody.paymentMethod = {
+                paymentMethodType:"CONNECT_WALLET",
+                paymentMethodId: paymentMethodId
+            }
+            requestBody.order.orderDescription= `Payment code for SuperPayACQP - Merchant: ${username}`;
+            break;
+
+            case 'CashierPayment':
+            requestBody.paymentFactor= {
+                isInStorePayment: false,
+                isCashierPayment: true,
+                presentmentMode:"TILE"
+            }
+            requestBody.paymentMethod = {
+                paymentMethodType: selectedWallet.walletName
+            }
+            requestBody.order.env={
+                terminalType: "WEB"
+            }
+            requestBody.order.orderDescription= `Cashier payment for SuperPayACQP - Merchant: ${username}`;
+            break;
         }
+
         
         return requestBody;
     }
@@ -760,14 +1058,34 @@
     // ============================================
     // Cashier Payment Functions (Placeholder)
     // ============================================
-    
+    function isMobileBrowser() {
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        // Common mobile indicators in the User-Agent
+        return /android|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(ua);
+    }
     async function confirmCashierPayment() {
-        // TODO: Implement cashier payment logic
-        showMessageDialog({
-            title: 'Coming Soon',
-            message: 'Cashier payment mode will be available soon.',
-            type: 'info'
-        });
+
+            
+            const csrftoken = getCookie('csrftoken');
+            const token=getCookie('token');
+             const requestBody = buildPlaceOrderRequest(null, 'CashierPayment');
+            // Call API
+            const response = await fetch('/api/place-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                    'Authorization': 'Bearer '+token
+                },
+                body: JSON.stringify(requestBody)
+            });
+            
+            const result = await response.json();
+            if (result.result.resultStatus==='U'&& result.result.resultCode==='PAYMENT_IN_PROCESS'){
+                const normalUrl=result.normalUrl;
+                window.location.href=normalUrl;
+                
+            }
     }
 </script>
 {% endblock %}

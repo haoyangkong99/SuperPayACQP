@@ -13,12 +13,12 @@ class PaymentFactorDTO(BaseModel):
     isCashierPayment: Optional[bool] = False
     inStorePaymentScenario: Optional[str] = None
     isAgreementPayment: Optional[bool] = False
+    presentmentMode: Optional[str]=None
 
 class AlipayPaymentFactorDTO(BaseModel):
     isInStorePayment: Optional[str] = None
     isCashierPayment: Optional[str] = None
     inStorePaymentScenario: Optional[str] = None
-    presentmentMode: Optional[str] = None  # TILE, etc.
 
 class NameDTO(BaseModel):
     """Name DTO"""
@@ -283,7 +283,7 @@ class AlipayConsultPaymentRequestDTO (BaseRequestDTO):
     paymentAmount: AmountDTO
     userRegion: Optional[str]=None
     paymentFactor: PaymentFactorDTO
-    settlementStrategy: SettlementStrategyDTO
+    settlementStrategy: Optional[SettlementStrategyDTO]=None
     merchant: Merchant
     referenceUserId: Optional[str]=None
     env: EnvDTO

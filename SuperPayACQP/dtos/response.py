@@ -29,6 +29,11 @@ class PaymentResponseDTO(BaseResponseDTO):
     walletBrandName: Optional[str] = None
     mppPaymentId: Optional[str] = None
     orderCodeForm: Optional[dict] = None
+    paymentUrl:Optional[str]=None
+    schemeUrl:Optional[str] = None
+    applinkUrl:Optional[str] = None
+    normalUrl:Optional[str] = None
+    appIdentifier:Optional[str] = None
 
 
 class AlipayPayResponseDTO(BaseResponseDTO):

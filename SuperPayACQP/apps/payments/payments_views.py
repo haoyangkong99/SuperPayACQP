@@ -106,7 +106,7 @@ class PlaceOrderView(APIView):
         isInStorePayment=request_dto.paymentFactor.isInStorePayment
         isCashierPayment=request_dto.paymentFactor.isCashierPayment
         try:
-            if (isInStorePayment):
+            if (isInStorePayment or (not isInStorePayment and isCashierPayment)):
                 if isCashierPayment:
                     expiry_time =  expiry_time+ timedelta(minutes=3)
                 else:
@@ -209,7 +209,13 @@ class PlaceOrderView(APIView):
             walletBrandName=response_dto.walletBrandName,
             mppPaymentId=response_dto.mppPaymentId,
             orderCodeForm=response_dto.orderCodeForm,
-            paymentExpireTime=request_dto.paymentExpiryTime
+            paymentExpireTime=request_dto.paymentExpiryTime,
+            paymentUrl=response_dto.paymentUrl,
+            schemeUrl=response_dto.schemeUrl,
+            applinkUrl=response_dto.applinkUrl,
+            normalUrl=response_dto.normalUrl,
+            appIdentifier=response_dto.appIdentifier
+            
         )
     def _handle_payment_in_process(self, payment_request_id: str, alipay_client: AlipayClient) -> PaymentResponseDTO:
         """Handle PAYMENT_IN_PROCESS with inquiry retry"""
@@ -567,6 +573,10 @@ class ConsultPaymentView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         _, alipay_client, db_service = get_service_instances()
+        if not request_dto.settlementStrategy:
+            request_dto.settlementStrategy=SettlementStrategyDTO(
+                settlementCurrency="MYR"
+            )
 
         try:
             response_dto = alipay_client.consultPayment(request_dto)

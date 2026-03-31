@@ -180,7 +180,7 @@
         const total = subtotal + totalTax;
         const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-        
+        sessionStorage.setItem('totalAmount', total);
         contentDiv.innerHTML = `
             <!-- Shipping Panel -->
             <div class="shipping-panel">
