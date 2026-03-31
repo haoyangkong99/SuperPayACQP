@@ -1,6 +1,7 @@
 """
 Response DTOs
 """
+from __future__ import annotations
 from dtos import BaseResponseDTO, AmountDTO
 from pydantic import BaseModel
 from typing import Optional, List
