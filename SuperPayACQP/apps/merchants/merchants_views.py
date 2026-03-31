@@ -17,8 +17,8 @@ from apps.api_records.api_records_models import ApiRecord
 from apps.merchants.merchants_models import Merchant, EntryCode
 import requests as http_requests
 from dtos.request import (
-    AlipayPayRequestDTO, 
-    PaymentMethodDTO, 
+    AlipayPayRequestDTO,
+    PaymentMethodDTO,
     AlipayOrderDTO,
     MerchantInfoDTO,
     PlaceOrderRequestDTO,
@@ -95,31 +95,31 @@ class MerchantView(APIView):
                     result=result
                 )
             return Response(response.model_dump(exclude_none=True), status=status.HTTP_200_OK)
-        
+
 @method_decorator(csrf_exempt, name='dispatch')
 class MerchantDeleteView(APIView):
     def delete(self, request):
         merchant_id = request.query_params.get('merchantId')
-        
+
         if not merchant_id:
             return Response({
                 'error': 'merchantId is required'
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         try:
             merchant = Merchant.objects.filter(merchantId=merchant_id).first()
             if not merchant:
                 return Response({
                     'error': 'Merchant not found'
                 }, status=status.HTTP_404_NOT_FOUND)
-            
+
             merchant.delete()
-            
+
             return Response({
                 'message': 'Merchant deleted successfully',
                 'merchantId': merchant_id
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             logger.error(f"Error deleting merchant: {e}")
             return Response({
@@ -131,11 +131,11 @@ class GenerateEntryCodeView(APIView):
     POST /api/generate-entry-code
     Generate an entry code for a merchant
     """
-    
+
     def post(self, request):
         # Get merchant ID from request body
         merchant_id = request.data.get('merchantId')
-        
+
         if not merchant_id:
             return Response({
                 'result': {
@@ -144,12 +144,12 @@ class GenerateEntryCodeView(APIView):
                     'resultMessage': 'merchantId is required'
                 }
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # Verify merchant exists
         merchant = Merchant.objects.filter(merchantId=merchant_id).first()
         if not merchant:
             return Response(BaseResponseDTO(result=Result.returnMerchantNotRegistered()), status=status.HTTP_200_OK)
-        
+
         try:
             # Check if there's an active entry code for this merchant
             active_entry_code = EntryCode.objects.filter(
@@ -157,7 +157,7 @@ class GenerateEntryCodeView(APIView):
                 status='Active',
                 codeExpireTime__gt=datetime.now(dt_timezone.utc)
             ).first()
-            
+
             if active_entry_code:
                 # Use existing active entry code
                 code_id = active_entry_code.codeId
@@ -168,13 +168,13 @@ class GenerateEntryCodeView(APIView):
                 current_time = datetime.now(dt_timezone.utc)
                 # Set expiry time to 24 hours from now
                 expiry_time = current_time + timedelta(days=365)
-                
+
                 # Deactivate any previous active entry codes for this merchant
                 EntryCode.objects.filter(
                     merchantId=merchant_id,
                     status='Active'
                 ).update(status='Inactive')
-                
+
                 # Create new entry code
                 EntryCode.objects.create(
                     codeId=code_id,
@@ -183,15 +183,15 @@ class GenerateEntryCodeView(APIView):
                     codeExpireTime=expiry_time,
                     status='Active'
                 )
-   
-            
+
+
             # Construct entry code URL
             base_url = os.getenv('API_BASE_URL')
             entry_code_url = f"{base_url}entry-code?merchantId={merchant_id}&codeId={code_id}"
-            
+
             # Get the entry code record for timestamps
             entry_code_record = EntryCode.objects.filter(codeId=code_id).first()
-            
+
             result = Result.returnSuccess()
             response = {
                 'result': result.model_dump(),
@@ -200,9 +200,9 @@ class GenerateEntryCodeView(APIView):
                 'codeStartTime': entry_code_record.codeStartTime.isoformat() if entry_code_record and entry_code_record.codeStartTime else None,
                 'codeExpireTime': entry_code_record.codeExpireTime.isoformat() if entry_code_record and entry_code_record.codeExpireTime else None,
             }
-            
+
             return Response(response, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             logger.error(f"Error generating entry code: {e}")
             result = Result.returnProcessFail()
@@ -216,32 +216,32 @@ class EntryCodeView(APIView):
     GET /entry-code
     Display the entry code payment page
     """
-    
+
     def get(self, request):
         # Get merchantId and codeId from URL parameters
         merchant_id = request.GET.get('merchantId')
         code_id = request.GET.get('codeId')
-        
+
         # Validate parameters
         if not merchant_id or not code_id:
             return render(request, 'entry_code.html', {
-                'valid': False, 
+                'valid': False,
                 'error_message': 'Invalid link. Missing required parameters.'
             })
-        
+
         # Check if entry code exists and is active
         entry_code = EntryCode.objects.filter(
             codeId=code_id,
             merchantId=merchant_id,
             status='Active'
         ).first()
-        
+
         if not entry_code:
             return render(request, 'entry_code.html', {
-                'valid': False, 
+                'valid': False,
                 'error_message': 'Invalid or expired entry code.'
             })
-        
+
         # Check if entry code is expired
         from django.utils import timezone
         if entry_code.codeExpireTime < timezone.now():
@@ -249,18 +249,18 @@ class EntryCodeView(APIView):
             entry_code.status = 'Inactive'
             entry_code.save()
             return render(request, 'entry_code.html', {
-                'valid': False, 
+                'valid': False,
                 'error_message': 'Entry code has expired.'
             })
-        
+
         # Check if merchant exists
         merchant = Merchant.objects.filter(merchantId=merchant_id).first()
         if not merchant:
             return render(request, 'entry_code.html', {
-                'valid': False, 
+                'valid': False,
                 'error_message': 'Merchant not found.'
             })
-        
+
         # Render the payment page
         return render(request, 'entry_code.html', {
             'valid': True,
@@ -277,7 +277,7 @@ class EntryCodeConfirmView(APIView):
     """
     def buildPlaceOrderRequestDTO (self,request_dto:EntryCodeConfirmRequestDTO)-> PlaceOrderRequestDTO:
         reference_order_id = str(uuid.uuid4())
-        
+
         dto=PlaceOrderRequestDTO(
             order=OrderDTO(
                 referenceOrderId=reference_order_id,
@@ -309,23 +309,23 @@ class EntryCodeConfirmView(APIView):
 
         # Generate payment request ID
         payment_request_id = str(uuid.uuid4())
-        
+
         # Calculate expiry time (current time + 3 minutes in UTC+8 timezone)
         malaysia_tz = ZoneInfo("Asia/Kuala_Lumpur")
         expiry_time = datetime.now(malaysia_tz)
-        
+
         # Get service instances
         signature_service, alipay_client, db_service = get_service_instances()
         isInStorePayment = request_dto.paymentFactor.isInStorePayment
         isCashierPayment = request_dto.paymentFactor.isCashierPayment
-        
+
         try:
             if isInStorePayment:
                 if isCashierPayment:
                     expiry_time = expiry_time + timedelta(minutes=3)
                 else:
                     expiry_time = expiry_time + timedelta(minutes=1)
-                
+
                 # Build Alipay request DTO
                 order = request_dto.order
                 merchant_info = db_service.getMerchantInfo(merchant_id=order.merchantId)
@@ -340,8 +340,8 @@ class EntryCodeConfirmView(APIView):
                         paymentMethod=request_dto.paymentMethod,
                         paymentFactor=request_dto.paymentFactor,
                         paymentExpiryTime=expiry_time.strftime("%Y-%m-%dT%H:%M:%S+08:00"),
-                        paymentRedirectUrl=f"https://superpayacqp-production.up.railway.app/payment-result?paymentRequestId={payment_request_id}",
-                        paymentNotifyUrl="https://superpayacqp-production.up.railway.app/alipay/notifyPayment",
+                        paymentRedirectUrl=f"https://superpayacqp.onrender.com/payment-result?paymentRequestId={payment_request_id}",
+                        paymentNotifyUrl="https://superpayacqp.onrender.com/alipay/notifyPayment",
                         order=AlipayOrderDTO(
                             referenceOrderId=order.referenceOrderId if order.referenceOrderId else str(uuid.uuid4()),
                             orderDescription=order.orderDescription,
@@ -364,38 +364,38 @@ class EntryCodeConfirmView(APIView):
                             settlementCurrency='MYR'
                         )
                     )
-                    
+
                     # Call Alipay+ Pay API
                     alipay_response_dto = alipay_client.pay(alipay_request_dto)
-                    
+
                     # Log API record
                     db_service.createApiRecordsWithReqRes(
-                        '/aps/api/v1/payments/pay', 
-                        HTTPMethod.POST, 
-                        alipay_request_dto, 
-                        alipay_response_dto, 
+                        '/aps/api/v1/payments/pay',
+                        HTTPMethod.POST,
+                        alipay_request_dto,
+                        alipay_response_dto,
                         MessageType.OUTBOUND
                     )
-                    
+
                     # Process result
                     result = alipay_response_dto.result
                     result_status = result.resultStatus
                     result_code = result.resultCode
-                    
+
                     # Save payment request to database
                     db_service.savePaymentRequest(alipay_request_dto, alipay_response_dto, payment_request_id)
-                    
+
                     # Handle UNKNOWN_EXCEPTION with retry
                     if result_status == 'U' and result_code == 'UNKNOWN_EXCEPTION':
                         alipay_response_dto = alipay_client.pay(alipay_request_dto)
                         db_service.createApiRecordsWithReqRes(
-                        '/aps/api/v1/payments/pay', 
-                        HTTPMethod.POST, 
-                        alipay_request_dto, 
-                        alipay_response_dto, 
+                        '/aps/api/v1/payments/pay',
+                        HTTPMethod.POST,
+                        alipay_request_dto,
+                        alipay_response_dto,
                         MessageType.OUTBOUND
                     )
-                    
+
                     # Map response
                     response_dto = EntryCodeConfirmResponseDTO(
                         result=alipay_response_dto.result,
@@ -409,15 +409,15 @@ class EntryCodeConfirmView(APIView):
             else:
                 result = Result.returnProcessFail()
                 response_dto = EntryCodeConfirmResponseDTO(result=result,paymentRequestId=payment_request_id)
-            
+
             db_service.createApiRecordsWithReqRes(
-                '/entry-code/confirm', 
-                HTTPMethod.POST, 
-                request_dto, 
-                response_dto, 
+                '/entry-code/confirm',
+                HTTPMethod.POST,
+                request_dto,
+                response_dto,
                 MessageType.INBOUND
             )
-            
+
             return response_dto
 
         except Exception as e:
@@ -425,16 +425,16 @@ class EntryCodeConfirmView(APIView):
             result = Result.returnProcessFail()
             response_dto = EntryCodeConfirmResponseDTO(result=result,paymentRequestId=payment_request_id)
             db_service.createApiRecordsWithReqRes(
-                '/entry-code/confirm', 
-                HTTPMethod.POST, 
-                request_dto, 
-                response_dto, 
+                '/entry-code/confirm',
+                HTTPMethod.POST,
+                request_dto,
+                response_dto,
                 MessageType.INBOUND
             )
-            return response_dto    
+            return response_dto
     def post(self, request):
 
-        
+
         # Get request data
 
         try:
@@ -443,10 +443,10 @@ class EntryCodeConfirmView(APIView):
             validated_response=self.entryCodeConfirmValidation(request_dto,user_agent)
             if validated_response != None:
                 return validated_response
-            
+
             request_body=self.buildPlaceOrderRequestDTO(request_dto)
             response_dto = self.process_place_order(request_body)
-            return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK) 
+            return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
         except Exception as e:
             return Response({
                 'result': {
@@ -456,9 +456,9 @@ class EntryCodeConfirmView(APIView):
                 }
             }, status=status.HTTP_200_OK)
     def entryCodeConfirmValidation (self,request_dto: EntryCodeConfirmRequestDTO,user_agent) -> Optional[Response] :
-            
+
             is_valid_ua = any(identifier in user_agent for identifier in ALLOWED_UA_IDENTIFIERS)
-        
+
             # if not is_valid_ua:
             #     logger.warning(f"Invalid User-Agent: {user_agent}")
             #     return Response({

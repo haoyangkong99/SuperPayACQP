@@ -22,11 +22,11 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 # Add Railway domain - use wildcard to allow all railway.app subdomains
 ALLOWED_HOSTS.append('.railway.app')
 # Also allow the specific production domain
-ALLOWED_HOSTS.append('superpayacqp-production.up.railway.app')
+ALLOWED_HOSTS.append('superpayacqp.onrender.com')
 
 # CSRF Trusted Origins - required for cross-origin POST requests
 CSRF_TRUSTED_ORIGINS = [
-    'https://superpayacqp-production.up.railway.app',
+    'https://superpayacqp.onrender.com',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
