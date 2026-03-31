@@ -62,7 +62,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
     login_url = '/login'
 
 
-class PaymentResultView(LoginRequiredMixin, TemplateView):
+class PaymentResultView( TemplateView):
     """Serve payment result page"""
     template_name = 'payment_result.html'
     login_url = '/login'
