@@ -140,13 +140,14 @@ class AlipayClient:
         }
 
     
-    def _make_request(self, endpoint: str, payload: Dict[str, Any],timeout:int) -> Dict[str, Any]:
+    def _make_request(self, endpoint: str, payload: Dict[str, Any], timeout: int) -> Dict[str, Any]:
         """
         Make HTTP request to Alipay+ API
         
         Args:
             endpoint: API endpoint path
             payload: Request payload dictionary
+            timeout: Request timeout in seconds
             
         Returns:
             Response JSON dictionary
@@ -157,14 +158,13 @@ class AlipayClient:
         
         headers = self._build_request_headers(endpoint, request_time, request_body)
         
-        # logger.info(f"Making request to Alipay+: {endpoint}")
         logger.debug(f"Request body: {request_body}")
         
         try:
             response = requests.post(url, headers=headers, data=request_body, timeout=timeout)
             response.raise_for_status()
             
-# Verify response signature
+            # Verify response signature
             response_signature = response.headers.get('Signature')
             response_time = response.headers.get('Response-Time')
             
@@ -203,6 +203,80 @@ class AlipayClient:
                     'resultMessage': str(e)
                 }
             }
+    
+    def _is_timeout_response(self, response: Dict[str, Any]) -> bool:
+        """
+        Check if response indicates a timeout
+        
+        Args:
+            response: Response dictionary
+            
+        Returns:
+            True if response indicates timeout, False otherwise
+        """
+        result = response.get('result', {})
+        return result.get('resultCode') == 'TIMEOUT'
+    
+    def _is_success_response(self, response: Dict[str, Any]) -> bool:
+        """
+        Check if response indicates success
+        
+        Args:
+            response: Response dictionary
+            
+        Returns:
+            True if response indicates success, False otherwise
+        """
+        result = response.get('result', {})
+        return result.get('resultStatus') in ('S', 'F')  # Success or Failure are both final states
+    
+    def _make_request_with_retry(self, endpoint: str, payload: Dict[str, Any], 
+                                  timeout: int, max_retries: int = 3, 
+                                  retry_intervals: Optional[List[int]] = None) -> Dict[str, Any]:
+        """
+        Make HTTP request to Alipay+ API with retry on timeout
+        
+        Args:
+            endpoint: API endpoint path
+            payload: Request payload dictionary
+            timeout: Request timeout in seconds
+            max_retries: Maximum number of retry attempts (default: 3)
+            retry_intervals: List of wait times in seconds between retries (default: [2, 4, 8])
+            
+        Returns:
+            Response JSON dictionary
+        """
+        if retry_intervals is None:
+            retry_intervals = [2, 4, 8]  # Exponential backoff: 2s, 4s, 8s
+        
+        # Ensure retry_intervals list matches max_retries
+        while len(retry_intervals) < max_retries:
+            retry_intervals.append(retry_intervals[-1] * 2)
+        
+        attempt = 0
+        last_response: Dict[str, Any] = {}
+        
+        while attempt <= max_retries:
+            last_response = self._make_request(endpoint, payload, timeout)
+            
+            # If not a timeout, return immediately
+            if not self._is_timeout_response(last_response):
+                if attempt > 0:
+                    logger.info(f"Request succeeded on attempt {attempt + 1} for {endpoint}")
+                return last_response
+            
+            # If this was the last attempt, return the timeout response
+            if attempt >= max_retries:
+                logger.warning(f"Max retries ({max_retries}) exhausted for {endpoint}")
+                return last_response
+            
+            # Wait before retrying
+            wait_time = retry_intervals[attempt]
+            logger.info(f"Timeout on attempt {attempt + 1}, retrying in {wait_time}s for {endpoint}")
+            time.sleep(wait_time)
+            attempt += 1
+        
+        return last_response
     def _make_response_header(self, httpMethod:str,endpoint: str, payload: Dict[str, Any]) :
 
         url = f"{self.API_BASE_URL}{endpoint}"
@@ -232,12 +306,12 @@ class AlipayClient:
             PaymentResponseDTO instance
         """
         payload = request_dto.to_alipay_dict()
-        response_data = self._make_request(self.PAY_ENDPOINT, payload,8)
+        response_data = self._make_request_with_retry(self.PAY_ENDPOINT, payload, timeout=8, max_retries=3)
         return AlipayPayResponseDTO(**response_data)
     
     def cancel_payment(self, request_dto: CancelPaymentRequestDTO) -> CancelPaymentResponseDTO:
         """
-        Call Alipay+ cancelPayment API
+        Call Alipay+ cancelPayment API with retry on timeout
         
         Args:
             request_dto: CancelPaymentRequestDTO instance
@@ -246,12 +320,12 @@ class AlipayClient:
             CancelPaymentResponseDTO instance
         """
         payload = request_dto.model_dump(exclude_none=True)
-        response_data = self._make_request(self.CANCEL_ENDPOINT, payload,8)
+        response_data = self._make_request_with_retry(self.CANCEL_ENDPOINT, payload, timeout=10, max_retries=3)
         return CancelPaymentResponseDTO(**response_data)
     
     def refund(self, request_dto: RefundRequestDTO) -> RefundResponseDTO:
         """
-        Call Alipay+ Refund API
+        Call Alipay+ Refund API with retry on timeout
         
         Args:
             request_dto: RefundRequestDTO instance
@@ -260,7 +334,7 @@ class AlipayClient:
             RefundResponseDTO instance
         """
         payload = request_dto.model_dump(exclude_none=True)
-        response_data = self._make_request(self.REFUND_ENDPOINT, payload,8)
+        response_data = self._make_request_with_retry(self.REFUND_ENDPOINT, payload, timeout=10, max_retries=3)
         return RefundResponseDTO(**response_data)
     
     def inquiry_payment(self, request_dto: InquiryPaymentRequestDTO) -> InquiryPaymentResponseDTO:
@@ -274,14 +348,13 @@ class AlipayClient:
             InquiryPaymentResponseDTO instance
         """
         payload = request_dto.model_dump(exclude_none=True)
-        response_data = self._make_request(self.INQUIRY_ENDPOINT, payload,5)
+        response_data = self._make_request_with_retry(self.INQUIRY_ENDPOINT, payload, timeout=5, max_retries=2)
         return InquiryPaymentResponseDTO(**response_data)
+    
     def consultPayment(self, request_dto: AlipayConsultPaymentRequestDTO) -> AlipayConsultPaymentResponseDTO:
         payload = request_dto.model_dump(exclude_none=True)
-        response_data = self._make_request(self.CONSULPAYMENT_ENDPOINT, payload,5)
-        response_dto=AlipayConsultPaymentResponseDTO(**response_data)
-        db_service=DbService()
-        db_service.createApiRecordsWithReqRes(self.CONSULPAYMENT_ENDPOINT,HTTPMethod.POST,request_dto,response_dto,MessageType.OUTBOUND)
+        response_data = self._make_request_with_retry(self.CONSULPAYMENT_ENDPOINT, payload, timeout=5, max_retries=2)
+        response_dto = AlipayConsultPaymentResponseDTO(**response_data)
+        db_service = DbService()
+        db_service.createApiRecordsWithReqRes(self.CONSULPAYMENT_ENDPOINT, HTTPMethod.POST, request_dto, response_dto, MessageType.OUTBOUND)
         return response_dto
-
-

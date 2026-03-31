@@ -338,7 +338,7 @@ class InquiryPaymentView(APIView):
                     f"Payment request not found for paymentRequestId: {request_dto.paymentRequestId} or paymentId: {request_dto.paymentId}")
             
             # Check if payment is still pending
-            if self._is_payment_pending(payment_request):
+            if self._is_payment_pending_or_expired(payment_request):
                 # Query Alipay+ for latest status
                 response_dto = self._query_alipay_status(request_dto, alipay_client, db_service)
             else:
@@ -386,9 +386,9 @@ class InquiryPaymentView(APIView):
         else:
             return PaymentRequest.objects.filter(paymentId=request_dto.paymentId).first()
     
-    def _is_payment_pending(self, payment_request: PaymentRequest) -> bool:
+    def _is_payment_pending_or_expired(self, payment_request: PaymentRequest) -> bool:
         """Check if payment is still in pending state"""
-        return payment_request.resultStatus == 'U' and payment_request.paymentStatus == PaymentStatus.PENDING.value
+        return payment_request.resultStatus == 'U' and payment_request.paymentStatus == PaymentStatus.PENDING
     
     def _query_alipay_status(self, request_dto: InquiryPaymentRequestDTO, 
                               alipay_client: AlipayClient, 

@@ -421,14 +421,12 @@ class DbService:
                     updated = True
             except Exception as e:
                 logger.warning(f"Failed to parse paymentTime: {response_dto.paymentTime}, error: {e}")
-        if response_dto.paymentResult:
+        if payment_request.resultStatus=='U' and response_dto.paymentResult:
             payment_request.resultStatus=response_dto.paymentResult.resultStatus
             payment_request.resultCode=response_dto.paymentResult.resultCode
             payment_request.resultMessage=response_dto.paymentResult.resultMessage
-            if (payment_request.resultStatus=='S'):
-                payment_request.paymentStatus=PaymentStatus.SUCCESS
-            if (payment_request.resultStatus=='F'):
-                payment_request.paymentStatus=PaymentStatus.FAILED
+            updated=True
+        
         # Update settlement if present
         if response_dto.settlementAmount:
             # settlementQuote is SettlementQuoteDTO (Pydantic model)

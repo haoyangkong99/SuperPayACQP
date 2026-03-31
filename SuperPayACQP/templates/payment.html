@@ -1083,7 +1083,11 @@
             const result = await response.json();
             if (result.result.resultStatus==='U'&& result.result.resultCode==='PAYMENT_IN_PROCESS'){
                 const normalUrl=result.normalUrl;
-                window.location.href=normalUrl;
+                window.open(normalUrl);
+                setTimeout(function (){
+                    window.location.href='/payment-result?paymentRequestId=' + result.paymentRequestId;
+                },3000);
+                
                 
             }
     }

@@ -296,10 +296,12 @@
     }
     
     // Get scenario display name
-    function getScenarioDisplay(scenario) {
-        if (!scenario) return '--';
+    function getScenarioDisplay(isInStorePayment,isCashierPayment, scenario) {
+        if (!scenario && isInStorePayment ==false && isCashierPayment==true) return 'Cashier Payment';
+        if (!scenario ) return '--';
         if (scenario === 'OrderCode') return 'Order Code';
         if (scenario === 'PaymentCode') return 'Payment Code';
+        if (scenario === 'EntryCode') return 'Entry Code';
         return scenario;
     }
     
@@ -332,7 +334,7 @@
             const statusClass = getStatusClass(order);
             const amount = formatAmount(order.paymentAmountValue,order.paymentAmountCurrency);
             const paymentTime = formatDateTime(order.paymentTime || order.created_at);
-            const scenario = getScenarioDisplay(order.inStorePaymentScenario);
+            const scenario = getScenarioDisplay(order.isInStorePayment,order.isCashierPayment,order.inStorePaymentScenario);
             const orderId = order.referenceOrderId || '--';
             const merchantId = order.merchantId || '--';
             const walletBrand = order.walletBrandName || '--';
@@ -473,7 +475,7 @@
         const statusClass = getStatusClass(payment);
         const paymentAmount = formatAmount(payment.paymentAmountValue,payment.paymentAmountCurrency);
         const paymentTime = formatDateTime(payment.paymentTime || payment.created_at);
-        const scenario = getScenarioDisplay(payment.inStorePaymentScenario);
+        const scenario = getScenarioDisplay(payment.isInStorePayment,payment.isCashierPayment,payment.inStorePaymentScenario);
         const orderAmount = formatAmount(payment.order.orderAmountValue,payment.order.orderAmountCurrency);
          settlementAmount = null;
         if (payment.settlement!=null){
@@ -893,6 +895,7 @@
                 });
                 
             }
+            return;
         } catch (error) {
             console.error('Error processing refund:', error);
             showMessageDialog({
