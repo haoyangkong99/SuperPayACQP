@@ -30,7 +30,8 @@ from dtos.request import (
     MerchantInfoDTO,
     RefundRequestDTO,
     AmountDTO,
-    SettlementQuoteDTO
+    PrivatePlaceOrderRequestDTO,
+    SettlementStrategyDTO
 )
 from dtos.response import (
     PaymentResponseDTO, 
@@ -38,8 +39,11 @@ from dtos.response import (
     InquiryPaymentResponseDTO,
     NotifyPaymentResponseDTO,
     AlipayPayResponseDTO,
-    RefundResponseDTO
+    RefundResponseDTO,
+    PrivatePlaceOrderResponseDTO,
+    SettlementQuoteDTO
 )
+from zoneinfo import ZoneInfo
 from dtos.request import RefundRequestDTO
 logger = logging.getLogger(__name__)
 
@@ -673,3 +677,72 @@ class DbService:
                 mppPaymentId=payment_request.mppPaymentId,
                 transactions=None
             )
+
+    @staticmethod
+    @transaction.atomic
+    def savePrivatePlaceOrder(request_dto: PrivatePlaceOrderRequestDTO) -> PaymentRequest:
+            malaysia_tz = ZoneInfo("Asia/Kuala_Lumpur")
+            expiry_time=datetime.now(malaysia_tz)+timedelta(minutes=3)
+            payment_request_id=str(uuid.uuid4())
+            payment_request=PaymentRequest.objects.create(
+                paymentRequestId=payment_request_id,
+                paymentAmountValue=request_dto.paymentAmount.value,
+                paymentAmountCurrency=request_dto.paymentAmount.currency,
+                paymentMethodType="CONNECT_WALLET",
+                isInStorePayment=True,
+                isCashierPayment=True,
+                inStorePaymentScenario="OrderCode",
+                paymentExpiryTime=expiry_time,
+                paymentNotifyUrl="https://superpayacqp.onrender.com/alipay/notifyPayment",
+                paymentRedirectUrl="https://superpayacqp.onrender.com/payment-result?paymentRequestId="+payment_request_id,
+                resultStatus=ResultStatus.UNKNOWN,
+                resultCode="PAYMENT_IN_PROCESS",
+                resultMessage="The payment is being processed.",
+                paymentStatus=PaymentStatus.PENDING,
+                settlementStrategy=SettlementStrategyDTO(settlementCurrency="MYR").model_dump(exclude_none=True)
+            )
+            
+            order = request_dto.order
+            if order:
+                orderId = str(uuid.uuid4())
+                
+                # Create Order with null checks
+                Order.objects.update_or_create(
+                    paymentRequestId=payment_request_id,
+                    defaults={
+                        'paymentRequestId':payment_request_id,
+                        'orderId':orderId,
+                        'referenceOrderId': order.referenceOrderId,
+                        'orderDescription': order.orderDescription,
+                        'orderAmountValue': order.orderAmount.value,
+                        'orderAmountCurrency': order.orderAmount.currency,
+                        'merchantId': order.merchantId,
+                        'shippingName': order.shipping.shippingName.model_dump(exclude_none=True) if order.shipping and order.shipping.shippingName else None,
+                        'shippingPhoneNo': order.shipping.shippingPhoneNo if order.shipping else '',
+                        'shippingAddress': order.shipping.shippingAddress.model_dump(exclude_none=True) if order.shipping and order.shipping.shippingAddress else None,
+                        'shippingCarrier': order.shipping.shippingCarrier if order.shipping else '',
+                        'referenceBuyerId': order.buyer.referenceBuyerId if order.buyer else '',
+                        'buyerName': order.buyer.buyerName.model_dump(exclude_none=True) if order.buyer and order.buyer.buyerName else None,
+                        'buyerPhoneNo': order.buyer.buyerPhoneNo if order.buyer else '',
+                        'buyerEmail': order.buyer.buyerEmail if order.buyer else '',
+                        'env': order.env.model_dump(exclude_none=True) if order.env else None
+                    }
+                )
+                
+                # Create OrderGoods for each item
+                if order.goods:
+                    for g in order.goods:
+                        OrderGoods.objects.update_or_create(
+                            orderId=orderId,
+                            referenceGoodsId=g.referenceGoodsId or '',
+                            defaults={
+                                'goodsName': g.goodsName or '',
+                                'goodsCategory': g.goodsCategory or '',
+                                'goodsBrand': g.goodsBrand or '',
+                                'goodsUnitAmountValue': g.goodsUnitAmount.value if g.goodsUnitAmount else None,
+                                'goodsUnitAmountCurrency': g.goodsUnitAmount.currency if g.goodsUnitAmount else None,
+                                'goodsQuantity': g.goodsQuantity
+                            }
+                        )
+
+            return payment_request

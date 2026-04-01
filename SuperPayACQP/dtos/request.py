@@ -1,11 +1,14 @@
 """
 Request DTOs
 """
+from __future__ import annotations
 from dtos import AmountDTO, BaseRequestDTO
 from pydantic import BaseModel
-from typing import Optional, List
-from dtos.response import SettlementQuoteDTO
+from typing import Optional, List, TYPE_CHECKING
 from utils.constants import Result
+
+if TYPE_CHECKING:
+    from dtos.response import SettlementQuoteDTO
 
 class PaymentFactorDTO(BaseModel):
     """Payment factor DTO"""
@@ -86,6 +89,7 @@ class OrderDTO(BaseModel):
     shipping: Optional[ShippingDTO] = None
     buyer: Optional[BuyerDTO] = None
     env: Optional[EnvDTO] = None
+    indirectAcquirer: Optional[IndirectAcquirerDTO]=None
 
 
 class PaymentMethodDTO(BaseModel):
@@ -103,6 +107,10 @@ class PlaceOrderRequestDTO(BaseRequestDTO):
     paymentAmount: AmountDTO
     paymentMethod: PaymentMethodDTO 
 
+class PrivatePlaceOrderRequestDTO(BaseRequestDTO):
+    """Place order request DTO"""
+    order: OrderDTO
+    paymentAmount: AmountDTO
 
 class CancelPaymentRequestDTO(BaseRequestDTO):
     """Cancel payment request DTO"""
@@ -287,3 +295,9 @@ class AlipayConsultPaymentRequestDTO (BaseRequestDTO):
     merchant: Merchant
     referenceUserId: Optional[str]=None
     env: EnvDTO
+
+class AlipayUserInitiatedPayRequestDTO (BaseRequestDTO):
+    acquirerId: Optional[str]=None
+    pspId:Optional[str]=None
+    codeValue: str
+    customerId: Optional[str]=None

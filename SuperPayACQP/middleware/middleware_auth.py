@@ -54,6 +54,7 @@ class JWTAuthMiddleware:
         '/static/',
         '/favicon.ico',
         '/.well-known/',  # Chrome DevTools requests
+        '/alipay/userInitiatedPay'
     ]
     
     def __init__(self, get_response):

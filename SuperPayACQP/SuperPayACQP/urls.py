@@ -9,7 +9,9 @@ from apps.payments.payments_views import (
     CancelPaymentView, 
     InquiryPaymentView,
     NotifyPaymentView,
-    ConsultPaymentView
+    ConsultPaymentView,
+    UserInitiatedPayView,
+    PrivatePlaceOrderCodeView
     
 )
 from apps.merchants.merchants_views import MerchantView, GenerateEntryCodeView, EntryCodeView, EntryCodeConfirmView,MerchantDeleteView
@@ -29,9 +31,10 @@ urlpatterns = [
     path('api/consult-payment', ConsultPaymentView.as_view(), name='consult-payment'),
     path('entry-code', EntryCodeView.as_view(), name='entry-code'),
     path('entry-code/confirm', EntryCodeConfirmView.as_view(), name='entry-code-confirm'),
-    
+    path('api/private-place-order', PrivatePlaceOrderCodeView.as_view(), name='private-place-order'),
     # Alipay+ Callback
     path('alipay/notifyPayment', NotifyPaymentView.as_view(), name='notify-payment'),
+    path('alipay/userInitiatedPay', UserInitiatedPayView.as_view(), name='user-initiated-pay'),
 
     path('api/merchants', MerchantView.as_view(), name='create-merchant'),
     

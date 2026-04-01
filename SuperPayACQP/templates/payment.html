@@ -180,12 +180,6 @@
         window.addEventListener('resize', updateCarouselIndicatorsPosition);
     });
     
-    // ============================================
-    // Carousel Functions
-    // ============================================
-    function onPaymentOptionsChange (selectElement){
-        
-    }
     async function loadPaymentOptions(){
         try {
             const token=getCookie('token');
@@ -1065,12 +1059,22 @@
     }
     async function confirmCashierPayment() {
 
-            
-            const csrftoken = getCookie('csrftoken');
+            const selectedWalletTemp=sessionStorage.getItem('selectedWallet');
+            if (!selectedWalletTemp){
+                    showMessageDialog({
+                        title: "Wallet is not selected",
+                        message: "Please select a wallet to proceed.",
+                        type: 'warning'
+                    });
+                    return;
+            }
+            else
+            {
+                            const csrftoken = getCookie('csrftoken');
             const token=getCookie('token');
              const requestBody = buildPlaceOrderRequest(null, 'CashierPayment');
             // Call API
-            const response = await fetch('/api/place-order', {
+            response = await fetch('/api/place-order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1080,16 +1084,34 @@
                 body: JSON.stringify(requestBody)
             });
             
-            const result = await response.json();
+            result = await response.json();
             if (result.result.resultStatus==='U'&& result.result.resultCode==='PAYMENT_IN_PROCESS'){
                 const normalUrl=result.normalUrl;
                 window.open(normalUrl);
                 setTimeout(function (){
                     window.location.href='/payment-result?paymentRequestId=' + result.paymentRequestId;
                 },3000);
-                
-                
             }
+            else if (result.result.resultStatus==='U'&& result.result.resultCode==='UNKNOWN_EXCEPTION'){
+                showMessageDialog({
+                        title: data.result.resultCode,
+                        message: data.result.resultMessage+". Please click the Continue Payment button again.",
+                        type: 'warning'
+                    });
+                    return;
+            }
+            else
+            {
+                showMessageDialog({
+                        title: data.result.resultCode,
+                        message: data.result.resultMessage,
+                        type: 'error'
+                    });
+                    return;
+            }
+            }
+
+
     }
 </script>
 {% endblock %}

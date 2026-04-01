@@ -7,6 +7,8 @@ from pydantic import BaseModel
 from typing import Optional, List
 from utils.constants import Result
 
+from dtos.request import OrderDTO,PaymentFactorDTO,SettlementStrategyDTO
+
 class SettlementQuoteDTO(BaseModel):
     """Settlement quote DTO"""
     quoteId: Optional[str] = None
@@ -35,6 +37,12 @@ class PaymentResponseDTO(BaseResponseDTO):
     applinkUrl:Optional[str] = None
     normalUrl:Optional[str] = None
     appIdentifier:Optional[str] = None
+
+class PrivatePlaceOrderResponseDTO(BaseResponseDTO):
+    """Payment response DTO"""
+    paymentRequestId: Optional[str] = None 
+    paymentExpireTime: Optional[str] = None
+    paymentAmount: Optional[AmountDTO] = None
 
 
 class AlipayPayResponseDTO(BaseResponseDTO):
@@ -190,3 +198,16 @@ class PaymentOptionDetail(BaseModel):
 
 class AlipayConsultPaymentResponseDTO (BaseResponseDTO):
     paymentOptions:List[PaymentOption]
+
+class AlipayUserInitiatedPayResponseDTO (BaseResponseDTO):
+    codeType: Optional[str]=None
+    paymentRequestId:Optional[str]=None
+    order: Optional[OrderDTO]
+    customerId: Optional[str]=None
+    paymentFactor: Optional[PaymentFactorDTO]=None
+    paymentAmount:Optional[AmountDTO]=None
+    paymentNotifyUrl: str
+    paymentRedirectUrl: Optional[str]=None
+    paymentExpiryTime: Optional[str]=None
+    settlementStrategy: Optional[SettlementStrategyDTO]=None
+    splitSettlementId: Optional[str]=None
