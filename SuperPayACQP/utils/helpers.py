@@ -3,7 +3,7 @@ Helper Functions for SuperPayACQP
 """
 import uuid
 from datetime import datetime, timezone, timedelta
-
+from dateutil import parser
 
 def generate_uuid() -> str:
     """Generate a UUID string"""
@@ -73,7 +73,7 @@ def format_str_to_datetime(dt: str) -> datetime:
     
     # If all formats fail, try using dateutil if available, otherwise raise error
     try:
-        from dateutil import parser
+        
         return parser.parse(dt)
     except ImportError:
         raise ValueError(f"Unable to parse datetime string: {dt}. Format not recognized.")

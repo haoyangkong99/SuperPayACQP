@@ -586,7 +586,7 @@ class PrivatePlaceOrderCodeView(APIView):
                     value=payment_request.paymentAmountValue,
                     currency=payment_request.paymentAmountCurrency
                 ),
-                codeValue="https://superpayacqp.onrender.com?paymentRequestId="+payment_request.paymentRequestId
+                codeValue="https://superpayacqp.onrender.com/private-order-code?paymentRequestId="+payment_request.paymentRequestId
             )
             db_service.createApiRecordsWithReqRes('/api/private-place-order',HTTPMethod.POST,request_dto,response_dto,MessageType.INBOUND)
             return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK)
@@ -600,13 +600,15 @@ class PrivatePlaceOrderCodeView(APIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class UserInitiatedPayView(APIView):
+    authentication_classes = []  # Disable DRF authentication for Alipay callback
+    
     def buildAlipayUserInitiatedPayResponse (self,db_service: DbService,payment_request_object:PaymentRequest) -> AlipayUserInitiatedPayResponseDTO:
             order_record=Order.objects.filter(paymentRequestId=payment_request_object.paymentRequestId).first()
             if order_record:
                 if not order_record.orderAmountValue :
-                    raise Exception
+                    raise ValueError("orderAmountValue is required")
                 if not order_record.merchantId:
-                    raise Exception
+                    raise ValueError("merchantId is required")
                 
                 merchant_record=db_service.getMerchantInfo(order_record.merchantId)
                 good_records=OrderGoods.objects.filter(orderId=order_record.referenceOrderId).all()
@@ -646,6 +648,22 @@ class UserInitiatedPayView(APIView):
             else:
                 order=None
 
+            # Handle paymentExpiryTime - could be datetime or string
+            payment_expiry_time_str = None
+            if payment_request_object.paymentExpiryTime:
+                if isinstance(payment_request_object.paymentExpiryTime, str):
+                    payment_expiry_time_str = payment_request_object.paymentExpiryTime
+                else:
+                    payment_expiry_time_str = payment_request_object.paymentExpiryTime.strftime("%Y-%m-%dT%H:%M:%S+08:00")
+            
+            # Handle settlementStrategy - could be dict or string
+            settlement_currency = 'MYR'
+            if payment_request_object.settlementStrategy:
+                if isinstance(payment_request_object.settlementStrategy, dict):
+                    settlement_currency = payment_request_object.settlementStrategy.get('settlementCurrency', 'MYR')
+                elif isinstance(payment_request_object.settlementStrategy, str):
+                    settlement_currency = payment_request_object.settlementStrategy
+
             return AlipayUserInitiatedPayResponseDTO(
                     result=Result.returnSuccess(),
                     codeType=payment_request_object.inStorePaymentScenario,
@@ -662,9 +680,9 @@ class UserInitiatedPayView(APIView):
                     ),
                     paymentNotifyUrl=payment_request_object.paymentNotifyUrl or '',
                     paymentRedirectUrl=payment_request_object.paymentRedirectUrl,
-                    paymentExpiryTime=payment_request_object.paymentExpiryTime.strftime("%Y-%m-%dT%H:%M:%S+08:00") if payment_request_object.paymentExpiryTime else None,
+                    paymentExpiryTime=payment_expiry_time_str,
                     settlementStrategy=SettlementStrategyDTO(
-                        settlementCurrency=payment_request_object.settlementStrategy
+                        settlementCurrency=settlement_currency
                     ),
                     splitSettlementId=payment_request_object.splitSettlementId
                 )
@@ -683,11 +701,11 @@ class UserInitiatedPayView(APIView):
                 signature
             )
             if not is_valid:
-                logger.warning("Invalid signature in notifyPayment")
+                logger.warning("Invalid signature in userInitiatedPay")
                 result = Result.returnInvalidSignature()
                 response_dto = AlipayUserInitiatedPayResponseDTO(
                     result=result,
-                    paymentNotifyUrl="https://superpayacqp.onrender.com/alipay/notifyPayment"
+                    paymentNotifyUrl=os.getenv('NOTIFY_PAYMENT_URL', 'https://superpayacqp.onrender.com/alipay/notifyPayment')
                 )
                 response_header=alipay_service._make_response_header("POST",'/alipay/userInitiatedPay',response_dto.model_dump(exclude_none=True))
                 db_service.createApiRecordsWithReqRes('/alipay/userInitiatedPay',HTTPMethod.POST,request.data,response_dto,MessageType.INBOUND)
@@ -696,7 +714,7 @@ class UserInitiatedPayView(APIView):
             result = Result.returnInvalidSignature()
             response_dto = AlipayUserInitiatedPayResponseDTO(
                     result=result,
-                    paymentNotifyUrl="https://superpayacqp.onrender.com/alipay/notifyPayment"
+                    paymentNotifyUrl=os.getenv('NOTIFY_PAYMENT_URL', 'https://superpayacqp.onrender.com/alipay/notifyPayment')
                 )
             response_header=alipay_service._make_response_header("POST",'/alipay/userInitiatedPay',response_dto.model_dump(exclude_none=True))
             db_service.createApiRecordsWithReqRes('/alipay/userInitiatedPay',HTTPMethod.POST,request.data,response_dto,MessageType.INBOUND)
@@ -710,35 +728,56 @@ class UserInitiatedPayView(APIView):
             payment_request_id=query_params.get("paymentRequestId", [None])[0]
             payment_request_object=PaymentRequest.objects.filter(paymentRequestId=payment_request_id).first()
             if payment_request_object:
+                # Check if order is closed
                 if payment_request_object.resultStatus=='F' and payment_request_object.resultCode=='ORDER_IS_CLOSED':
                     response_dto=AlipayUserInitiatedPayResponseDTO(
-                    result=Result.returnOrderIsClosed(),
-                    paymentNotifyUrl="https://superpayacqp.onrender.com/alipay/notifyPayment"
-                )
-                expiry = payment_request_object.paymentExpiryTime
-                if expiry is not None and datetime.now() < expiry:
-                    response_dto = AlipayUserInitiatedPayResponseDTO(
-                        result=Result.returnExpiredCode(),
-                        paymentNotifyUrl="https://superpayacqp.onrender.com/alipay/notifyPayment"
+                        result=Result.returnOrderIsClosed(),
+                        paymentNotifyUrl=os.getenv('NOTIFY_PAYMENT_URL', 'https://superpayacqp.onrender.com/alipay/notifyPayment')
                     )
+                    response_header=alipay_service._make_response_header("POST",'/alipay/userInitiatedPay',response_dto.model_dump(exclude_none=True))
+                    db_service.createApiRecordsWithReqRes('/alipay/userInitiatedPay',HTTPMethod.POST,request.data,response_dto,MessageType.INBOUND)
+                    return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK,headers=response_header)
                 
+                # Check if code is expired - use timezone-aware comparison
+                expiry = payment_request_object.paymentExpiryTime
+                if expiry is not None:
+                    # Handle both datetime and string types
+                    if isinstance(expiry, str):
+                        expiry = format_str_to_datetime(expiry)
+                    
+                    if expiry and datetime.now(timezone.utc) > expiry:
+                        response_dto = AlipayUserInitiatedPayResponseDTO(
+                            result=Result.returnExpiredCode(),
+                            paymentNotifyUrl=os.getenv('NOTIFY_PAYMENT_URL', 'https://superpayacqp.onrender.com/alipay/notifyPayment')
+                        )
+                        response_header=alipay_service._make_response_header("POST",'/alipay/userInitiatedPay',response_dto.model_dump(exclude_none=True))
+                        db_service.createApiRecordsWithReqRes('/alipay/userInitiatedPay',HTTPMethod.POST,request.data,response_dto,MessageType.INBOUND)
+                        return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK,headers=response_header)
+                
+                # Update payment request with Alipay info
                 payment_request_object.acquirerId=notification_dto.acquirerId
                 payment_request_object.pspId=notification_dto.pspId
                 payment_request_object.customerId=notification_dto.customerId
                 payment_request_object.save()
+                
                 response_dto=self.buildAlipayUserInitiatedPayResponse(db_service,payment_request_object)
+                response_header=alipay_service._make_response_header("POST",'/alipay/userInitiatedPay',response_dto.model_dump(exclude_none=True))
+                db_service.createApiRecordsWithReqRes('/alipay/userInitiatedPay',HTTPMethod.POST,request.data,response_dto,MessageType.INBOUND)
+                return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK,headers=response_header)
 
             else:
                 response_dto=AlipayUserInitiatedPayResponseDTO(
                     result=Result.returnInvalidCode(),
-                    paymentNotifyUrl="https://superpayacqp.onrender.com/alipay/notifyPayment"
+                    paymentNotifyUrl=os.getenv('NOTIFY_PAYMENT_URL', 'https://superpayacqp.onrender.com/alipay/notifyPayment')
                 )
-            response_header=alipay_service._make_response_header("POST",'/alipay/userInitiatedPay',response_dto.model_dump(exclude_none=True))
-            return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK,headers=response_header)
-        except Exception:
+                response_header=alipay_service._make_response_header("POST",'/alipay/userInitiatedPay',response_dto.model_dump(exclude_none=True))
+                db_service.createApiRecordsWithReqRes('/alipay/userInitiatedPay',HTTPMethod.POST,request.data,response_dto,MessageType.INBOUND)
+                return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK,headers=response_header)
+        except Exception as e:
+                logger.error(f"Error in userInitiatedPay: {e}")
                 response_dto=AlipayUserInitiatedPayResponseDTO(
                     result=Result.returnUnknownException(),
-                    paymentNotifyUrl="https://superpayacqp.onrender.com/alipay/notifyPayment"
+                    paymentNotifyUrl=os.getenv('NOTIFY_PAYMENT_URL', 'https://superpayacqp.onrender.com/alipay/notifyPayment')
                 )
                 response_header=alipay_service._make_response_header("POST",'/alipay/userInitiatedPay',response_dto.model_dump(exclude_none=True))
                 return Response(response_dto.model_dump(exclude_none=True), status=status.HTTP_200_OK,headers=response_header)
